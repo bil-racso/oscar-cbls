@@ -1,3 +1,5 @@
+package oscar.cbls.invariants.lib.routing
+
 /*******************************************************************************
   * OscaR is free software: you can redistribute it and/or modify
   * it under the terms of the GNU Lesser General Public License as published by
@@ -13,8 +15,6 @@
   * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
   ******************************************************************************/
 
-
-package oscar.cbls.invariants.lib.routing
 import oscar.cbls.algo.rb.RedBlackTreeMap
 import oscar.cbls.algo.seq.functional.IntSequence
 import oscar.cbls.invariants.core.computation._
@@ -26,23 +26,15 @@ import oscar.cbls.invariants.core.computation._
 object GenericCumulativeIntegerDimensionOnVehicle {
   /**
     * Implements a GenericCumulativeIntegerDimensionOnVehicle Invariant
-    *
     * @param routes The sequence representing the route associated at each vehicle
-    * @param n the maximum number of nodes
-    * @param v the number of vehicles
-    * @param op a function which returns the capacity change between two nodes : (startingNode,destinationNode,capacityAtStartingNode)=> capacityAtDestinationNode
-    * @return the capacity of each node in the sequence representinf the route associeted at each vehicle
-    */
-
-  /**
-    *
-    * @param routes
-    * @param n
-    * @param v
-    * @param op
-    * @param initValue
-    * @param maxStack
-    * @return
+    * @param n The maximum number of nodes
+    * @param v The number of vehicles
+    * @param op A function which returns the capacity change between two nodes : (startingNode,destinationNode,capacityAtStartingNode)=> capacityAtDestinationNode
+    * @param initValue Array of lenght = v where initValue(car) = content at start pos of vehicle #car
+    * @param minContent Min content of a node
+    * @param maxContent Max content of a node
+    * @param maxStack Maximum depth of vehicleLocation history
+    * @return The capacity of each node in the sequence representing the route associated at each vehicle
     */
   def apply(routes:ChangingSeqValue,n:Int,v:Int,op :(Int,Int,Int)=>Int,initValue:Array[Int],minContent :Int=Int.MinValue, maxContent:Int=Int.MaxValue,maxStack:Int =4):Array[CBLSIntVar] ={
     var output: Array[CBLSIntVar] = Array.tabulate(n)((node: Int) => CBLSIntVar(routes.model, 0, Domain.coupleToDomain(minContent,maxContent), "capacity at node("+node.toString+")"))
@@ -63,12 +55,14 @@ object GenericCumulativeIntegerDimensionOnVehicle {
   * @param output The array which store, for any node, the capacity of the vehicle associated at the node
   * @param maxStack
   */
+
 class GenericCumulativeIntegerDimensionOnVehicle(routes:ChangingSeqValue, n:Int, v:Int, op :(Int,Int,Int)=>Int, initValue :Array[Int], output:Array[CBLSIntVar],maxStack:Int)
   extends AbstractVehicleCapacity(routes,n,v,-1,initValue  ,op) with SeqNotificationTarget{
 
   private var contentAtNode : Array[Int]= Array.tabulate(n)((node:Int)=> -1)
 
   private var stack:VehicleLocation = ConcreteVehicleLocation(Array.tabulate(n)((node:Int)=> 0))
+  private var stackAtCheckpoint:VehicleLocation = null
 
   require(initValue.length==v)
   require( output.length==n)
@@ -89,9 +83,8 @@ class GenericCumulativeIntegerDimensionOnVehicle(routes:ChangingSeqValue, n:Int,
 
   /**
     * Search the zones where changes occur following a SeqUpdate
-    *
     * @param changes the SeqUpdate
-    * @return a list that specify mandatory zones which must be computed. A zone is represented by his start and end position : (startPositionIncluded, endPositionIncluded). Note that the list is sorted by position ((x,y) <= (x',y') iff y <= x'  )
+    * @return RedBlackTreeMap[List[(Int,Int)]] of sorted list of pos for vehicle
     */
   def digestUpdatesAndUpdateVehicleStartPositionsAndSearchZoneToUpdate(changes:SeqUpdate) : RedBlackTreeMap[List[(Int,Int)]] = {
     changes match {
@@ -106,9 +99,14 @@ class GenericCumulativeIntegerDimensionOnVehicle(routes:ChangingSeqValue, n:Int,
       case SeqUpdateLastNotified(value:IntSequence) =>
         updateVehicleStartPositionsAndSearchZoneToUpdateAfterLastNotified(value )
       case s@SeqUpdateDefineCheckpoint(prev:SeqUpdate,_) =>
-        digestUpdatesAndUpdateVehicleStartPositionsAndSearchZoneToUpdate(prev)
+        val toReturn =  digestUpdatesAndUpdateVehicleStartPositionsAndSearchZoneToUpdate(prev)
+        stackAtCheckpoint = stack.regularize()
+        stack = stackAtCheckpoint
+        toReturn
       case u@SeqUpdateRollBackToCheckpoint(checkpoint:IntSequence) =>
-        digestUpdatesAndUpdateVehicleStartPositionsAndSearchZoneToUpdate(u.howToRollBack)
+        val toReturn = digestUpdatesAndUpdateVehicleStartPositionsAndSearchZoneToUpdate(u.howToRollBack)
+        stack = stackAtCheckpoint
+        toReturn
     }
   }
 
@@ -125,7 +123,6 @@ class GenericCumulativeIntegerDimensionOnVehicle(routes:ChangingSeqValue, n:Int,
     if(stack.depth>maxStack) stack = stack.regularize()
   }
 
-
   def computeAndAffectContentAndVehicleStartPositionsFromScratch(): Unit ={
     var tmp = computeContentAndVehicleStartPositionsFromScratch(routes.newValue)
     stack = tmp._2
@@ -140,8 +137,16 @@ class GenericCumulativeIntegerDimensionOnVehicle(routes:ChangingSeqValue, n:Int,
 }
 
 
-
-
+/**
+  *
+  * @param routes The sequence representing the route associated at each vehicle
+  * @param n The maximum number of nodes
+  * @param v The number of vehicles
+  * @param op A function which returns the capacity change between two nodes : (startingNode,destinationNode,capacityAtStartingNode)=> capacityAtDestinationNode
+  * @param initValue An array giving the initial capacity of a vehicle at his starting node (0, v-1)
+  * @param output
+  * @param maxStack
+  */
 class GenericCumulativeIntegerDimensionOnVehicleInvariant(routes:ChangingSeqValue, n:Int, v:Int, op :(Int,Int,Int)=>Int, initValue :Array[Int], output:Array[CBLSIntVar],maxStack:Int)
   extends GenericCumulativeIntegerDimensionOnVehicle(routes, n, v, op, initValue,output,maxStack) {
 
