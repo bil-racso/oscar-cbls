@@ -179,13 +179,13 @@ class MagicBoolArray(val length:Int,initVal:Boolean = false){
    * @return the new iterator
    */
   def indicesAtTrue:Iterator[Int] ={
-    val ret=Array.newBuilder[Int]
-    for(n <-0 until length-1){
+    var toReturn:QList[Int]=null
+    for(n <-0 until length){
       if(internalArray(n)>=global){
-        ret.+=(n)
+        toReturn = QList(n,toReturn)
       }
     }
-    ret.result().iterator
+    toReturn.toIterator
   }
 
   override def toString: String = "["+indicesAtTrue.mkString(",")+"]"
