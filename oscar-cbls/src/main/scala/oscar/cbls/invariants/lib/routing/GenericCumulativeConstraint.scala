@@ -94,7 +94,7 @@ class GenericCumulativeConstraint(routes:ChangingSeqValue, n:Int, v:Int, op :(In
   private def computeAndAffectContentAndVehicleStartPositionsFromScratch(): Unit ={
     var tmp = computeContentAndVehicleStartPositionsFromScratch(routes.newValue)
     stack = tmp._2
-    contentAtNode = MagicIntArray(n, initContent,tmp._1.clone())
+    contentAtNode = MagicIntArray(n, initContent,tmp._1)
     var currentCar = 0
     var valueOfCurrentNode = initContent
     var currentNode = routes.newValue.explorerAtPosition(0)
@@ -122,7 +122,6 @@ class GenericCumulativeConstraint(routes:ChangingSeqValue, n:Int, v:Int, op :(In
           if (lst.nonEmpty) updateContentForSelectedZones(routes.newValue,lst,  positionOfVehicle(car)  ,car)
         }
     }
-    this.checkInternals(ErrorChecker())
   }
 
   /**
