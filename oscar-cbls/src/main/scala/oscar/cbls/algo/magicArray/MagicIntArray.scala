@@ -16,75 +16,63 @@ package oscar.cbls.algo.magicArray
   ******************************************************************************/
 
 
-
 /**
   * Created by  Jannou Brohée on 24/11/16.
   */
+
 object MagicIntArray {
-
-
-  def apply(length:Int, initValue:Int=0): MagicIntArray = {
-    new MagicIntArray(length,initValue,Array.tabulate(length)((id:Int)=> initValue))
-  }
+  def apply(length:Int, initValue:Int=0): MagicIntArray = new MagicIntArray(length,initValue,Array.tabulate(length)((id:Int)=> initValue))
 
   def apply(length:Int,initValue:Int, initValues:Array[Int]): MagicIntArray = {
     require(initValues.length==length)
     new MagicIntArray(length,initValue,initValues)
   }
-
 }
 
+/**
+  * Handle checkpoint and rollback on an array of Int
+  * @param lengthArray Int
+  * @param initValue =0
+  * @param initValues =Array.tabulate(lengthArray)((id:Int)=> initValue)
+  */
 class MagicIntArray(lengthArray :Int, initValue:Int,initValues:Array[Int]){
   private val internalIntArray : Array[Int] = initValues
   private val internalArraySavingChanges : Array[Int] = Array.tabulate(lengthArray)((id:Int)=> initValue)
   private val changesSaved : MagicBoolArray = MagicBoolArray(lengthArray)
   private var change:Boolean = false
 
-
-
   /**
-    * Set the new value of element at specific index
-    * @param id the index of the element
-    * @param value the new element's value
+    * Updates the n-th element to a new value
+    * @param n the index of the element
+    * @param value the new value
+    * @param saved true to save the value at checkpoint, false to override it
+    * @note O(1)
     */
-  def update(id:Int, value:Int,saved:Boolean = change){
-    assert(id<lengthArray && 0<=id)
+  def update(n:Int, value:Int, saved:Boolean = change){
+    assert(n<lengthArray && 0<=n)
     if(saved) {
-      changesSaved(id)=true
-      internalArraySavingChanges(id) = value
+      changesSaved(n)=true
+      internalArraySavingChanges(n) = value
     }
-    else internalIntArray(id)=value
+    else internalIntArray(n)=value
   }
 
   /**
-    * Return the value of the element at specific index
-    * @param id the index of the element
-    * @return the saved value at index
+    * Return the value of the n-th element
+    * @param n the index of the element
+    * @param saved true if checkpoint, false otherwise
+    * @return the value of the n-th element
+    * @note O(1)
     */
-  def apply(id:Int,saved:Boolean = change): Int ={
-    assert(0<=id && id<lengthArray)
-    if(saved && changesSaved(id) ) internalArraySavingChanges(id) else internalIntArray(id)
+  def apply(n:Int, saved:Boolean = change): Int ={
+    assert(0<=n && n<lengthArray)
+    if(saved && changesSaved(n) ) internalArraySavingChanges(n) else internalIntArray(n)
   }
 
   /**
-    * Sets the value of each element to "value"
-    * @note complexity is O(1)
+    * Saves current value of the MagicArray
+    * @note O(length)
     */
-  def all_=(value:Int): Unit ={
-    if(change) {
-
-    }else{
-
-    }
-  }
-
-  /**
-    *
-    * @return
-    */
-  def all:Int = ???
-
-
   def save(): Unit = {
     change = true
     for(indice <- changesSaved.indicesAtTrue) internalIntArray(indice)=internalArraySavingChanges(indice)
@@ -92,22 +80,45 @@ class MagicIntArray(lengthArray :Int, initValue:Int,initValues:Array[Int]){
   }
 
 
+  /**
+    * Recovers saved values and clears changes history
+    * @note O(1)
+    */
   def reload(): Unit = changesSaved.all=false
 
-
+  /**
+    * Drops the saved values
+    * @note O(1)
+    */
   def drop(): Unit = {
     reload()
     change = false
   }
 
-  def changedSinceSave(id:Int) :Boolean= changesSaved(id)
+  /**
+    * Tests whether the n-th element have changed since save call
+    * @param n
+    * @return true if change, false otherwise
+    * @note O(1)
+    */
+  def changedSinceSave(n:Int) :Boolean= changesSaved(n)
 
+  /**
+    * Tests whether values is saved
+    * @return true if there are saved values, false otherwise
+    * @note O(1)
+    */
   def saveChanges():Boolean = change
 
- // override def toString: String = "["+indicesAtTrue.mkString(",")+"]"
-
-
-
-
-
+  /**
+    * @note O(lengthArray)
+    * @return
+    */
+  override def toString: String = {
+    var toReturn = "["
+    for(n <- 0 until lengthArray-1)
+      toReturn += "("+this(n)+" changed := "+this.changedSinceSave(n)+"),"
+    toReturn += "("+this(lengthArray-1)+" changed := "+this.changedSinceSave(lengthArray-1)+")]"
+    toReturn
+  }
 }

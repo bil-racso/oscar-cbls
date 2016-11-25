@@ -1,5 +1,7 @@
 package oscar.cbls.algo.magicArray
 
+import oscar.cbls.algo.quick.QList
+
 /*******************************************************************************
   * OscaR is free software: you can redistribute it and/or modify
   * it under the terms of the GNU Lesser General Public License as published by
@@ -94,13 +96,13 @@ class MagicBoolArray(val length:Int){
     * @return the new iterator
     */
   def indicesAtTrue:Iterator[Int] ={
-    val ret=Array.newBuilder[Int]
+    var toReturn:QList[Int]=null
     for(n <-0 until length){
       if(internalArray(n)>=global){
-        ret.+=(n)
+        toReturn = QList(n,toReturn)
       }
     }
-    ret.result().iterator
+    toReturn.toIterator
   }
 
   override def toString: String = "["+indicesAtTrue.mkString(",")+"]"
