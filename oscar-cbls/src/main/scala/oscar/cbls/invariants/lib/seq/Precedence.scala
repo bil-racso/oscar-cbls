@@ -161,7 +161,6 @@ class Precedence(seq:ChangingSeqValue,
     }
   }
 
-
   //should always be false when not in use
   val tmpArrayForDigestUpdate = MagicBoolArray(seq.maxValue+1,false)
 

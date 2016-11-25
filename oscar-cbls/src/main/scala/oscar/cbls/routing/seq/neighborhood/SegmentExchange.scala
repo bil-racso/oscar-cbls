@@ -328,6 +328,9 @@ case class PickupDeliverySegmentExchange(pdp: PDP,
   }
 }
 
+
+
+
 case class PickupDeliverySegmentExchangeMove(firstSegmentStartPosition:Int,
                                              firstSegmentEndPosition:Int,
                                              secondSegmentStartPosition: Int,
@@ -351,6 +354,3 @@ case class PickupDeliverySegmentExchangeMove(firstSegmentStartPosition:Int,
       " secondSegmentStartPosition:" + secondSegmentStartPosition + " secondSegmentEndPosition:" + secondSegmentEndPosition + objToString + ")"
   }
 }
-
-
-
