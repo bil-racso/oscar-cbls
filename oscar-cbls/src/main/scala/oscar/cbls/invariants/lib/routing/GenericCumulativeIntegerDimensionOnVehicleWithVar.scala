@@ -105,7 +105,7 @@ class GenericCumulativeIntegerDimensionOnVehicleWithVar(routes:ChangingSeqValue,
     todo= RedBlackTreeMap.empty[List[(Int,Int)]]
   }
 
-  override def contentAtStartingNodeOfVehicle(vehicle: Int): Int = initValue(vehicle).newValue
+  override def getContentAtVehicleStart(vehicle: Int): Int = initValue(vehicle).newValue
 
   override def updateVehicleStartPositionsAndSearchZoneToUpdateAfterLastNotified(value: IntSequence): RedBlackTreeMap[List[(Int, Int)]] =  todo
 

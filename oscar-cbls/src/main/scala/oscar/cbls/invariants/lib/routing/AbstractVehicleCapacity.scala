@@ -37,26 +37,10 @@ import oscar.cbls.invariants.lib.routing.convention.{ConcreteVehicleLocation, Ve
  * @param initValue An array giving the initial capacity of a vehicle at his starting node (0, v-1)
  * @param op A function which describes the capacity between two nodes : (startingNode,destinationNode,capacityAtStartingNode)=> capacityAtDestinationNode
  */
-abstract class AbstractVehicleCapacity(routes:ChangingSeqValue, n:Int, v:Int, initInt:Int, initValue:Array[Int], op :(Int,Int,Int)=>Int )
+abstract class AbstractVehicleCapacity(routes:ChangingSeqValue, n:Int, v:Int, defaultVehicleContentForUnroutedNodes:Int, initValue:Array[Int], op :(Int,Int,Int)=>Int )
   extends Invariant()   {
 
   /**
-   * Returns the position of the first node associated with the given vehicle
-   * @param vehicle the concerned vehicle
-   * @return the position of the first node associated with the vehicle
-   */
-  def positionOfVehicle(vehicle:Int): Int
-
-  /**
-   * Returns the vehicle reaching the node at the given position
-   * @param position the position of the concerned node
-   * @return the vehicle reaching the position
-   */
-  def vehicleReachingPosition(position:Int):Int
-
-
-  /**
-   *
    * @param zoneStart
    * @param zoneEnd
    * @param list
@@ -76,189 +60,73 @@ abstract class AbstractVehicleCapacity(routes:ChangingSeqValue, n:Int, v:Int, in
     }
   }
 
-  /**
-   * Updates vehicles starting positions and list zones of position of nodes which content have to be updated after the insert
-   * @param map
-   * @param s
-   * @param changes
-   * @return
-   */
-  def updateVehicleStartPositionsAndSearchZoneToUpdateAfterLastInsert(map: RedBlackTreeMap[List[(Int, Int)]], s: SeqUpdateInsert, changes:SeqUpdate):RedBlackTreeMap[List[(Int, Int)]] = {
-    map match {
-      case null => null
-      case tree =>
-        pushOnTopOfStack((posit) => s.oldPosToNewPos(posit))
-        val car = vehicleReachingPosition(s.pos)
-        val posOfTag = positionOfVehicle(car)
-
-        def shiftPositionsAfterTheInsertPos(list: List[(Int, Int)], insertPosIsNotStartPos: Int = 1): List[(Int, Int)] = {
-          list match {
-            case Nil => list
-            case (a, b) :: tail => (a + insertPosIsNotStartPos, b + 1) :: shiftPositionsAfterTheInsertPos(tail)
-          }
-        }
-
-        val relativePos = s.pos - posOfTag
-        def updateListOfZoneToUpdateAndSearchZoneToUpdateAfterInsert(list: List[(Int, Int)]): List[(Int, Int)] = {
-          list match {
-            case Nil => List((relativePos, (math.min(s.pos + 1, if (car != v - 1) positionOfVehicle(car + 1) - 1 else changes.newValue.size - 1)) - posOfTag))
-            case (startZone, endZone) :: tail =>
-              if (endZone < relativePos) smartPrepend(startZone, endZone, updateListOfZoneToUpdateAndSearchZoneToUpdateAfterInsert(tail))
-              else if (endZone == relativePos) smartPrepend(startZone, endZone + 1, shiftPositionsAfterTheInsertPos(tail))
-              else smartPrepend(relativePos, (math.min(s.pos + 1, if (car != v - 1) positionOfVehicle(car + 1) - 1 else changes.newValue.size - 1) - posOfTag), shiftPositionsAfterTheInsertPos(list, if (startZone < relativePos && endZone > relativePos) 0 else 1))
-          }
-        }
-        tree.insert(car, updateListOfZoneToUpdateAndSearchZoneToUpdateAfterInsert(tree.getOrElse(car, List.empty[(Int, Int)])))
+  private def shiftPlusDelta(l:List[(Int,Int)],delta:Int):List[(Int,Int)] = {
+    l match {
+      case Nil => l
+      case (a, b) :: tail => (a + delta, b + delta) :: shiftPlusDelta(tail,delta)
     }
   }
 
-  /**
-   * Updates vehicles starting positions and list zones of position of nodes which content have to be updated after the remove
-   * @param map
-   * @param r
-   * @param changes
-   * @return
-   */
-  def updateVehicleStartPositionsAndSearchZoneToUpdateAfterLastRemove(map: RedBlackTreeMap[List[(Int, Int)]], r: SeqUpdateRemove, changes:SeqUpdate): RedBlackTreeMap[List[(Int, Int)]] = {
-    map match{
-      case null => null
-      case tree =>
-        setVehicleContentAtNode(r.removedValue , r.position,initInt)
-        val car = vehicleReachingPosition(r.position)
-        pushOnTopOfStack((posit)=>r.oldPosToNewPos(posit))
-        val relativePos = r.position - positionOfVehicle(car)
+  def updateZoneToUpdateAfterInsert(zoneToUpdate: RedBlackTreeMap[List[(Int, Int)]],
+                                    posOfInsert:Int,
+                                    sequenceBeforeInsert:IntSequence,
+                                    vehicleLocationBeforeInsert:VehicleLocation):RedBlackTreeMap[List[(Int, Int)]] = {
+    if (zoneToUpdate == null) return null
+    val vehicleOfInsert = vehicleLocationBeforeInsert.vehicleReachingPosition(posOfInsert)
+    val startPosOfVehicle = vehicleLocationBeforeInsert.startPosOfVehicle(vehicleOfInsert)
+    val relativePosOfInsert = posOfInsert - startPosOfVehicle
 
-        def shiftByOneToLeft(list:List[(Int,Int)]):List[(Int,Int)]= {
-          list match {
-            case Nil => list
-            case (a, b) :: tail => (a - 1, b - 1) :: shiftByOneToLeft(tail)
+    def addInsertionIntoZonesToUpdate(zonesToUpdate:List[(Int,Int)]):List[(Int,Int)] = {
+      zonesToUpdate match {
+        case Nil => List((relativePosOfInsert, relativePosOfInsert))
+        case (startZone, endZone) :: tail =>
+          if (relativePosOfInsert < startZone) {
+            //we are before the startZone,endZone, and it cannot be incorporated into this zone
+            //eg: if insert at relative pos 4 and zone starts at 5, the element at 4 is moved one upwards
+            // and will separate the insert from the start
+            (relativePosOfInsert, relativePosOfInsert) :: shiftPlusDelta(zonesToUpdate,1)
+          } else if (relativePosOfInsert <= endZone + 1){
+            //we are in the zone, or the zone can be extended to iclude the insertion point
+            (startZone, endZone + 1) :: shiftPlusDelta(tail,1)
+          } else {
+            assert(relativePosOfInsert > endZone + 1)
+            (startZone, endZone) :: addInsertionIntoZonesToUpdate(tail)
           }
-        }
-
-        def updateListOfZoneToUpdateAndSearchZoneToUpdateAfterRemove(list:List[(Int,Int)]):List[(Int,Int)]= {
-          list match {
-            case Nil => if ((car != v - 1 && r.position != positionOfVehicle(car + 1)) || (car == v - 1 && (r.position < changes.newValue.size)))
-              List((relativePos, relativePos))
-            else list
-            case (startZone, endZone) :: tail =>
-              if (endZone < relativePos) smartPrepend(startZone, endZone, updateListOfZoneToUpdateAndSearchZoneToUpdateAfterRemove(tail))
-              else if (endZone >= relativePos && startZone <= relativePos)
-                if(endZone >startZone ) smartPrepend(startZone, endZone-1, shiftByOneToLeft(tail)) else { if ((car != v - 1 && r.position != positionOfVehicle(car + 1)) || (car == v - 1 && (r.position < changes.newValue.size))) (startZone, endZone) :: shiftByOneToLeft(tail) else shiftByOneToLeft(tail)}
-              else smartPrepend(relativePos, relativePos, shiftByOneToLeft(list))
-          }
-        }
-        tree.insert(car, updateListOfZoneToUpdateAndSearchZoneToUpdateAfterRemove(tree.getOrElse(car,List.empty[(Int,Int)])))
-
+      }
     }
+    zoneToUpdate.insert(vehicleOfInsert, addInsertionIntoZonesToUpdate(zoneToUpdate.getOrElse(vehicleOfInsert, List.empty[(Int, Int)])))
   }
 
-  /**
-   * Updates vehicles starting positions and list zones of position of nodes which content have to be updated after the move
-   * @param map
-   * @param m
-   * @param changes
-   * @return
-   */
-  def updateVehicleStartPositionsAndSearchZoneToUpdateAfterLastMove(map: RedBlackTreeMap[List[(Int, Int)]], m: SeqUpdateMove, changes: SeqUpdate): RedBlackTreeMap[List[(Int, Int)]] = {
-    map match{
-      case null => null
-      case tree =>
-        val vehicleSource = vehicleReachingPosition(m.fromIncluded)
-        val vehicleDestination =vehicleReachingPosition(m.after)
-        val vehiculeOfSrc = vehicleReachingPosition(m.fromIncluded-1)
-        val vehiculeOfNodeFollowingAfter = vehicleReachingPosition(m.after+1)
-        val isMovedToLeft:Boolean = m.after<m.fromIncluded
-        val relativeFromIncluded = m.fromIncluded - positionOfVehicle(vehicleSource)
-        val relativeToIncluded = m.toIncluded -positionOfVehicle(vehicleSource)
-        val relativeAfter = m.after - positionOfVehicle(vehicleDestination)
-        val delta = m.toIncluded - m.fromIncluded +1
-        val newAfter = m.oldPosToNewPos(m.after).get
-        val beforeFrom = m.fromIncluded-1
-        val newBeforeFrom = m.oldPosToNewPos(beforeFrom).get
-        var toReinsertInTheOtherSide= List.empty[(Int,Int)]
 
-        def insertInList(lst:List[(Int,Int)], toInsert:List[(Int,Int)]):List[(Int,Int)] ={
-          toInsert match{
-            case Nil => lst
-            case (s,e)::tail =>
-              lst match{
-                case Nil =>  toInsert
-                case (start,end)::tail =>
-                  if(s>end) smartPrepend(start,end, insertInList(lst.drop(1),toInsert))
-                  else if(s==start && end == e) insertInList(lst,toInsert.drop(1))
-                  else smartPrepend(s,e, insertInList(lst,toInsert.drop(1)))
-              }
+  def updateZoneToUpdateAfterRemove(zoneToUpdate: RedBlackTreeMap[List[(Int, Int)]],
+                                    posOfRemove:Int,
+                                    sequenceBeforeRemove:IntSequence,
+                                    vehicleLocationBeforeRemove:VehicleLocation):RedBlackTreeMap[List[(Int, Int)]] = {
+    if (zoneToUpdate == null) return null
+    val vehicleOfRemove = vehicleLocationBeforeRemove.vehicleReachingPosition(posOfRemove)
+    val startPosOfVehicle = vehicleLocationBeforeRemove.startPosOfVehicle(vehicleOfRemove)
+    val relativePosOfRemove = posOfRemove - startPosOfVehicle
+
+    def addRemoveIntoZonesToUpdate(zonesToUpdate:List[(Int,Int)]):List[(Int,Int)] = {
+      zonesToUpdate match {
+        case Nil => List((relativePosOfRemove, relativePosOfRemove))
+        case (startZone, endZone) :: tail =>
+          if (relativePosOfRemove + 1 < startZone) {
+            smartPrepend(relativePosOfRemove , relativePosOfRemove, shiftPlusDelta(zonesToUpdate,-1))
+          } else if (relativePosOfRemove - 1 <= endZone){
+            //we are in the zone, or the zone can be extended to include the insertion point
+            (startZone, endZone - 1) :: shiftPlusDelta(tail,-1)
+          } else {
+            assert(vehicleOfRemove > endZone + 1)
+            smartPrepend(startZone, endZone, addRemoveIntoZonesToUpdate(tail))
           }
-        }
-
-        def updateListOfZoneToUpdateAfterMove(listOfZonesForVehicle:List[(Int,Int)],sourceSide:Boolean=true):List[(Int,Int)]={
-          listOfZonesForVehicle match {
-            case Nil => listOfZonesForVehicle
-            case (startZone, endZone) :: tail =>
-              if (sourceSide) {// traitement du coté [from,to]
-                if (endZone < relativeFromIncluded) smartPrepend(startZone, endZone, updateListOfZoneToUpdateAfterMove(tail)) // on avance
-                else if (startZone > relativeToIncluded) smartPrepend(startZone - delta, endZone - delta, updateListOfZoneToUpdateAfterMove(tail))// on decale
-                else {// on gere les deplacement due au mouvement
-                  if(!m.flip)  toReinsertInTheOtherSide = (Math.max(startZone, relativeFromIncluded)-relativeFromIncluded,Math.min(relativeToIncluded, endZone)-relativeFromIncluded) ::toReinsertInTheOtherSide
-                  val toReturn = if (endZone > relativeToIncluded) smartPrepend(relativeToIncluded+1 - delta, endZone - delta, updateListOfZoneToUpdateAfterMove(tail))
-                  else updateListOfZoneToUpdateAfterMove(tail)
-                  if (startZone >= relativeFromIncluded) toReturn
-                  else smartPrepend(startZone, relativeFromIncluded - 1,toReturn)
-                }
-              }
-              else{// traitement coté after
-                if (endZone <= relativeAfter) smartPrepend(startZone, endZone, updateListOfZoneToUpdateAfterMove(tail,sourceSide))// on avance
-                else if(startZone>relativeAfter) smartPrepend(startZone+delta,endZone+delta,updateListOfZoneToUpdateAfterMove(tail,sourceSide))// on decale
-                else  smartPrepend(startZone,relativeAfter,smartPrepend(relativeAfter+1+delta,endZone+delta,updateListOfZoneToUpdateAfterMove(tail,sourceSide)))// si la zone contient after+1
-              }
-          }
-        }
-
-        var tmp = tree.insert(vehicleSource,updateListOfZoneToUpdateAfterMove(tree.getOrElse(vehicleSource, List.empty[(Int,Int)])))
-        tmp=  tmp.insert(vehicleDestination,updateListOfZoneToUpdateAfterMove(tmp.getOrElse(vehicleDestination, List.empty[(Int,Int)]),false))//, startPosOfVehicle(vehicleDestination)
-
-        pushOnTopOfStack((pos)=>m.oldPosToNewPos(pos))
-        val newRelativeAfter = newAfter - positionOfVehicle(vehicleDestination)
-        var toReinsertInTheDestinationSideList:List[(Int,Int)]=List.empty[(Int,Int)]
-
-        for(elt <- toReinsertInTheOtherSide) toReinsertInTheDestinationSideList = ((newRelativeAfter+1+elt._1), (newRelativeAfter+1+elt._2)) :: toReinsertInTheDestinationSideList
-
-        if(isMovedToLeft) {
-          var dst =  if (vehicleDestination != v - 1)  math.min(m.oldPosToNewPos(m.after+1).get, positionOfVehicle(vehicleDestination + 1)-1)-positionOfVehicle(vehicleDestination) // juste pour savoir si
-          else  math.min(m.oldPosToNewPos(m.after+1).get, routes.newValue.size-1)-positionOfVehicle(vehicleDestination)
-          toReinsertInTheDestinationSideList =  if (m.flip) insertInList(toReinsertInTheDestinationSideList, List.apply((m.oldPosToNewPos(m.toIncluded).get-positionOfVehicle(vehicleDestination), dst)))
-          else insertInList(insertInList(toReinsertInTheDestinationSideList,List.apply((dst,dst)) ) , List.apply((m.oldPosToNewPos(m.fromIncluded).get-positionOfVehicle(vehicleDestination), m.oldPosToNewPos(m.fromIncluded).get-positionOfVehicle(vehicleDestination)) ))
-          dst = if ((vehiculeOfSrc == v - 1 || m.oldPosToNewPos(m.toIncluded + 1).get < positionOfVehicle(vehiculeOfSrc + 1)) && m.toIncluded+1 <= routes.newValue.size-1) m.toIncluded+1  -positionOfVehicle(vehicleSource) else -1
-          if(dst != -1) tmp = tmp.insert(vehicleSource,insertInList(tmp.getOrElse(vehicleSource, List.empty[(Int,Int)]),List.apply((dst,dst))))
-        }
-        else {
-          var dst = if (vehiculeOfSrc == v - 1 || m.oldPosToNewPos(m.toIncluded + 1).get < positionOfVehicle(vehiculeOfSrc + 1)) m.fromIncluded else -1
-          dst-= positionOfVehicle(vehicleSource)
-          if(dst > -1)   tmp = tmp.insert(vehicleSource,insertInList(tmp.getOrElse(vehicleSource, List.empty[(Int,Int)]),List.apply((dst,dst))))
-          dst = if((m.after == routes.newValue.size-1) || ( vehiculeOfNodeFollowingAfter!=vehicleDestination ))  newRelativeAfter+delta else newRelativeAfter+delta+1
-          toReinsertInTheDestinationSideList = if (m.flip) insertInList(toReinsertInTheDestinationSideList,List.apply((newRelativeAfter+1, dst)))
-          else insertInList(insertInList(toReinsertInTheDestinationSideList, List.apply((dst, dst))), List.apply((newRelativeAfter+1,newRelativeAfter+1)))
-        }
-        tmp.insert(vehicleDestination,insertInList(tmp.getOrElse(vehicleDestination, List.empty[(Int,Int)]),toReinsertInTheDestinationSideList))
+      }
     }
+    zoneToUpdate.insert(vehicleOfRemove, addRemoveIntoZonesToUpdate(zoneToUpdate.getOrElse(vehicleOfRemove, List.empty[(Int, Int)])))
   }
 
-  /**
-   * Updates vehicles starting positions and list zones of position of nodes which content have to be updated after last notified
-   * @param value
-   * @return
-   */
-  def updateVehicleStartPositionsAndSearchZoneToUpdateAfterLastNotified(value: IntSequence): RedBlackTreeMap[List[(Int, Int)]] = {
-    require (value quickEquals routes.value)
-    RedBlackTreeMap.empty[List[(Int,Int)]]
-  }
 
-  /**
-   * Updates vehicles starting positions and list zones of position of nodes which content have to be updated after the last assign
-   * @param value
-   * @return
-   */
-  def UpdateVehicleStartPositionsAndSearchZoneToUpdateAfterAssign(value: IntSequence): RedBlackTreeMap[List[(Int, Int)]] = null
+
 
 
   /**
@@ -277,20 +145,48 @@ abstract class AbstractVehicleCapacity(routes:ChangingSeqValue, n:Int, v:Int, in
    */
   def setVehicleContentAtNode2(node: Int, newValueAtNode:Int, vehicleOfNode:Int): Unit
 
+  def getContentAtVehicleStart(vehicle:Int): Int = initValue(vehicle)
+
+  def setVehiclecontentAtEnd(vehicle:Int,content:Int)
+
+  protected def updateVehicleContentOnAllVehicle(s:IntSequence,
+                                                 vehiclesToZonesToUpdate: RedBlackTreeMap[List[(Int, Int)]],
+                                                 vehicleLocationInSequence:VehicleLocation){
+
+    var tmpExmplorer:Option[IntSequenceExplorer] = None
+    for((vehicle,sortedZonesToUpdateRelativeToVehicleStartPosition) <- vehiclesToZonesToUpdate.content){
+      tmpExmplorer = updateVehicleContent(s,
+        sortedZonesToUpdateRelativeToVehicleStartPosition,
+        vehicleLocationInSequence.startPosOfVehicle(vehicle),
+        vehicle,
+        tmpExmplorer)
+
+      tmpExmplorer match{
+        case Some(e) if(e.position+1 == s.size || (e.position + 1 == vehicleLocationInSequence.startPosOfVehicle(vehicle+1))) =>
+          setVehiclecontentAtEnd(vehicle,getVehicleContentAtNode(e.value))
+        case _ => ;
+      }
+    }
+  }
 
   /**
-   * Computes the capacity of nodes concerned by a SeqUpdate
-   * @param s the sequence after the SeqUpdate
-   * @param lst the list containing positions where calculations must be performed
+   * performs the update of vehicle content on the mentioned vehicle
+   * beware, this does not update the contentAtVehicleEnd; you must do it somewhere else.
+   * @param s the equence
+   * @param sortedZonesToUpdateRelativeToVehicleStartPosition a sorted lsit of non-overlapping intervals wit hthe relative positions to update
+   * @param startPositionOfVehicle the start position o he vehicle to update
+   * @param vehicle the vehicle to update
+   * @param explorerToLatestUpdatedPosition an explorer to the latest position that was updated
+   * @return the last position that was updated
    */
-  def updateVehicleContent(s:IntSequence,
-                           sortedZonesToUpdateRelativeToVehicleStartPosition: List[(Int, Int)],
-                           startPositionOfVehicle:Int,
-                           vehicle:Int,
-                           explorerToLatestUpdatedPosition:Option[IntSequenceExplorer] = None) {
+  private def updateVehicleContent(s:IntSequence,
+                                   sortedZonesToUpdateRelativeToVehicleStartPosition: List[(Int, Int)],
+                                   startPositionOfVehicle:Int,
+                                   vehicle:Int,
+                                   explorerToLatestUpdatedPosition:Option[IntSequenceExplorer] = None):Option[IntSequenceExplorer] = {
 
     sortedZonesToUpdateRelativeToVehicleStartPosition match {
-      case Nil => ;
+      case Nil => explorerToLatestUpdatedPosition
       case (startCompulsoryRelative, endCompulsoryRelative) :: tail =>
         val startCompulsoryAbsolute = startCompulsoryRelative + startPositionOfVehicle
         val endCompulsoryAbsolute = endCompulsoryRelative + startPositionOfVehicle
@@ -389,29 +285,81 @@ abstract class AbstractVehicleCapacity(routes:ChangingSeqValue, n:Int, v:Int, in
   /**
    *Computes content of vehicle and their starting position from scratch
    * @param s the sequence
-   * @return (contentAtnode,VehicleLocation)
+   * @return (VehicleLocation)
    */
-  def computeContentAndVehicleStartPositionsFromScratch(s:IntSequence):(Array[Int],VehicleLocation) = {
-    var current = s.explorerAtPosition(0).get
-    var currentCar = current.value
-    var tmpVehicleLocation : Array[Int]=Array.tabulate(v)(((car:Int)=> 0))
-    var tmpCapacity : Array[Int]=Array.tabulate(n)(((node:Int)=> initInt))
-    tmpVehicleLocation(currentCar) = current.position
-    var valueOfCurrentNode =  contentAtStartingNodeOfVehicle(current.value)
-    tmpCapacity(current.value)= valueOfCurrentNode
-    while(!current.next.isEmpty){
-      val previous = current
-      val valueOfPreviousNode = valueOfCurrentNode
-      current = current.next.get
-      if(current.value < v){
-        currentCar = current.value
-        tmpVehicleLocation(currentCar) = current.position
-        valueOfCurrentNode = contentAtStartingNodeOfVehicle(current.value)
-      } else valueOfCurrentNode =  op(previous.value,current.value,valueOfPreviousNode)
-      tmpCapacity(current.value)= valueOfCurrentNode
+  def computeAndAffectContentAndVehicleStartPositionsFromScratch(s:IntSequence):(ConcreteVehicleLocation) = {
+    val vehicleLocation = Array.fill(v)(0)
+
+    var previousPosition = s.explorerAtPosition(0).get
+    var currentVehicle = 0
+    var previousContent = getContentAtVehicleStart(0)
+    setVehicleContentAtNode2(0, previousContent , 0)
+
+    while(true) {
+      previousPosition.next match {
+        case None => //we'v reached the end of the sequence
+          setVehicleContentAtEnd(previousContent, currentVehicle)
+          return VehicleLocation(vehicleLocation)
+        case Some(currentPosition) =>
+          val currentNode = currentPosition.value
+          if (currentNode < v) {
+            //we'v reached a new vehicle
+            setVehicleContentAtEnd(previousContent, currentVehicle)
+            vehicleLocation(currentNode) = currentPosition.position
+            previousContent = getContentAtVehicleStart(currentNode)
+            setVehicleContentAtNode2(currentNode, previousContent, currentVehicle)
+            previousPosition = currentPosition
+            currentVehicle = currentNode
+          } else {
+            //carry on the same vehicle
+            //(startingNode,destinationNode,capacityAtStartingNode)=> capacityAtDestinationNode
+            previousContent = op(previousPosition.value, previousContent, currentNode)
+            setVehicleContentAtNode2(currentNode, previousContent, currentVehicle)
+            previousPosition = currentPosition
+          }
+      }
     }
-    (tmpCapacity,VehicleLocation(tmpVehicleLocation))
+    throw new Error("should not happen")
   }
+
+  /**
+   *Computes content of vehicle and their starting position from scratch
+   * @param s the sequence
+   * @return (VehicleLocation)
+   */
+  def computeAndReturnAndVehicleStartPositionsFromScratch(s:IntSequence):(Array[Int],ConcreteVehicleLocation) = {
+    val vehicleLocation = Array.fill(v)(0)
+    val vehicleContent = Array.fill(n)(defaultVehicleContentForUnroutedNodes)
+    var previousPosition = s.explorerAtPosition(0).get
+    var currentVehicle = 0
+    var previousContent = getContentAtVehicleStart(0)
+    setVehicleContentAtNode2(0, previousContent , 0)
+
+    while(true) {
+      previousPosition.next match {
+        case None => //we'v reached the end of the sequence
+          return (vehicleContent,VehicleLocation(vehicleLocation))
+        case Some(currentPosition) =>
+          val currentNode = currentPosition.value
+          if (currentNode < v) {
+            //we'v reached a new vehicle
+            vehicleLocation(currentNode) = currentPosition.position
+            previousContent = getContentAtVehicleStart(currentNode)
+            vehicleContent(currentNode) = previousContent
+            previousPosition = currentPosition
+            currentVehicle = currentNode
+          } else {
+            //carry on the same vehicle
+            //(startingNode,destinationNode,capacityAtStartingNode)=> capacityAtDestinationNode
+            previousContent = op(previousPosition.value, previousContent, currentNode)
+            vehicleContent(currentNode) = previousContent
+            previousPosition = currentPosition
+          }
+      }
+    }
+    throw new Error("should not happen")
+  }
+
 
   /**
    * Update the stack of vehicles location
@@ -419,7 +367,7 @@ abstract class AbstractVehicleCapacity(routes:ChangingSeqValue, n:Int, v:Int, in
    */
   def pushOnTopOfStack(oldToNewfunction:(Int)=> Option[Int]) :Unit
 
-  def contentAtStartingNodeOfVehicle(vehicle:Int): Int = initValue(vehicle)
+
 
   override def checkInternals(c: Checker): Unit = {
     val (capaToChekc, stackToChekc) = computeContentAndVehicleStartPositionsFromScratch(routes.newValue)

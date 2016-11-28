@@ -21,6 +21,7 @@ package oscar.cbls.invariants.lib.routing.convention
  */
 object VehicleLocation{
   def apply(v:Int,nodeToPosition:Int=>Int): ConcreteVehicleLocation = new ConcreteVehicleLocation(Array.tabulate(v)(nodeToPosition))
+  def apply(startPositionOfVehicleThatIWillNeverModify:Array[Int]) = new ConcreteVehicleLocation(startPositionOfVehicleThatIWillNeverModify)
 }
 
 /**
