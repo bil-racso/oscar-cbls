@@ -687,7 +687,7 @@ class InvariantTests extends FunSuite with Checkers {
 
     def start() : Array[Int]= { Array.tabulate(v)((car:Int)=> scala.util.Random.nextInt(limite))}
     val  s = start()
-    val inv = GenericCumulativeIntegerDimensionOnVehicle(route,n,v,op,s)
+    val inv = ForwardCumulativeIntegerDimensionOnVehicle(route,n,v,op,s)
 
     val go = System.nanoTime()
     bench.run()

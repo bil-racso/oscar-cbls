@@ -24,6 +24,7 @@ import oscar.cbls.invariants.core.computation._
 import oscar.cbls.invariants.core.propagation.{Checker, ErrorChecker}
 import oscar.cbls.invariants.lib.routing.convention.{VehicleLocation, RoutingConventionMethods}
 
+/*
 /**
   * Created by  Jannou Brohée on 17/10/16.
   */
@@ -289,3 +290,4 @@ class GenericCumulativeConstraint(routes:ChangingSeqValue, n:Int, v:Int, op :(In
   }
 }
 
+*/
