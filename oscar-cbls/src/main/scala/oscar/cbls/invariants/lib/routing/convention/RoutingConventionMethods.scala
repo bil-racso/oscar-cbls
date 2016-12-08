@@ -17,7 +17,7 @@ package oscar.cbls.invariants.lib.routing.convention
 
 import oscar.cbls.algo.rb.RedBlackTreeMap
 import oscar.cbls.algo.seq.functional.{IntSequence, Token}
-@deprecated("use the VehicleLocation method isntead","we use stacked chackpoints")
+@deprecated("use the VehicleLocation method instead","we use stacked checkpoints")
 object RoutingConventionMethods {
 
   def cachedVehicleReachingPosition(checkpoint:IntSequence,v:Int):((IntSequence,Int) => Int) = {
@@ -108,7 +108,6 @@ object RoutingConventionMethods {
 }
 
 
-@deprecated("use the VehicleLocation method isntead","we use stacked chackpoints")
 class CachedPositionOf(maxValue:Int){
 
   private var tokenOfCurrentCheckpoint:Token = null

@@ -344,12 +344,16 @@ class ConcreteIntSequence(private[seq] val internalPositionToValue:RedBlackTreeM
       //inserting at end of the sequence
       externalToInternalPosition.updateBefore(
         (size, size, LinearTransform(oldExternalPosRelatedToFreeInternalPos - pos, false)))
-      //TODO: this migfht be always identity, actually, so useless!
+      //TODO: this might be always identity, actually, so useless!
     } else {
       //inserting somewhere within the sequence, need to shift upper part
-      externalToInternalPosition.updateBefore(
+
+      val tmp = externalToInternalPosition.swapAdjacentZonesShiftFirst(pos,size-1,size,false)
+
+      assert(tmp.forward equals externalToInternalPosition.updateBefore(
         (pos + 1, size, LinearTransform(-1, false)),
-        (pos, pos, LinearTransform(oldExternalPosRelatedToFreeInternalPos - pos, false)))
+        (pos, pos, LinearTransform(oldExternalPosRelatedToFreeInternalPos - pos, false))).forward)
+      tmp
     }
 
     new ConcreteIntSequence(
@@ -393,12 +397,14 @@ class ConcreteIntSequence(private[seq] val internalPositionToValue:RedBlackTreeM
     //now, update the fct knowing the move and remove
     val externalPositionAssociatedToLargestInternalPosition = externalToInternalPosition.backward(largestInternalPosition)
 
+    //TODO: this is overly complex and probably very slow
     val newExternalToInternalPosition = externalToInternalPosition.updateBefore(
       (externalPositionAssociatedToLargestInternalPosition,
         externalPositionAssociatedToLargestInternalPosition,
         LinearTransform(pos - externalPositionAssociatedToLargestInternalPosition, false)),
       (pos, pos, LinearTransform(externalPositionAssociatedToLargestInternalPosition - pos, false))).updateBefore(
-      (pos, size - 2, LinearTransform(1, false)), (size - 1, size - 1, LinearTransform(pos - size + 1, false)))
+      (pos, size - 2, LinearTransform(1, false)),
+      (size - 1, size - 1, LinearTransform(pos - size + 1, false)))
 
     new ConcreteIntSequence(
       newInternalPositionToValue,
@@ -440,14 +446,31 @@ class ConcreteIntSequence(private[seq] val internalPositionToValue:RedBlackTreeM
     } else {
       if (moveAfterPosition > startPositionIncluded) {
         //move upwards
-        val newExternalToInternalPosition = externalToInternalPosition.updateBefore(
+        val newExternalToInternalPosition = if(!flip) {
+          externalToInternalPosition.swapAdjacentZonesShiftBest(
+            startPositionIncluded,
+            endPositionIncluded,
+            moveAfterPosition)
+
+        }else{
+          externalToInternalPosition.updateBefore(
+            (startPositionIncluded,
+              moveAfterPosition + startPositionIncluded - endPositionIncluded - 1,
+              LinearTransform(endPositionIncluded + 1 - startPositionIncluded, false)),
+            (startPositionIncluded + moveAfterPosition - endPositionIncluded,
+              moveAfterPosition,
+              LinearTransform(if (flip) startPositionIncluded + moveAfterPosition
+              else endPositionIncluded - moveAfterPosition, flip)))
+        }
+
+        assert(newExternalToInternalPosition.forward equals externalToInternalPosition.updateBefore(
           (startPositionIncluded,
             moveAfterPosition + startPositionIncluded - endPositionIncluded - 1,
             LinearTransform(endPositionIncluded + 1 - startPositionIncluded, false)),
           (startPositionIncluded + moveAfterPosition - endPositionIncluded,
             moveAfterPosition,
             LinearTransform(if (flip) startPositionIncluded + moveAfterPosition
-            else endPositionIncluded - moveAfterPosition, flip)))
+            else endPositionIncluded - moveAfterPosition, flip))).forward)
 
         new ConcreteIntSequence(
           internalPositionToValue,
@@ -457,13 +480,26 @@ class ConcreteIntSequence(private[seq] val internalPositionToValue:RedBlackTreeM
 
       } else {
         //move downwards
-        val newExternalToInternalPosition = externalToInternalPosition.updateBefore(
+        val newExternalToInternalPosition = if(!flip) {
+          externalToInternalPosition.swapAdjacentZonesShiftBest(
+            moveAfterPosition+1,
+            startPositionIncluded-1,
+            endPositionIncluded)
+        }else{
+          externalToInternalPosition.swapAdjacentZonesShiftFirst(
+            moveAfterPosition+1,
+            startPositionIncluded-1,
+            endPositionIncluded,true)
+        }
+
+        assert(externalToInternalPosition.updateBefore(
           (moveAfterPosition + 1,
             moveAfterPosition + endPositionIncluded - startPositionIncluded + 1,
             LinearTransform(if (flip) endPositionIncluded + moveAfterPosition + 1 else startPositionIncluded - moveAfterPosition - 1, flip)),
           (moveAfterPosition + endPositionIncluded - startPositionIncluded + 2,
             endPositionIncluded,
-            LinearTransform(startPositionIncluded - endPositionIncluded - 1, false)))
+            LinearTransform(startPositionIncluded - endPositionIncluded - 1, false))).forward equals newExternalToInternalPosition.forward)
+
 
         new ConcreteIntSequence(
           internalPositionToValue,
@@ -695,13 +731,19 @@ object MovedIntSequence{
     }else{
       if (moveAfterPosition > startPositionIncluded) {
         //move upwards
-        //TODO: this is WAY TOO SLOW; should be like O(1) because used very intensively
-        PiecewiseLinearBijectionNaive.identity.updateBefore(
-          (startPositionIncluded, moveAfterPosition + startPositionIncluded - endPositionIncluded - 1,
-            LinearTransform(endPositionIncluded + 1 - startPositionIncluded, false)),
-          (startPositionIncluded + moveAfterPosition - endPositionIncluded,moveAfterPosition,
-            LinearTransform(if (flip) startPositionIncluded + moveAfterPosition
-            else endPositionIncluded - moveAfterPosition, flip)))
+        if (moveAfterPosition + 1 < moveAfterPosition + startPositionIncluded - endPositionIncluded){
+          PiecewiseLinearBijectionNaive(new PiecewiseLinearFun(RedBlackTreeMap.makeFromSortedArray(Array(
+            (startPositionIncluded, new Pivot(startPositionIncluded, LinearTransform(endPositionIncluded + 1 - startPositionIncluded, false))),
+            (moveAfterPosition + 1, new Pivot(moveAfterPosition + 1, LinearTransform.identity)),
+            (moveAfterPosition + startPositionIncluded - endPositionIncluded, new Pivot(moveAfterPosition + startPositionIncluded - endPositionIncluded,
+              LinearTransform(if (flip) startPositionIncluded + moveAfterPosition else endPositionIncluded - moveAfterPosition, flip)))))))
+        }else {
+          PiecewiseLinearBijectionNaive(new PiecewiseLinearFun(RedBlackTreeMap.makeFromSortedArray(Array(
+            (startPositionIncluded, new Pivot(startPositionIncluded, LinearTransform(endPositionIncluded + 1 - startPositionIncluded, false))),
+            (moveAfterPosition + startPositionIncluded - endPositionIncluded, new Pivot(moveAfterPosition + startPositionIncluded - endPositionIncluded,
+              LinearTransform(if (flip) startPositionIncluded + moveAfterPosition else endPositionIncluded - moveAfterPosition, flip))),
+            (moveAfterPosition + 1, new Pivot(moveAfterPosition + 1, LinearTransform.identity))))))
+        }
       } else {
         //move downwards
         //TODO: this is WAY TOO SLOW; should be like O(1) because used very intensively
@@ -713,54 +755,6 @@ object MovedIntSequence{
       }
     }
   }
-  /*
-
-    //this is another impleme of the above method, supposedly faster because using arrays and not requiring log(n) inserts into the redBlack.
-    //This is not as efficient as possible because there is another sort performed anyway since it is a bijection.
-    def bijectionForMoveArray(startPositionIncluded:Int,
-                              endPositionIncluded:Int,
-                              moveAfterPosition:Int,
-                              flip:Boolean):PiecewiseLinearBijectionNaive= {
-      if (moveAfterPosition + 1 == startPositionIncluded) {
-        //not moving
-        if (flip) {
-          //just flipping
-          if (startPositionIncluded == 0) {
-            PiecewiseLinearBijectionNaive(new PiecewiseLinearFun(RedBlackTreeMap.makeFromSortedArray(Array(
-              (0, new Pivot(0, new LinearTransform(endPositionIncluded, true))),
-              (endPositionIncluded + 1, new Pivot(endPositionIncluded + 1, LinearTransform.identity))))))
-          } else {
-            PiecewiseLinearBijectionNaive(new PiecewiseLinearFun(RedBlackTreeMap.makeFromSortedArray(Array(
-              (0, new Pivot(0, LinearTransform.identity)),
-              (startPositionIncluded, new Pivot(startPositionIncluded, new LinearTransform(endPositionIncluded + startPositionIncluded, true))),
-              (endPositionIncluded + 1, new Pivot(endPositionIncluded + 1, LinearTransform.identity))))))
-          }
-        } else {
-          PiecewiseLinearBijectionNaive.identity
-        }
-      } else {
-
-        if (moveAfterPosition > startPositionIncluded) {
-          //so we also know that endPositionIncluded < moveAfter
-          //orer is: startpositionIncluded endPositionIncluded moveAfter
-          //move upwards
-          PiecewiseLinearBijectionNaive(new PiecewiseLinearFun(RedBlackTreeMap.makeFromSortedArray(Array(
-            (0,new Pivot(0,LinearTransform.identity)), //TODO: pas sûr su'ils soient ordonnés correctement
-            (startPositionIncluded,new Pivot(startPositionIncluded, LinearTransform(endPositionIncluded + 1 - startPositionIncluded, false))),
-            (moveAfterPosition + 1,new Pivot(moveAfterPosition + 1,LinearTransform.identity)),
-            (moveAfterPosition + startPositionIncluded - endPositionIncluded,new Pivot(moveAfterPosition + startPositionIncluded - endPositionIncluded,
-              LinearTransform(if (flip) startPositionIncluded + moveAfterPosition else endPositionIncluded - moveAfterPosition, flip)))))))
-        } else {
-          //move downwards
-          PiecewiseLinearBijectionNaive.identity.updateBefore(
-            (moveAfterPosition + 1, moveAfterPosition + endPositionIncluded - startPositionIncluded + 1,
-              LinearTransform(if (flip) endPositionIncluded + moveAfterPosition + 1 else startPositionIncluded - moveAfterPosition - 1, flip)),
-            (moveAfterPosition + endPositionIncluded - startPositionIncluded + 2, endPositionIncluded,
-              LinearTransform(startPositionIncluded - endPositionIncluded - 1, false)))
-        }
-      }
-    }
-  }*/
 }
 
 class MovedIntSequence(val seq:IntSequence,

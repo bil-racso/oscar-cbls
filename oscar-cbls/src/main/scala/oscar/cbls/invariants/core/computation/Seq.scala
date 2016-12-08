@@ -1711,6 +1711,4 @@ class SeqCheckpointedValueStack[@specialized T]{
     popCheckpointStackToLevel(checkpointLevel,true)
     defineTopCheckpoint(checkpoint:IntSequence,savedValue:T)
   }
-
-
 }

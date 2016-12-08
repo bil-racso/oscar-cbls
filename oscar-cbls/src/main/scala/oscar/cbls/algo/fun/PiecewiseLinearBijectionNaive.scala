@@ -41,18 +41,18 @@ object PiecewiseLinearBijectionNaive{
   def apply(forward:PiecewiseLinearFun) = new PiecewiseLinearBijectionNaive(forward)
 }
 
-class PiecewiseLinearBijectionNaive(val forward:PiecewiseLinearFun, givenBackward:PiecewiseLinearFun = null){
-  lazy val backward:PiecewiseLinearFun = {
-    if(givenBackward != null) givenBackward
+class PiecewiseLinearBijectionNaive(val forward:PiecewiseLinearFun, givenBackward:PiecewiseLinearFun = null) {
+  lazy val backward : PiecewiseLinearFun = {
+    if (givenBackward != null) givenBackward
     else PiecewiseLinearFun.createFromPivots(PiecewiseLinearBijectionNaive.computeInvertedPivots(null, forward.pivots, null))
   }
 
-  def invert:PiecewiseLinearBijectionNaive = new PiecewiseLinearBijectionNaive(backward,forward)
+  def invert : PiecewiseLinearBijectionNaive = new PiecewiseLinearBijectionNaive(backward, forward)
 
-  def checkBijection(){
+  def checkBijection() {
     var pivots = backward.pivots
-    while(true){
-      pivots match{
+    while (true) {
+      pivots match {
         case p1 :: p2 :: tail =>
           require(p1.asInstanceOf[PivotWithTo].toValue + 1 == p2.fromValue, "not a bijection; p1:" + p1 + " p2:" + p2)
           pivots = p2 :: tail
@@ -62,13 +62,21 @@ class PiecewiseLinearBijectionNaive(val forward:PiecewiseLinearFun, givenBackwar
   }
 
   override def toString : String = {
-    "Bijection.forward: " + forward + "\n"+
+    "Bijection.forward: " + forward + "\n" +
       "Bijection.backward:" + backward + "\n"
   }
 
-  def updateBefore(updates:(Int,Int,LinearTransform)*):PiecewiseLinearBijectionNaive ={
+  def updateBefore(updates : (Int, Int, LinearTransform)*) : PiecewiseLinearBijectionNaive = {
     //println("update before:" + updates)
-    new PiecewiseLinearBijectionNaive(forward.updateForCompositionBefore(updates:_*))
+    new PiecewiseLinearBijectionNaive(forward.updateForCompositionBefore(updates : _*))
+  }
+
+  def swapAdjacentZonesShiftFirst(startZone1Included : Int, endZone1Included : Int, endZone2Included : Int, flipZone2 : Boolean) : PiecewiseLinearBijectionNaive = {
+    new PiecewiseLinearBijectionNaive(forward.swapAdjacentZonesShiftFirst(startZone1Included, endZone1Included, endZone2Included, flipZone2))
+  }
+
+  def swapAdjacentZonesShiftBest(startZone1Included : Int, endZone1Included : Int, endZone2Included : Int): PiecewiseLinearBijectionNaive ={
+    new PiecewiseLinearBijectionNaive(forward.swapAdjacentZonesShiftBest(startZone1Included, endZone1Included, endZone2Included))
   }
 
   def apply(value:Int) = forward(value)
