@@ -117,24 +117,24 @@ class PiecewiseLinearFun(private[fun] val transformation: RedBlackTreeMap[Pivot]
     val widthZone1 = endZone1Included - startZone1Included + 1
     val widthZone2 = endZone2Included - endZone1Included
     //TODO: the choice is based on the number of positions, it should be based on the number of segments instead (but this is probably the same very often)
-    if(true ||(widthZone1 > widthZone2)){
+    if(widthZone1 > widthZone2){
       swapAdjacentZonesShiftFirst(startZone1Included, endZone1Included, endZone2Included, false)
     }else{
-      swapAdjacentZonesShiftSecond(startZone1Included, endZone1Included, endZone2Included, false)
+      val tmp = swapAdjacentZonesShiftSecond(startZone1Included, endZone1Included, endZone2Included, false)
+      assert(tmp equals swapAdjacentZonesShiftFirst(startZone1Included, endZone1Included, endZone2Included, false))
+      tmp
     }
   }
 
   def swapAdjacentZonesShiftFirst(startZone1Included:Int, endZone1Included:Int, endZone2Included:Int, flipZone2:Boolean):PiecewiseLinearFun = {
     val widthZone2 = endZone2Included - endZone1Included
-    val startZone1Dest = startZone1Included + widthZone2
-    val endZone1Dest = endZone1Included + widthZone2
     val widthZone1 = endZone1Included - startZone1Included + 1
 
     //remove pivot for destination of zone1
-    val transformWithTargetZone1Cleaned = removePivotsBetween(endZone1Included+1, endZone2Included,addRedundantPivotAt(endZone2Included+1,transformation))
+    val transformWithTargetZone2Cleaned = removePivotsBetween(endZone1Included+1, endZone2Included,transformation)
 
     //a pivot must be added after the end of update1 if 2 is the first zone
-    val transformReadyForShiftOfZone1 = addRedundantPivotAt(startZone1Included,transformWithTargetZone1Cleaned)
+    val transformReadyForShiftOfZone1 = addRedundantPivotAt(startZone1Included,transformWithTargetZone2Cleaned)
 
     val f2 = LinearTransform(-widthZone2,false)
     val f3 = LinearTransform(widthZone2,false)
@@ -147,13 +147,48 @@ class PiecewiseLinearFun(private[fun] val transformation: RedBlackTreeMap[Pivot]
         (p:Pivot) => new Pivot(p.fromValue+widthZone2,if(p.f.minus) f3(p.f) else f2(p.f)))
 
     //now, we apply the second transformation that will add pivots at the zone occupied by zone1 (which is now cleaned)
-    val transformationWithUpdate2Done = myUpdateForCompositionBefore(startZone1Included, startZone1Included + widthZone2 - 1, LinearTransform(if(flipZone2) endZone2Included + startZone1Included else widthZone1,flipZone2), transformWithZone1Shifted)
+    val transformationWithUpdate2Done = myUpdateForCompositionBefore(startZone1Included, startZone1Included + widthZone2 - 1,
+      LinearTransform(if(flipZone2) endZone2Included + startZone1Included else widthZone1,flipZone2), transformWithZone1Shifted)
 
     //finally, we can clean the potentially redundant pivots
-    new PiecewiseLinearFun(deleteUnnecessaryPivotStartingJustAfter(startZone1Included-1,deleteUnnecessaryPivotStartingJustAfter(startZone1Included + widthZone2 - 1,deleteUnnecessaryPivotStartingJustAfter(endZone2Included,transformationWithUpdate2Done))))
+    new PiecewiseLinearFun(
+      deleteUnnecessaryPivotStartingJustAfter(startZone1Included-1,
+      deleteUnnecessaryPivotStartingJustAfter(startZone1Included + widthZone2 - 1,
+        deleteUnnecessaryPivotStartingJustAfter(endZone2Included,transformationWithUpdate2Done))))
   }
 
-  def swapAdjacentZonesShiftSecond(startZone1Included:Int, endZone1Included:Int, endZone2Included:Int, flipZone1:Boolean):PiecewiseLinearFun = ???
+  def swapAdjacentZonesShiftSecond(startZone1Included:Int, endZone1Included:Int, endZone2Included:Int, flipZone1:Boolean):PiecewiseLinearFun = {
+
+    val widthZone2 = endZone2Included - endZone1Included
+    val widthZone1 = endZone1Included - startZone1Included + 1
+
+    //remove pivot for destination of zone1
+    val transformWithTargetZone1Cleaned = removePivotsBetween(startZone1Included, endZone1Included,transformation)
+
+    //a pivot must be added after the end of update1 if 2 is the first zone
+    val transformReadyForShiftOfZone2 = addRedundantPivotAt(endZone2Included+1,transformWithTargetZone1Cleaned)
+
+    val f2 = LinearTransform(widthZone1,false)
+    val f3 = LinearTransform(-widthZone1,false)
+
+    val transformWithZone2Shifted =
+      transformReadyForShiftOfZone2.update(
+        endZone1Included +1,
+        endZone2Included,
+        -widthZone1,
+        (p:Pivot) => new Pivot(p.fromValue-widthZone1,if(p.f.minus) f3(p.f) else f2(p.f)))
+
+    //now, we apply the second transformation that will add pivots at the zone occupied by zone2 (which is now cleaned)
+    val transformationWithUpdate1Done = myUpdateForCompositionBefore(startZone1Included+widthZone2, endZone2Included,
+      LinearTransform(if(flipZone1) endZone1Included + startZone1Included + widthZone2 else -widthZone2,flipZone1), transformWithZone2Shifted)
+
+    //finally, we can clean the potentially redundant pivots
+    new PiecewiseLinearFun(
+      deleteUnnecessaryPivotStartingJustAfter(startZone1Included-1,
+        deleteUnnecessaryPivotStartingJustAfter(startZone1Included + widthZone2 - 1,
+          deleteUnnecessaryPivotStartingJustAfter(endZone2Included,transformationWithUpdate1Done))))
+
+  }
 
   def updateForCompositionBefore(fromIncluded:Int, toIncluded: Int, additionalFAppliedBefore: LinearTransform):PiecewiseLinearFun = {
     //step1: remove all pivots between fromIncluded and toIncluded

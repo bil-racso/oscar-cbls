@@ -75,6 +75,10 @@ class PiecewiseLinearBijectionNaive(val forward:PiecewiseLinearFun, givenBackwar
     new PiecewiseLinearBijectionNaive(forward.swapAdjacentZonesShiftFirst(startZone1Included, endZone1Included, endZone2Included, flipZone2))
   }
 
+  def swapAdjacentZonesShiftSecond(startZone1Included:Int, endZone1Included:Int, endZone2Included:Int, flipZone1:Boolean):PiecewiseLinearBijectionNaive = {
+    new PiecewiseLinearBijectionNaive(forward.swapAdjacentZonesShiftSecond(startZone1Included, endZone1Included, endZone2Included, flipZone1))
+  }
+
   def swapAdjacentZonesShiftBest(startZone1Included : Int, endZone1Included : Int, endZone2Included : Int): PiecewiseLinearBijectionNaive ={
     new PiecewiseLinearBijectionNaive(forward.swapAdjacentZonesShiftBest(startZone1Included, endZone1Included, endZone2Included))
   }

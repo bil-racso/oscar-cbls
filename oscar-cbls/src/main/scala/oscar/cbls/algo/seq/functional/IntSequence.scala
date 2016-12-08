@@ -453,14 +453,23 @@ class ConcreteIntSequence(private[seq] val internalPositionToValue:RedBlackTreeM
             moveAfterPosition)
 
         }else{
-          externalToInternalPosition.updateBefore(
+
+          val tmp = externalToInternalPosition.swapAdjacentZonesShiftSecond(
+            startPositionIncluded,
+            endPositionIncluded,
+            moveAfterPosition:Int,
+            true)
+
+          assert(tmp.forward equals externalToInternalPosition.updateBefore(
             (startPositionIncluded,
               moveAfterPosition + startPositionIncluded - endPositionIncluded - 1,
               LinearTransform(endPositionIncluded + 1 - startPositionIncluded, false)),
             (startPositionIncluded + moveAfterPosition - endPositionIncluded,
               moveAfterPosition,
               LinearTransform(if (flip) startPositionIncluded + moveAfterPosition
-              else endPositionIncluded - moveAfterPosition, flip)))
+              else endPositionIncluded - moveAfterPosition, flip))).forward)
+
+          tmp
         }
 
         assert(newExternalToInternalPosition.forward equals externalToInternalPosition.updateBefore(

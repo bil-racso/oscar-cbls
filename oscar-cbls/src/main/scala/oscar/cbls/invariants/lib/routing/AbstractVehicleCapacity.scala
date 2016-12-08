@@ -117,10 +117,27 @@ abstract class AbstractVehicleCapacity(n:Int,
     zoneToUpdate.insert(vehicleOfRemove, addRemoveIntoZonesToUpdate(zoneToUpdate.getOrElse(vehicleOfRemove, List.empty[(Int, Int)])))
   }
 
+
+  // @Note => O(listToInsert+toInsert)
+  private def insertInList(listToInsert: List[(Int, Int)], toInsert: List[(Int, Int)]): List[(Int, Int)] = {
+    listToInsert match {
+      case Nil => toInsert
+      case (start, end) :: tail =>
+        toInsert match {
+          case Nil => listToInsert
+          case (s, e) :: tail =>
+            if (s > end) smartPrepend(start, end, insertInList(listToInsert.drop(1), toInsert))
+            else if (s == start && end == e) insertInList(listToInsert, toInsert.drop(1))
+            else smartPrepend(s, e, insertInList(listToInsert, toInsert.drop(1)))
+        }
+    }
+  }
+
   def updateZoneToUpdateAfterMove(zonesToUpdate: RedBlackTreeMap[List[(Int, Int)]],
                                   m:SeqUpdateMove,
                                   sequenceBeforeMove:IntSequence,
                                   vehicleLocationBeforeMove:VehicleLocation):RedBlackTreeMap[List[(Int, Int)]] = ???
+
 
   def insertIntoToUpdateZone(fromPositionRelativeIncluded:Int,toPositionRelativeIncluded:Int,listOfZones:List[(Int,Int)]):List[(Int,Int)] = {
     listOfZones match{
