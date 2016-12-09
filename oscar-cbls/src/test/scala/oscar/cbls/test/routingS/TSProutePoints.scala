@@ -54,22 +54,26 @@ object TSProutePoints extends App {
   new TSPRoutePointsS(1000,100,4,verbose)
   System.gc()
 
+  val nbTrials = 10
+
   println()
-  println("n\tv\tpercent\ttime\ttime\ttime")
+  print("n\tv\tpercent")
+  for (t <- 1 to nbTrials) {
+    print("\ttime")
+  }
+  println
+
 
   for(n <- 1000 to 11000 by 2000){
     for(v <- List(100)){
       for (maxPivotPerValuePercent <- List(0,1,2,3,4,5,20)) {
         print(n + "\t" + v + "\t" + maxPivotPerValuePercent + "\t")
-        new TSPRoutePointsS(n, v, maxPivotPerValuePercent, verbose)
-        print("\t")
-        System.gc()
-        new TSPRoutePointsS(n, v, maxPivotPerValuePercent, verbose)
-        print("\t")
-        System.gc()
-        new TSPRoutePointsS(n, v, maxPivotPerValuePercent, verbose)
-        print("\n")
-        System.gc()
+        for (t <- 1 to nbTrials){
+          new TSPRoutePointsS(n, v, maxPivotPerValuePercent, verbose)
+          print("\t")
+          System.gc()
+        }
+        println
       }
     }
   }

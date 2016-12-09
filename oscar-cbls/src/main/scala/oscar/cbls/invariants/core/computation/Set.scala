@@ -177,7 +177,6 @@ abstract class ChangingSetValue(initialValue:SortedSet[Int], initialDomain:Domai
         }
       }
       //puis, on fait une affectation en plus, pour garbage collecter l'ancienne structure de donnees.
-      assert(OldValue.intersect(m_NewValue).size == m_NewValue.size, "mismatch: OLD" + OldValue + " New:" + m_NewValue)
       OldValue=m_NewValue
     }
     this.addedValues = null

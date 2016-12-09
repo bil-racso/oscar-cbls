@@ -167,7 +167,9 @@ object SeqUpdateMove{
 class SeqUpdateMove(val fromIncluded:Int,val toIncluded:Int,val after:Int, val flip:Boolean, prev:SeqUpdate, seq:IntSequence)
   extends SeqUpdateWithPrev(prev,seq){
 
-  assert(seq equals prev.newValue.moveAfter(fromIncluded,toIncluded,after,flip,fast=true), "given seq=" + seq + " should be " +  prev.newValue.moveAfter(fromIncluded,toIncluded,after,flip,fast=true))
+  assert(seq equals prev.newValue.moveAfter(fromIncluded,toIncluded,after,flip,fast=true),
+    "given seq=" + seq + " should be " +  prev.newValue.moveAfter(fromIncluded,toIncluded,after,flip,fast=true))
+
   def isSimpleFlip:Boolean = after+1 == fromIncluded && flip
   def isNop = after+1 == fromIncluded && !flip
   def fromValue:Int = prev.newValue.valueAtPosition(fromIncluded).head
@@ -180,8 +182,16 @@ class SeqUpdateMove(val fromIncluded:Int,val toIncluded:Int,val after:Int, val f
   def movedValuesQList = prev.newValue.valuesBetweenPositionsQList(fromIncluded,toIncluded)
 
   override protected[computation] def reverse(target:IntSequence, newPrev:SeqUpdate) : SeqUpdate = {
+
     val (intFromIncluded,intToIncluded) = if(flip) (toIncluded,fromIncluded) else (fromIncluded,toIncluded)
-    prev.reverse(target,new SeqUpdateMove(oldPosToNewPos(intFromIncluded).head, oldPosToNewPos(intToIncluded).head, oldPosToNewPos(fromIncluded-1).head, flip, newPrev,prev.newValue))
+
+    prev.reverse(target,new SeqUpdateMove(
+      oldPosToNewPosNoOopt(intFromIncluded),
+      oldPosToNewPosNoOopt(intToIncluded),
+      oldPosToNewPosNoOopt(fromIncluded-1),
+      flip,
+      newPrev,
+      prev.newValue))
   }
 
   assert({seq match{case m:MovedIntSequence => m.localBijection.checkBijection() case _ => ;};true})
@@ -200,40 +210,14 @@ class SeqUpdateMove(val fromIncluded:Int,val toIncluded:Int,val after:Int, val f
     }
   }
 
+  @inline
+  private def oldPosToNewPosNoOopt(oldPos : Int) : Int = {
+    MovedIntSequence.oldPosToNewPos(oldPos : Int, fromIncluded:Int, toIncluded:Int, after:Int, flip:Boolean)
+  }
+
+  //TODO transposer çà dans IntSequece.MovedIntSequence
   override def oldPosToNewPos(oldPos : Int) : Option[Int] = {
-    if(isNop) Some(oldPos)
-    else if(isSimpleFlip){
-      if(oldPos < fromIncluded || oldPos > toIncluded) Some(oldPos)
-      else Some(fromIncluded + toIncluded - oldPos)
-    }else if(moveUpwards){
-      //println("move upwards")
-      if(oldPos < fromIncluded || oldPos > after) Some(oldPos)
-      else if(oldPos <= toIncluded){
-        //println("in the moved segment")
-        if(flip){
-          Some(fromIncluded - oldPos + after - 1)
-        }else{
-          Some(oldPos + after - toIncluded)
-        }
-      }else{
-        //println("not in the moved segment")
-        Some(oldPos - toIncluded + fromIncluded - 1)
-      }
-    }else{
-      //println("move downwards")
-      if(oldPos <= after || oldPos > toIncluded) Some(oldPos)
-      else if(oldPos < fromIncluded){
-        //println("not in the moved segment")
-        Some(oldPos + toIncluded - fromIncluded + 1)
-      }else{
-        //println("in the moved segment")
-        if(flip){
-          Some(fromIncluded - oldPos + after - 1)
-        }else{
-          Some(oldPos + after - fromIncluded + 1)
-        }
-      }
-    }
+    Some(oldPosToNewPosNoOopt(oldPos : Int))
   }
 
   override def newPos2OldPos(newPos : Int) : Option[Int] = {

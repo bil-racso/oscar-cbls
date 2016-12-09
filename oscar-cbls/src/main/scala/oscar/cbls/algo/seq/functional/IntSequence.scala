@@ -102,7 +102,6 @@ abstract class IntSequence(protected[cbls] val token: Token = Token()) {
 
   def map(fun:Int=>Int):IntSequence = {
     val l:List[Int] = this.iterator.toList
-    println("l:" + l)
     val l2 = l.map(fun)
     IntSequence.apply(l2)
   }
@@ -170,7 +169,7 @@ abstract class IntSequence(protected[cbls] val token: Token = Token()) {
   }
 
   def explorerAtAnyOccurrence(value : Int) : Option[IntSequenceExplorer] = {
-    positionOfAnyOccurrence(value : Int) match {
+    positionOfAnyOccurrence(value) match {
       case None => None
       case Some(x) => explorerAtPosition(x)
     }
@@ -298,7 +297,7 @@ class ConcreteIntSequence(private[seq] val internalPositionToValue:RedBlackTreeM
 
       Some(new ConcreteIntSequenceExplorer(this,
         position,
-        internalPositionToValue.positionOf(internalPosition).head,
+        internalPositionToValue.positionOf(internalPosition).get,
         currentPivotPosition,
         pivotAbovePosition)()
       )
@@ -764,6 +763,45 @@ object MovedIntSequence{
       }
     }
   }
+
+  @inline
+  def oldPosToNewPos(oldPos : Int, fromIncluded:Int, toIncluded:Int, after:Int, flip:Boolean) : Int = {
+    //println("oldPosToNewPos(oldPos:"  + oldPos + " fromIncluded:" + fromIncluded + " toIncluded:" + toIncluded + " after:" + after +" flip:" + flip + ")")
+
+    if(after+1 == fromIncluded && !flip) oldPos
+    else if(after+1 == fromIncluded && flip){
+      if(oldPos < fromIncluded || oldPos > toIncluded) oldPos
+      else fromIncluded + toIncluded - oldPos
+    }else if(fromIncluded < after){
+      //println("move upwards")
+      if(oldPos < fromIncluded || oldPos > after) oldPos
+      else if(oldPos <= toIncluded){
+        //println("in the moved segment")
+        if(flip){
+          fromIncluded - oldPos + after
+        }else{
+          oldPos + after - toIncluded
+        }
+      }else{
+        //println("not in the moved segment")
+        oldPos - toIncluded + fromIncluded - 1
+      }
+    }else{
+      //println("move downwards")
+      if(oldPos <= after || oldPos > toIncluded) oldPos
+      else if(oldPos < fromIncluded){
+        //println("not in the moved segment")
+        oldPos + toIncluded - fromIncluded + 1
+      }else{
+        //println("in the moved segment")
+        if(flip){
+          after + 1 + toIncluded - oldPos
+        }else{
+          oldPos + after - fromIncluded + 1
+        }
+      }
+    }
+  }
 }
 
 class MovedIntSequence(val seq:IntSequence,
@@ -799,8 +837,14 @@ class MovedIntSequence(val seq:IntSequence,
     }
   }
 
+  def oldPosToNewPos(oldPos : Int) :Int = {
+    val tmp = MovedIntSequence.oldPosToNewPos(oldPos, startPositionIncluded, endPositionIncluded, moveAfterPosition, flip)
+    assert(tmp == localBijection.backward(oldPos), "oldPosToNewPos got" + tmp + " expected " + localBijection.backward(oldPos))
+    tmp
+  }
+
   override def positionsOfValue(value : Int) : SortedSet[Int] = {
-    seq.positionsOfValue(value).map(localBijection.backward(_))
+    seq.positionsOfValue(value).map(oldPosToNewPos)
   }
 
   override def contains(value : Int) : Boolean = seq.contains(value)
@@ -810,8 +854,6 @@ class MovedIntSequence(val seq:IntSequence,
   override def valueAtPosition(position : Int) : Option[Int] = {
     seq.valueAtPosition(localBijection.forward(position))
   }
-
-  assert(this equals seq.moveAfter(startPositionIncluded,endPositionIncluded,moveAfterPosition,flip,fast=false))
 }
 
 class MovedIntSequenceExplorer(sequence:MovedIntSequence,
@@ -829,9 +871,6 @@ class MovedIntSequenceExplorer(sequence:MovedIntSequence,
                                   case None => true
                                   case Some(p) => !p.value.f.minus}
                                 ) extends IntSequenceExplorer{
-
-  //  override def toString : String = "MovedIntSequenceExplorer(position:" + position + " value:" + value + " currentPivotPosition:" + currentPivotPosition + " pivotAbovePosition:" +
-  //    pivotAbovePosition + " basicPositionn:" + positionInBasicSequence + ")"
 
   override val value : Int = positionInBasicSequence.value
 
