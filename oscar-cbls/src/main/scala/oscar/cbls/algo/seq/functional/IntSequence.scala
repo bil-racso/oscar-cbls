@@ -718,9 +718,6 @@ object MovedIntSequence{
       //not moving
       if(flip) {
         //just flipping
-        val x = PiecewiseLinearBijectionNaive.identity.updateBefore(
-          (startPositionIncluded,endPositionIncluded,LinearTransform(endPositionIncluded + startPositionIncluded,true)))
-
         if (startPositionIncluded == 0) {
           PiecewiseLinearBijectionNaive(new PiecewiseLinearFun(RedBlackTreeMap.makeFromSortedArray(Array(
             (0, new Pivot(0, new LinearTransform(endPositionIncluded, true))),
@@ -739,27 +736,23 @@ object MovedIntSequence{
     }else{
       if (moveAfterPosition > startPositionIncluded) {
         //move upwards
-        if (moveAfterPosition + 1 < moveAfterPosition + startPositionIncluded - endPositionIncluded){
-          PiecewiseLinearBijectionNaive(new PiecewiseLinearFun(RedBlackTreeMap.makeFromSortedArray(Array(
-            (startPositionIncluded, new Pivot(startPositionIncluded, LinearTransform(endPositionIncluded + 1 - startPositionIncluded, false))),
-            (moveAfterPosition + 1, new Pivot(moveAfterPosition + 1, LinearTransform.identity)),
-            (moveAfterPosition + startPositionIncluded - endPositionIncluded, new Pivot(moveAfterPosition + startPositionIncluded - endPositionIncluded,
-              LinearTransform(if (flip) startPositionIncluded + moveAfterPosition else endPositionIncluded - moveAfterPosition, flip)))))))
-        }else {
-          PiecewiseLinearBijectionNaive(new PiecewiseLinearFun(RedBlackTreeMap.makeFromSortedArray(Array(
-            (startPositionIncluded, new Pivot(startPositionIncluded, LinearTransform(endPositionIncluded + 1 - startPositionIncluded, false))),
-            (moveAfterPosition + startPositionIncluded - endPositionIncluded, new Pivot(moveAfterPosition + startPositionIncluded - endPositionIncluded,
-              LinearTransform(if (flip) startPositionIncluded + moveAfterPosition else endPositionIncluded - moveAfterPosition, flip))),
-            (moveAfterPosition + 1, new Pivot(moveAfterPosition + 1, LinearTransform.identity))))))
-        }
+        PiecewiseLinearBijectionNaive(new PiecewiseLinearFun(RedBlackTreeMap.makeFromSortedArray(Array(
+          (startPositionIncluded, new Pivot(startPositionIncluded, LinearTransform(endPositionIncluded + 1 - startPositionIncluded, false))),
+          (moveAfterPosition + startPositionIncluded - endPositionIncluded, new Pivot(moveAfterPosition + startPositionIncluded - endPositionIncluded,
+            LinearTransform(if (flip) startPositionIncluded + moveAfterPosition else endPositionIncluded - moveAfterPosition, flip))),
+          (moveAfterPosition + 1, new Pivot(moveAfterPosition + 1, LinearTransform.identity))))))
       } else {
         //move downwards
-        //TODO: this is WAY TOO SLOW; should be like O(1) because used very intensively
-        PiecewiseLinearBijectionNaive.identity.updateBefore(
-          (moveAfterPosition + 1, moveAfterPosition + endPositionIncluded - startPositionIncluded + 1,
-            LinearTransform(if (flip) endPositionIncluded + moveAfterPosition + 1 else startPositionIncluded - moveAfterPosition - 1, flip)),
-          (moveAfterPosition + endPositionIncluded - startPositionIncluded + 2, endPositionIncluded,
-            LinearTransform(startPositionIncluded - endPositionIncluded - 1, false)))
+        PiecewiseLinearBijectionNaive(new PiecewiseLinearFun(RedBlackTreeMap.makeFromSortedArray(Array(
+          (moveAfterPosition + 1,
+            new Pivot(moveAfterPosition + 1,LinearTransform(if (flip) endPositionIncluded + moveAfterPosition + 1
+            else startPositionIncluded - moveAfterPosition - 1, flip))),
+          (moveAfterPosition + endPositionIncluded - startPositionIncluded + 2,
+            new Pivot(moveAfterPosition + endPositionIncluded - startPositionIncluded + 2,
+              LinearTransform(startPositionIncluded - endPositionIncluded - 1, false))),
+          (endPositionIncluded +1,
+            new Pivot(endPositionIncluded +1, LinearTransform.identity))
+        ))))
       }
     }
   }
