@@ -161,7 +161,7 @@ class ConstantRoutingDistance(routes:ChangingSeqValue,
         if(!digestUpdates(prev)) return false
         val newSeq = changes.newValue
 
-        val oldPrev = prev.newValue.valueAtPosition(pos-1).head
+        val oldPrev = prev.newValue.valueAtPosition(pos-1).get
 
         val oldSucc =prev.newValue.valueAtPosition(pos) match{
           case None => v-1 //at the end
@@ -189,7 +189,7 @@ class ConstantRoutingDistance(routes:ChangingSeqValue,
         else if(x.isSimpleFlip){
           //this is a simple flip
 
-          val oldPrevFromValue = prev.newValue.valueAtPosition(fromIncluded - 1).head
+          val oldPrevFromValue = prev.newValue.valueAtPosition(fromIncluded - 1).get
           val oldSuccToValue = RoutingConventionMethods.routingSuccPos2Val(toIncluded,prev.newValue,v)
 
           val fromValue = x.fromValue
@@ -236,7 +236,7 @@ class ConstantRoutingDistance(routes:ChangingSeqValue,
           true
         }else {
           //actually moving, not simple flip
-          val oldPrevFromValue = prev.newValue.valueAtPosition(fromIncluded - 1).head
+          val oldPrevFromValue = prev.newValue.valueAtPosition(fromIncluded - 1).get
           val oldSuccToIfNoLoopOpt = prev.newValue.valueAtPosition(toIncluded + 1)
           val oldSuccToValue = oldSuccToIfNoLoopOpt match {
             case None => v - 1
@@ -339,7 +339,7 @@ class ConstantRoutingDistance(routes:ChangingSeqValue,
 
         val positionOfDelete = x.position
 
-        val oldPrevValue = prev.newValue.valueAtPosition(positionOfDelete-1).head //vehicles are never deleted
+        val oldPrevValue = prev.newValue.valueAtPosition(positionOfDelete-1).get //vehicles are never deleted
         val oldSuccValue = RoutingConventionMethods.routingSuccPos2Val(positionOfDelete, prev.newValue,v)
         val newDistance = distanceMatrix(oldPrevValue)(oldSuccValue)
         val oldDistanceBefore = distanceMatrix(oldPrevValue)(removedValue)
@@ -420,21 +420,21 @@ class ConstantRoutingDistance(routes:ChangingSeqValue,
   //datastruct for checkpoint: forward et bw labeling per vehicle. labeling: node -> (forward,backward) in a redBlack
   protected def computeValueBetween(s:IntSequence, vehicle:Int, fromPosIncluded:Int, fromValueIncluded:Int, toPosIncluded:Int, toValueIncluded:Int):Int = {
     if(fromPosIncluded <= toPosIncluded) {
-      var e = s.explorerAtPosition(fromPosIncluded).head
+      var e = s.explorerAtPosition(fromPosIncluded).get
       var toReturn = distanceMatrix(e.value)(e.value)
 
       while (e.position < toPosIncluded) {
-        val nextPos = e.next.head
+        val nextPos = e.next.get
         toReturn += distanceMatrix(e.value)(nextPos.value) + distanceMatrix(nextPos.value)(nextPos.value)
         e = nextPos
       }
       toReturn
     }else{
-      var e = s.explorerAtPosition(fromPosIncluded).head
+      var e = s.explorerAtPosition(fromPosIncluded).get
       var toReturn = distanceMatrix(e.value)(e.value)
 
       while (e.position > toPosIncluded) {
-        val prevPos = e.prev.head
+        val prevPos = e.prev.get
         toReturn += distanceMatrix(e.value)(prevPos.value) + distanceMatrix(prevPos.value)(prevPos.value)
         e = prevPos
       }
@@ -552,7 +552,7 @@ class ConstantRoutingDistancePrecompute(routes:ChangingSeqValue,
   * */
 
   def computePrecomputedForwardCumulatedCostAtCheckpoint(vehicle : Int, seq : IntSequence) {
-    var explorerOPt = seq.explorerAtAnyOccurrence(vehicle).head.next
+    var explorerOPt = seq.explorerAtAnyOccurrence(vehicle).get.next
     var prevValue = vehicle
     while(explorerOPt match{
       case None => false //we finished the last vehicle
@@ -571,7 +571,7 @@ class ConstantRoutingDistancePrecompute(routes:ChangingSeqValue,
   }
 
   def computePrecomputedBackwardCumulatedCostAtCheckpoint(vehicle : Int, seq : IntSequence) {
-    var explorerOPt = seq.explorerAtAnyOccurrence(vehicle).head.next
+    var explorerOPt = seq.explorerAtAnyOccurrence(vehicle).get.next
     var prevValue = vehicle
     while(explorerOPt match{
       case None => false

@@ -17,9 +17,9 @@ package oscar.cbls.invariants.lib.routing.convention
 
 import oscar.cbls.algo.rb.RedBlackTreeMap
 import oscar.cbls.algo.seq.functional.{IntSequence, Token}
-@deprecated("use the VehicleLocation method instead","we use stacked checkpoints")
-object RoutingConventionMethods {
 
+object RoutingConventionMethods {
+  @deprecated("use the VehicleLocation method instead","we use stacked checkpoints")
   def cachedVehicleReachingPosition(checkpoint:IntSequence,v:Int):((IntSequence,Int) => Int) = {
 
     val batch = batchVehicleReachingPosition(checkpoint,v:Int)
@@ -30,7 +30,7 @@ object RoutingConventionMethods {
 
     getVehicleReachingPosition
   }
-
+  @deprecated("use the VehicleLocation method instead","we use stacked checkpoints")
   def batchVehicleReachingPosition(seq:IntSequence,v:Int):(Int=>Int) = {
     val vehiclePositionArray:Array[(Int,Int)] =
       Array.tabulate(v)(vehicle => (seq.positionOfAnyOccurrence(vehicle).get, vehicle))
@@ -81,7 +81,7 @@ object RoutingConventionMethods {
   def routingSuccPos2Val(position:Int, seq:IntSequence, v:Int):Int = {
     seq.valueAtPosition(position + 1) match{
       case None => v-1
-      case Some(succToIfNoLoop ) => if (succToIfNoLoop < v) succToIfNoLoop-1 else succToIfNoLoop
+      case Some(succToIfNoLoop) => if (succToIfNoLoop < v) succToIfNoLoop-1 else succToIfNoLoop
     }
   }
 

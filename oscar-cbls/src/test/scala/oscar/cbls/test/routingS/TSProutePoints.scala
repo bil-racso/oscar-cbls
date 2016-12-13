@@ -54,7 +54,7 @@ object TSProutePoints extends App {
   new TSPRoutePointsS(1000,100,4,verbose)
   System.gc()
 
-  val nbTrials = 10
+  val nbTrials = 3
 
   println()
   print("n\tv\tpercent")
@@ -64,7 +64,7 @@ object TSProutePoints extends App {
   println
 
 
-  for(n <- 1000 to 11000 by 2000){
+  for(n <- 5000 to 11000 by 2000){
     for(v <- List(100)){
       for (maxPivotPerValuePercent <- List(0,1,2,3,4,5,20)) {
         print(n + "\t" + v + "\t" + maxPivotPerValuePercent + "\t")
