@@ -317,6 +317,13 @@ abstract class AbstractVehicleCapacity(n:Int,
         }
       }
 
+      /**
+       * this method shifts the zones that will be located after the position where the zones impacted by the move will be inserted, in a second pass...
+       * AWFULL!!!!!!!!!!!!!!!!!!!!!
+       *
+       * @param listOfZonesForVehicle
+       * @return
+       */
       def updateListOfZoneAfterSideFollowingAMove(listOfZonesForVehicle: List[(Int, Int)]): List[(Int, Int)] = {
         listOfZonesForVehicle match {
           case Nil => listOfZonesForVehicle
@@ -327,14 +334,18 @@ abstract class AbstractVehicleCapacity(n:Int,
         }
       }
 
-      val (updatedListOfZonesForVehicleFrom,movedZones) = removeMovedZoneFromZonesToUpdate(zonesToUpdate.getOrElse(sourceVehicle, List.empty[(Int, Int)]))
+      val (updatedListOfZonesForVehicleFrom,movedZones) = zonesToUpdate.get(sourceVehicle) match{
+        case None => (List.empty,List.empty)
+        case Some(l) => removeMovedZoneFromZonesToUpdate(l)
+      }
+
       val listsOfZoneWhenSourceVehicleListUpdated = zonesToUpdate.insert(sourceVehicle, updatedListOfZonesForVehicleFrom)
       val listsOfZoneWhenDestinationVehicleListUpdated =
-        listsOfZoneWhenSourceVehicleListUpdated.insert(destinationVehicle, updateListOfZoneAfterSideFollowingAMove(listsOfZoneWhenSourceVehicleListUpdated.getOrElse(destinationVehicle, List.empty[(Int, Int)]))) //, startPosOfVehicle(destinationVehicle)
+        listsOfZoneWhenSourceVehicleListUpdated.insert(destinationVehicle, updateListOfZoneAfterSideFollowingAMove(listsOfZoneWhenSourceVehicleListUpdated.getOrElse(destinationVehicle, List.empty[(Int, Int)])))
 
       val newRelativeAfter = m.oldPosToNewPos(m.after).get - vehicleLocationAfterMove.startPosOfVehicle(destinationVehicle)
 
-      val toReinsertInTheDestinationSideList: List[(Int, Int)] = movedZones.mapConserve((elt:(Int,Int))=>((newRelativeAfter + 1 + elt._1), (newRelativeAfter + 1 + elt._2)))
+      val toReinsertInTheDestinationSideList: List[(Int, Int)] = movedZones.mapConserve((elt:(Int,Int))=> (newRelativeAfter + 1 + elt._1, newRelativeAfter + 1 + elt._2))
 
       val fromIncludedZoneSideAndtoIncludedZoneSideAndNewlistsOfZone :(RedBlackTreeMap[List[(Int, Int)]],Int,Int) =
         if (m.moveUpwards) {
