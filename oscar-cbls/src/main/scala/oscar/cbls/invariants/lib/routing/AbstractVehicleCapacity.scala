@@ -234,7 +234,7 @@ abstract class AbstractVehicleCapacity(n:Int,
                                   m:SeqUpdateMove,
                                   sequenceBeforeMove:IntSequence,
                                   vehicleLocationBeforeMove:VehicleLocation,
-                                   vehicleLocationAfterMove:VehicleLocation):RedBlackTreeMap[List[(Int, Int)]] = {
+                                  vehicleLocationAfterMove:VehicleLocation):RedBlackTreeMap[List[(Int, Int)]] = {
     if(zonesToUpdate==null) return null
     if (m.isNop) return zonesToUpdate
 
@@ -258,29 +258,61 @@ abstract class AbstractVehicleCapacity(n:Int,
       val relativeAfter = m.after - vehicleLocationBeforeMove.startPosOfVehicle(destinationVehicle)
       val nbPointsInMovedSegment = m.nbPointsInMovedSegment
 
-      def removeMovedZoneFromZonesToUpdate(listOfZonesForVehicle: List[(Int, Int)], toReinsertInTheOtherSide:List[(Int, Int)] = List.empty[(Int, Int)]): (List[(Int, Int)],List[(Int, Int)]) = {
-        def gotoNext(startOfZone: Int, endOfZone: Int, tail: List[(Int, Int)], toReinsert: List[(Int,Int)] = toReinsertInTheOtherSide): (List[(Int, Int)], List[(Int, Int)]) = {
-          (smartPrepend(startOfZone, endOfZone, removeMovedZoneFromZonesToUpdate(tail, toReinsert)._1), toReinsertInTheOtherSide)
-        }
-
+      /**
+       * @param listOfZonesForVehicle the list of zones to update on vehicleFrom
+       * @return the lsit of zone where the segment of the move has bee nremoved
+       *         and the list of zones that are within the moved segment, not including the first position in this segment unless covered by zone in the input
+       */
+      def removeMovedZoneFromZonesToUpdate(listOfZonesForVehicle: List[(Int, Int)]): (List[(Int, Int)],List[(Int, Int)]) = {
         listOfZonesForVehicle match {
-          case Nil => (listOfZonesForVehicle,toReinsertInTheOtherSide)
-          case (startZone, endZone) :: tail =>  // traitement du coté [from,to]
-            if (endZone < relativeFromIncluded)  gotoNext(startZone, endZone, tail) // on est avant from
-            else if (startZone > relativeToIncluded)  gotoNext(startZone - nbPointsInMovedSegment, endZone - nbPointsInMovedSegment, tail) // on est après to
-            else { /* on est dans l'interval a deplacer */
-            val toReinsertInTheOtherSideInternal =  if (!m.flip){ // si flip alors on a pas besoins de recuperer les paure dans l'interval
-              val startPartOfZoneInMovedInterval = Math.max(startZone, relativeFromIncluded) - relativeFromIncluded // si overlape ==> max découpe au bon endroit
-              val endPartOfZoneInMovedInterval  = Math.min(relativeToIncluded, endZone) - relativeFromIncluded // si overlape ==> min découpe au bon endroit
-                (startPartOfZoneInMovedInterval,endPartOfZoneInMovedInterval ) :: toReinsertInTheOtherSide
-              } else List.empty[(Int, Int)]
-              val toReturn = // ici on passe a la paire suivante et on gère le cas d'overlap
-                if (endZone > relativeToIncluded) /* [from ..... (start ..... to] .... end) ==> overlap */
-                  gotoNext(relativeToIncluded + 1 - nbPointsInMovedSegment,endZone - nbPointsInMovedSegment,tail,toReinsertInTheOtherSideInternal) // on recupère la partie de la zone qui est hors de l'interval et on passe a la suite
-                else removeMovedZoneFromZonesToUpdate(tail,toReinsertInTheOtherSideInternal) // pas d'overlap ==> on passe a la paire suivante
-              if (startZone < relativeFromIncluded) /*   (start ..... [from .... end)..... to]  overlap */
-                (smartPrepend(startZone, relativeFromIncluded - 1, toReturn._1),toReturn._2) // on récupère la partie de la zone qui est hors de l'interval
-              else toReturn // pas d'overlap ===> on a rien a récupéré
+          case Nil => (Nil,Nil)
+          case (startZone, endZone) :: tail =>
+            // traitement du coté [from,to]
+            if (endZone < relativeFromIncluded) {
+              // on est avant from
+              val(updatedZones,removedZones) = removeMovedZoneFromZonesToUpdate(tail)
+              (smartPrepend(startZone, endZone, updatedZones), removedZones)
+
+            }else if (startZone > relativeToIncluded) {
+              // on est après to
+              val (updatedTail,removedZones) = removeMovedZoneFromZonesToUpdate(tail)
+              (smartPrepend(startZone - nbPointsInMovedSegment, endZone - nbPointsInMovedSegment, updatedTail), removedZones)
+
+            }else {
+              // si overlape ==> (min,max) découpe au bon endroit
+
+              val coupleFromRemovedZone =
+                (Math.max(startZone, relativeFromIncluded) - relativeFromIncluded,
+                  Math.min(relativeToIncluded, endZone) - relativeFromIncluded)
+
+              val (updatedTail,removedZones) = removeMovedZoneFromZonesToUpdate(tail)
+              val updatedRemovedZone = coupleFromRemovedZone :: removedZones
+
+              if (endZone > relativeToIncluded) {
+                //[from ..... (start ..... to] .... end) ==> overlap
+                // on recupère la partie de la zone qui est hors de l'interval et on passe a la suite
+
+                val updatedZones = smartPrepend(relativeToIncluded + 1 - nbPointsInMovedSegment, endZone - nbPointsInMovedSegment, updatedTail)
+
+                if (startZone < relativeFromIncluded) {
+                  //(start ..... [from .... end)..... to]  overlap
+                  // on récupère la partie de la zone qui est hors de l'interval
+                  (smartPrepend(startZone, relativeFromIncluded - 1, updatedZones), updatedRemovedZone)
+                }else {
+                  // pas d'overlap ===> on a rien a récupéré
+                  (updatedZones,updatedRemovedZone)
+                }
+              }else{
+                // pas d'overlap ==> on passe a la paire suivante
+                if (startZone < relativeFromIncluded) {
+                  //(start ..... [from .... end)..... to]  overlap
+                  // on récupère la partie de la zone qui est hors de l'interval
+                  (smartPrepend(startZone, relativeFromIncluded - 1, updatedTail), updatedRemovedZone)
+                }else {
+                  // pas d'overlap ===> on a rien a récupéré
+                  (updatedTail,updatedRemovedZone)
+                }
+              }
             }
         }
       }

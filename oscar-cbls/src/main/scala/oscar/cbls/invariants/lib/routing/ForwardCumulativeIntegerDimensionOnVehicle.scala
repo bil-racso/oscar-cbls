@@ -183,12 +183,16 @@ class ForwardCumulativeIntegerDimensionOnVehicle(routes:ChangingSeqValue,
       case m@SeqUpdateMove(fromIncluded : Int, toIncluded : Int, after : Int, flip : Boolean, prev : SeqUpdate) =>
         digestUpdatesAndUpdateVehicleStartPositionsAndSearchZoneToUpdate(prev, toUpdateZonesAndVehiceStartOpt, potentiallyRemovedPoints, previousSequence) match {
           case (Some((zonesAfterPrev, vehicleLocationAfterPrev)), potentiallyRemovedPointsAfterPrev) =>
+            val vehicleLocationAfterMove = vehicleLocationAfterPrev.push(m.oldPosToNewPos,maxStack)
             val updatedZones =
               updateZoneToUpdateAfterMove(
                 zonesAfterPrev,
                 m,
-                prev.newValue, vehicleLocationAfterPrev)
-            (Some((updatedZones, vehicleLocationAfterPrev.push(m.oldPosToNewPos,maxStack))), potentiallyRemovedPointsAfterPrev)
+                prev.newValue,
+                vehicleLocationAfterPrev,
+                vehicleLocationAfterMove)
+            (Some((updatedZones, vehicleLocationAfterMove)), potentiallyRemovedPointsAfterPrev)
+
           case(None,potentiallyRemovedPointsAfterPrev) =>
             (None, potentiallyRemovedPointsAfterPrev)
         }
