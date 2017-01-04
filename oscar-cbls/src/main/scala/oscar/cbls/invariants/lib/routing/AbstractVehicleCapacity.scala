@@ -435,10 +435,10 @@ abstract class AbstractVehicleCapacity(n:Int,
             if (positionToStartFromAbsolute == startPositionOfVehicle) {
               //we need to update the value at vehicle start
               val newValueAtStart:Int = getContentAtVehicleStart(vehicle)
-              val oldValueAtStart = getVehicleContentAtNode(positionToStartFromAbsolute)
+              val oldValueAtStart = getVehicleContentAtNode(vehicle)
               if(newValueAtStart != oldValueAtStart || endCompulsoryAbsolute > 0) {
                 //start iterate from here
-                setVehicleContentAtNode(positionToStartFromAbsolute, newValueAtStart)
+                setVehicleContentAtNode(vehicle, newValueAtStart)
                 updateUntilAbsolutePositionAndSaturatedOrVehicleEnd(explorerToStartUpdate,
                   newValueAtStart,
                   endCompulsoryAbsolute, vehicle)

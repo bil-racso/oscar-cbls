@@ -749,9 +749,6 @@ class InvariantTests extends FunSuite with Checkers {
 
   test("GenericCumulativeIntegerDimensionOnVehicleWithVar"){
 
-
-    System.err.println("/!\\  GenericCumulativeIntegerDimensionOnVehicleWithVar : FAIL IF Shuffle()"+" so this test is not a high accuracy test ".toUpperCase)
-
     val bench = new InvBench(verbose,List(PlusOne(), MinusOne(), ToZero(), ToMin(), ToMax(), Random(), RandomDiff(), Shuffle()))
 
     val n = 100
@@ -818,7 +815,7 @@ class InvariantTests extends FunSuite with Checkers {
 
 
 
-    var inv = ForwardCumulativeIntegerDimensionOnVehicle(route,n,v,op,contentAtStart,defaultForUnroutedNodes=0,maxContent = 6)
+    var inv = ForwardCumulativeIntegerDimensionOnVehicle(route,n,v,op,contentAtStart,defaultForUnroutedNodes= -1,maxContent = 6)
 
 
 

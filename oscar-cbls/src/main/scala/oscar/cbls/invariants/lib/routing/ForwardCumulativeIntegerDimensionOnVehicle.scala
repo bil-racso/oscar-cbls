@@ -97,7 +97,9 @@ class ForwardCumulativeIntegerDimensionOnVehicle(routes:ChangingSeqValue,
   private var toUpdateZonesAndVehicleStartAfter:Option[(RedBlackTreeMap[List[(Int,Int)]],VehicleLocation)] = Some(RedBlackTreeMap.empty[List[(Int,Int)]],currentVehicleLocation)
   private var potentiallyRemovedNodes:List[Int] = List.empty
 
-  override def getVehicleContentAtNode(node : Int) : Int = contentAtNode(node).newValue
+  override def getVehicleContentAtNode(node : Int) : Int = {
+    contentAtNode(node).newValue
+  }
 
   override def setEndNodeOfVehicle(vehicle : Int, lastNode : Int) : Unit = lastPointOfVehicle(vehicle) := lastNode
 
@@ -241,7 +243,7 @@ class ForwardCumulativeIntegerDimensionOnVehicle(routes:ChangingSeqValue,
     val (nodeToContent,vehicleToContentAtEnd,vehicleLocation) = computeNodeToContentAndVehicleContentAtEndAndVehicleStartPositionsFromScratch(routes.value,defaultVehicleContentForUnroutedNodes)
     for(node <- 0 until n){
       c.check(nodeToContent(node) == getVehicleContentAtNode(node),
-        Some("Vehicle content at node(" + node + ") at pos : "+ routes.value.positionsOfValue(node)+ " := " + getVehicleContentAtNode(node) + " should be :=" + nodeToContent(node)+ " routes:" + routes.value.mkString(",")))
+        Some("Vehicle content at node(" + node + ") at pos : "+ routes.value.positionsOfValue(node)+ " := " + getVehicleContentAtNode(node) + " should be :=" + nodeToContent(node)+ " routes:" + routes.value.mkString(",")  + " contentAtStart:" + contentAtStart.mkString(",")))
     }
     for(vehicle <- 0 until v){
       c.check(vehicleLocation.startPosOfVehicle(vehicle) == routes.value.positionOfAnyOccurrence(vehicle).get,
