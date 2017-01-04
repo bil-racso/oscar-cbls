@@ -85,5 +85,5 @@ class StackedVehicleLocation(val oldPosToNewPos:Int=> Option[Int], val prev: Veh
 
   def startPosOfVehicle(vehicle: Int): Int = oldPosToNewPos(prev.startPosOfVehicle(vehicle)).get
 
-  override def toString: String = "StackedVehicleLocation(depth:" + level + " prev:" + prev + ")"
+  override def toString: String = "StackedVehicleLocation([" + (0 until v).map(startPosOfVehicle).mkString(",") + "] depth:" + level + " prev:" + prev + ")"
 }

@@ -23,7 +23,7 @@ import org.scalatest.prop.Checkers
 import oscar.cbls.constraints.lib.basic.{BelongsTo, EQ, G, GE, L, LE, NE}
 import oscar.cbls.constraints.lib.global.{AllDiff, AtLeast, AtMost, MultiKnapsack, Sequence}
 import oscar.cbls.invariants.core.computation
-import oscar.cbls.invariants.core.computation.{IntValue, CBLSIntVar}
+import oscar.cbls.invariants.core.computation.{ChangingIntValue, ChangingSeqValue, IntValue, CBLSIntVar}
 import oscar.cbls.invariants.lib.logic.{DenseCount, Elements, Filter, IntElement, IntITE, SelectLEHeapHeap, SetElement, _}
 import oscar.cbls.invariants.lib.minmax.{ArgMax, ArgMin, Max2, MaxArray, MaxLin, MaxSet, Min2, MinArray, MinLin, MinSet}
 import oscar.cbls.invariants.lib.numeric.{Abs, Div, Minus, Mod, Prod, Prod2, ProdElements, RoundUpModulo, Step, Sum, Sum2, SumElements}
@@ -645,7 +645,7 @@ class InvariantTests extends FunSuite with Checkers {
     VehicleOfNodes(route,v)
     bench.run()
   }
-/*
+
   test("GenericCumulativeIntegerDimensionOnVehicle"){
     val bench = new InvBench(verbose,List(PlusOne(), MinusOne(), ToZero(), ToMin(), ToMax(), Random(), RandomDiff(), Shuffle()))
     val n = 100
@@ -689,9 +689,7 @@ class InvariantTests extends FunSuite with Checkers {
     val  s = start()
     val inv = ForwardCumulativeIntegerDimensionOnVehicle(route,n,v,op,s,-1)
 
-    val go = System.nanoTime()
     bench.run()
-    println("GenericCumulativeIntegerDimensionOnVehicle(n ="+n+" v ="+v+") : "+((System.nanoTime()-go)/Math.pow(10,9))+" s")
   }
 
   test("GenericCumulativeConstraint"){
@@ -737,7 +735,12 @@ class InvariantTests extends FunSuite with Checkers {
     def start() : Array[Int]= { Array.tabulate(v)((car:Int)=> scala.util.Random.nextInt(limite))}
     val  s = start()
 
-    val inv = ForwardCumulativeConstraintOnVehicle(route,n,v,op,limite,s)
+    val inv = ForwardCumulativeConstraintOnVehicle(route,n,v,op,limite,s,
+      maxCheckpointLevel = 1,
+      maxStack = 1,
+      capacityName = "test capacity"
+    )
+
 
     val go = System.nanoTime()
     bench.run()
@@ -755,7 +758,7 @@ class InvariantTests extends FunSuite with Checkers {
     val v = 5
 
     val route = bench.genRouteOfNodes(n,v)
-    val test = bench.genIntVarsArray(v)
+    val contentAtStart = bench.genIntVarsArray(v)
 
     val limite = 10
     def genMatrix(node:Int):Array[Array[Int]] = {
@@ -815,14 +818,17 @@ class InvariantTests extends FunSuite with Checkers {
 
 
 
-    var inv = ForwardCumulativeIntegerDimensionOnVehicle(route,n,v,op,test)
+    var inv = ForwardCumulativeIntegerDimensionOnVehicle(route,n,v,op,contentAtStart,defaultForUnroutedNodes=0,maxContent = 6)
+
+
+
+
     val go = System.nanoTime()
     bench.run()
     print("GenericCumulativeIntegerDimensionOnVehicleWithVar(n ="+n+" v ="+v+") : "+((System.nanoTime()-go)/Math.pow(10,9))+" s")
 
   }
 
-*/
 
   // ---- checkpoint Tests ---- //
 

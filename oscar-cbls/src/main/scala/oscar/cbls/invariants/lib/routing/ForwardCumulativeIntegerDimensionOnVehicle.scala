@@ -31,14 +31,14 @@ object ForwardCumulativeIntegerDimensionOnVehicle {
    * @param routes The sequence representing the route associated at each vehicle
    * @param n The maximum number of nodes
    * @param v The number of vehicles
-   * @param op A function which returns the capacity change between two nodes : (startingNode,destinationNode,capacityAtStartingNode)=> capacityAtDestinationNode
+   * @param op A function which returns the capacity change between two nodes : (fromNode,toNode,contentAtFromNode)=> contentAtToNode
    * @param contentAtStart Array of lenght = v where initValue(car) = content at start pos of vehicle #car
    * @param defaultForUnroutedNodes is the content of a node that is not routed
    * @param minContent Min content of a node
    * @param maxContent Max content of a node
    * @param maxStack Maximum depth of vehicleLocation history
    * @param contentName the name of this content, for debug purpose. it is atributed to all variales created by this invairant
-   * @return The capacity of each node in the sequence representing the route associated at each vehicle
+   * @return  (contentAtNode,contentAtEnd,lastPointOfVehicle)
    */
   def apply(routes:ChangingSeqValue,
             n:Int,
@@ -65,7 +65,7 @@ object ForwardCumulativeIntegerDimensionOnVehicle {
  * @param routes The sequence representing the route associated at each vehicle
  * @param n The maximum number of nodes
  * @param v The number of vehicles
- * @param op A function which returns the capacity change between two nodes : (startingNode,destinationNode,capacityAtStartingNode)=> capacityAtDestinationNode
+ * @param op A function which returns the capacity change between two nodes : (fromNode,toNode,contentAtFromNode)=> contentAtToNode
  * @param contentAtStart Array of lenght = v where initValue(car) = content at start pos of vehicle #car
  * @param defaultVehicleContentForUnroutedNodes is the content of a node that is not routed
  * @param maxStack Maximum depth of vehicleLocation history
@@ -119,6 +119,13 @@ class ForwardCumulativeIntegerDimensionOnVehicle(routes:ChangingSeqValue,
     scheduleForPropagation()
   }
 
+  private def printToUpdateZonesAndVehicleStartAfter(toUpdateZonesAndVehicleStartAfter:Option[(RedBlackTreeMap[List[(Int,Int)]],VehicleLocation)]):String = {
+    toUpdateZonesAndVehicleStartAfter match{
+      case None => "None"
+      case Some((a,b)) => "Some(" + a.content.map({case (a,l) => a + "->" + l}).mkString(",") + "," + b + ")"
+    }
+  }
+
   override def notifyIntChanged(v: ChangingIntValue, id: Int, OldVal: Int, NewVal: Int){
     toUpdateZonesAndVehicleStartAfter match {
       case None => ;
@@ -156,13 +163,14 @@ class ForwardCumulativeIntegerDimensionOnVehicle(routes:ChangingSeqValue,
       case s@SeqUpdateInsert(value : Int, posOfInsert : Int, prev : SeqUpdate) =>
         digestUpdatesAndUpdateVehicleStartPositionsAndSearchZoneToUpdate(prev, toUpdateZonesAndVehiceStartOpt, potentiallyRemovedPoints, previousSequence) match {
           case (Some((zonesAfterPrev, vehicleLocationAfterPrev)), potentiallyRemovedPointsAfterPrev) =>
+            val vehicleLocationAfyterInsert = vehicleLocationAfterPrev.push(s.oldPosToNewPos,maxStack)
             val updatedZones =
               updateZoneToUpdateAfterInsert(
                 zonesAfterPrev,
                 posOfInsert,
                 prev.newValue,
-                vehicleLocationAfterPrev)
-            (Some((updatedZones,  vehicleLocationAfterPrev.push(s.oldPosToNewPos,maxStack))), potentiallyRemovedPointsAfterPrev)
+                vehicleLocationAfterPrev,vehicleLocationAfyterInsert)
+            (Some((updatedZones,  vehicleLocationAfyterInsert)), potentiallyRemovedPointsAfterPrev)
           case (None,potentiallyRemovedPointsAfterPrev) =>
             (None, potentiallyRemovedPointsAfterPrev)
         }
@@ -231,9 +239,13 @@ class ForwardCumulativeIntegerDimensionOnVehicle(routes:ChangingSeqValue,
 
   override def checkInternals(c : Checker) : Unit = {
     val (nodeToContent,vehicleToContentAtEnd,vehicleLocation) = computeNodeToContentAndVehicleContentAtEndAndVehicleStartPositionsFromScratch(routes.value,defaultVehicleContentForUnroutedNodes)
-    for(node <- 0 until n) c.check(nodeToContent(node) equals getVehicleContentAtNode(node), Some("Error on vehicle content at node(" + node + ") at pos : "+ routes.value.positionsOfValue(node)+ " :=" + getVehicleContentAtNode(node) + " should be :=" + nodeToContent(node)))
+    for(node <- 0 until n){
+      c.check(nodeToContent(node) == getVehicleContentAtNode(node),
+        Some("Vehicle content at node(" + node + ") at pos : "+ routes.value.positionsOfValue(node)+ " := " + getVehicleContentAtNode(node) + " should be :=" + nodeToContent(node)+ " routes:" + routes.value.mkString(",")))
+    }
     for(vehicle <- 0 until v){
-      c.check(vehicleLocation.startPosOfVehicle(vehicle) equals routes.value.positionOfAnyOccurrence(vehicle), Some("Found start of vehicle(" + vehicle + "):=" +vehicleLocation.startPosOfVehicle(vehicle) + " should be :=" + routes.value.positionOfAnyOccurrence(vehicle) +" seq :"+routes.value.mkString(",")))
+      c.check(vehicleLocation.startPosOfVehicle(vehicle) == routes.value.positionOfAnyOccurrence(vehicle).get,
+        Some("Found start of vehicle(" + vehicle + "):=" + vehicleLocation.startPosOfVehicle(vehicle) + " should be :=" + routes.value.positionOfAnyOccurrence(vehicle) +" seq :"+routes.value.mkString(",")))
       c.check(contentAtEnd(vehicle).value == vehicleToContentAtEnd(vehicle))
     }
   }

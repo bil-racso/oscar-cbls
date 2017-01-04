@@ -48,14 +48,20 @@ object ForwardCumulativeConstraintOnVehicle {
              contentAtVehicleStart:Array[Int],
              maxCheckpointLevel:Int,
              maxStack:Int,
-             capacityName:String):CBLSIntVar = {
+             capacityName:String):ChangingIntValue = {
 
     val violation = new CBLSIntVar(routes.model, 0, 0 to Int.MaxValue, "violation of capacity " + capacityName)
 
     new ForwardCumulativeConstraintOnVehicle(
-      routes, n, v, op, cMax,
-      contentAtVehicleStart, violation,
-      maxCheckpointLevel,maxStack)
+      routes,
+      n,
+      v,
+      op,
+      cMax,
+      contentAtVehicleStart,
+      violation,
+      maxCheckpointLevel,
+      maxStack)
 
     violation
   }
@@ -156,13 +162,14 @@ class ForwardCumulativeConstraintOnVehicle(routes:ChangingSeqValue,
       case s@SeqUpdateInsert(value : Int, posOfInsert : Int, prev : SeqUpdate) =>
         digestUpdatesAndUpdateVehicleStartPositionsAndSearchZoneToUpdate(prev, toUpdateZonesAndVehiceStartOpt, potentiallyRemovedPoints, previousSequence) match {
           case (Some((zonesAfterPrev, vehicleLocationAfterPrev)), potentiallyRemovedPointsAfterPrev) =>
+            val vehicleLocationAfyterInsert = vehicleLocationAfterPrev.push(s.oldPosToNewPos,maxStack)
             val updatedZones =
               updateZoneToUpdateAfterInsert(
                 zonesAfterPrev,
                 posOfInsert,
                 prev.newValue,
-                vehicleLocationAfterPrev)
-            (Some((updatedZones,  vehicleLocationAfterPrev.push(s.oldPosToNewPos,maxStack))), potentiallyRemovedPointsAfterPrev)
+                vehicleLocationAfterPrev,vehicleLocationAfyterInsert)
+            (Some((updatedZones, vehicleLocationAfyterInsert )), potentiallyRemovedPointsAfterPrev)
           case (None,potentiallyRemovedPointsAfterPrev) =>
             (None, potentiallyRemovedPointsAfterPrev)
         }
