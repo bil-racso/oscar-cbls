@@ -516,7 +516,7 @@ abstract class AbstractVehicleCapacity(n:Int,
   def computeAndAffectContentAndVehicleStartPositionsFromScratch(s:IntSequence,unrouteAllNodes:Boolean):(ConcreteVehicleLocation) = {
     val vehicleLocation = Array.fill(v)(0)
 
-    if(unrouteAllNodes) setNodesUnrouted(0 until n)
+    if(unrouteAllNodes) setNodesUnrouted(v until n)
 
     var previousPosition = s.explorerAtPosition(0).get
     var currentVehicle = 0

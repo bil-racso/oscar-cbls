@@ -249,6 +249,9 @@ class ForwardCumulativeIntegerDimensionOnVehicle(routes:ChangingSeqValue,
       c.check(vehicleLocation.startPosOfVehicle(vehicle) == routes.value.positionOfAnyOccurrence(vehicle).get,
         Some("Found start of vehicle(" + vehicle + "):=" + vehicleLocation.startPosOfVehicle(vehicle) + " should be :=" + routes.value.positionOfAnyOccurrence(vehicle) +" seq :"+routes.value.mkString(",")))
       c.check(contentAtEnd(vehicle).value == vehicleToContentAtEnd(vehicle))
+
+      c.check(currentVehicleLocation.startPosOfVehicle(vehicle) == vehicleLocation.startPosOfVehicle(vehicle),Some("x"))
     }
+
   }
 }

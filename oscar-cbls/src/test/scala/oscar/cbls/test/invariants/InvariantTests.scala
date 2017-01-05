@@ -736,7 +736,7 @@ class InvariantTests extends FunSuite with Checkers {
     val  s = start()
 
     val inv = ForwardCumulativeConstraintOnVehicle(route,n,v,op,limite,s,
-      maxCheckpointLevel = 1,
+      maxCheckpointLevel = 2,
       maxStack = 1,
       capacityName = "test capacity"
     )

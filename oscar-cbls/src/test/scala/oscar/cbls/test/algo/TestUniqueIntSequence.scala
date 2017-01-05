@@ -1,4 +1,4 @@
-package oscar.cbls.test.invariants.algo
+package oscar.cbls.test.algo
 
 /*******************************************************************************
   * OscaR is free software: you can redistribute it and/or modify
