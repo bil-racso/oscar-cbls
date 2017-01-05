@@ -28,7 +28,7 @@ import org.scalatest.prop.Checkers
  * We distinguish between some identified "extremum" moves which can be used
  * as well on IntVar as on IntSetVar.
  */
-abstract class Move
+abstract sealed class Move
 
 case class PlusOne() extends Move
 case class MinusOne() extends Move
@@ -244,7 +244,7 @@ case class RandomIntVar(intVar: CBLSIntVar,
       case ToMin() => {
         applyConstraint(randomVar.min)
       }
-      case Random() => {
+      case Random() | Shuffle() | MultipleMove() => {
         applyConstraint(Gen.choose(randomVar.min, randomVar.max).sample.get)
       }
       case RandomDiff() => {
@@ -292,7 +292,7 @@ case class RandomIntSetVar(intSetVar: CBLSSetVar) extends RandomVar {
         randomVar.value.foreach(value => randomVar.deleteValue(value))
         randomVar :+= Gen.choose(randomVar.min, randomVar.max).sample.get
       }
-      case Random() => { // Replaces the set with a randomly generated one
+      case Random() | Shuffle() | MultipleMove() => { // Replaces the set with a randomly generated one
       val newSize = Gen.choose(1, randomVar.value.size + 1).sample.get
         val newVal = Gen.containerOfN[List, Int](newSize,
           Gen.choose(randomVar.min, randomVar.max)).sample.get
@@ -345,7 +345,7 @@ case class RandomIntSeqVar(intSeqVar: CBLSSeqVar) extends RandomVar{
         for(i <- randomVar().min until randomVar().newValue.size)
           randomVar().remove(0)
         randomVar().insertAtPosition(Gen.choose(randomVar().min,randomVar().max).sample.get,0)
-      case Random() =>
+      case Random() | Shuffle() =>
         val newSize = Gen.choose(1, Math.min(randomVar().newValue.size + 1,randomVar().max)).sample.get
         val newVal = Gen.containerOfN[Iterable, Int](newSize,
           Gen.choose(randomVar().min, randomVar().max)).sample.get
@@ -356,7 +356,7 @@ case class RandomIntSeqVar(intSeqVar: CBLSSeqVar) extends RandomVar{
           Gen.choose(randomVar().min, randomVar().max)
             suchThat (!randomVar().newValue.contains(_))).sample
         if (newValOpt.isDefined) randomVar := IntSequence(newValOpt.get)
-      case Shuffle() =>
+      case Shuffle() | MultipleMove() =>
         for(p <- 0 until randomVar().newValue.size) {
           val newPos = Gen.choose(0, randomVar().newValue.size - 1).sample.get
           if (newPos-1 != p)
@@ -402,7 +402,7 @@ case class NotRandomIntSeqVar(intSeqVar: CBLSSeqVar) extends RandomVar{
         for(i <- randomVar().min until randomVar().newValue.size)
           randomVar().remove(0)
         randomVar().insertAtPosition(Gen.choose(randomVar().min,randomVar().max).sample.get,0)
-      case Random() =>
+      case Random() | MultipleMove() =>
         val newSize = Gen.choose(1, Math.min(randomVar().newValue.size + 1,randomVar().max)).sample.get
         val fullList = scala.util.Random.shuffle(List.tabulate(randomVar().max)(n => n))
         val newVal = List.tabulate(newSize)(n => fullList(n)).toIterable
@@ -492,7 +492,7 @@ case class RouteOfNodes(intSeqVar: CBLSSeqVar, v:Int) extends RandomVar{
         randomVar() := IntSequence(newVal)
         for(i <- 0 until nbOfValueToAdd)
           randomVar().insertAtPosition(fullList(i),Gen.choose(1,randomVar().newValue.size-1).sample.get)
-      case Shuffle() =>
+      case Shuffle() | MultipleMove() =>
         for(p <- 0 until randomVar().value.size){
           if(randomVar().newValue.valueAtPosition(p).get>=v) {
             val newPos = Gen.choose(1, randomVar().newValue.size - 1).sample.get
@@ -535,7 +535,7 @@ case class RouteOfNodesForCheckPoint(intSeqVar: CBLSSeqVar, v:Int, checker:Invar
             notInSeq = List.tabulate(randomVar().max)(n => n).filterNot(inSeq.contains(_))
             randomVar().insertAtPosition(Gen.oneOf(notInSeq).sample.get, Gen.choose(1, inSeq.size).sample.get)
           }
-          randomVar().rollbackToCurrentCheckpoint(checkPoint)
+          randomVar().rollbackToTopCheckpoint(checkPoint)
           checker.check(randomVar().value == checkPoint, Some("Error : " + randomVar().value.toString + ", or : " + randomVar().newValue.toString + " != " + checkPoint.toString))
         }
         inSeq = randomVar().newValue.toList
@@ -549,7 +549,7 @@ case class RouteOfNodesForCheckPoint(intSeqVar: CBLSSeqVar, v:Int, checker:Invar
             inSeq = randomVar().newValue.toList
             randomVar().remove(inSeq.indexOf(Gen.oneOf(inSeq.filterNot(_ < v)).sample.get))
           }
-          randomVar().rollbackToCurrentCheckpoint(checkPoint)
+          randomVar().rollbackToTopCheckpoint(checkPoint)
           checker.check(randomVar().value == checkPoint, Some("Error : " + randomVar().value.toString + ", or : " + randomVar().newValue.toString + " != " + checkPoint.toString))
         }
         checker.check(randomVar().value == checkPoint, Some("Error : " + randomVar().value.toString + ", or : " + randomVar().newValue.toString + " != " + checkPoint.toString))
@@ -567,7 +567,7 @@ case class RouteOfNodesForCheckPoint(intSeqVar: CBLSSeqVar, v:Int, checker:Invar
             if(newPos < p1 || newPos > p2)
               randomVar().move(p1, p2, newPos, false)
           }
-          randomVar().rollbackToCurrentCheckpoint(checkPoint)
+          randomVar().rollbackToTopCheckpoint(checkPoint)
           checker.check(randomVar().value == checkPoint, Some("Error : " + randomVar().value.toString + ", or : " + randomVar().newValue.toString + " != " + checkPoint.toString))
         }
         for(i <- 0 until inSeq.size - v){
@@ -603,7 +603,7 @@ case class RouteOfNodesForCheckPoint(intSeqVar: CBLSSeqVar, v:Int, checker:Invar
                 }
             }
           }
-          randomVar().rollbackToCurrentCheckpoint(checkPoint)
+          randomVar().rollbackToTopCheckpoint(checkPoint)
           checker.check(randomVar().value == checkPoint, Some("Error : " + randomVar().value.toString + ", or : " + randomVar().newValue.toString + " != " + checkPoint.toString))
         }
     }

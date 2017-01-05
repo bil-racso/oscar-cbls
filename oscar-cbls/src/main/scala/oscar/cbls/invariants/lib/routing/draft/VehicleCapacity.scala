@@ -1,18 +1,21 @@
 package oscar.cbls.invariants.lib.routing.draft
 /*
-import oscar.cbls.algo.quick.QList
-import oscar.cbls.algo.rb.RedBlackTreeMap
+import oscar.cbls.algo.magicArray.MagicBoolArrayWithFastIteratorOnTrueOverApproximated
+import oscar.cbls.algo.rb.{RedBlackTreeMap, RedBlackTreeMapExplorer}
 import oscar.cbls.algo.seq.functional.IntSequence
 import oscar.cbls.invariants.core.computation._
+import oscar.cbls.invariants.core.propagation.Checker
 import oscar.cbls.invariants.lib.routing.RoutingConventionMethods
 
 class VehicleCapacity(routes:ChangingSeqValue,
                       v:Int,
-                      deltaAtNode:Array[Int], //the initial content is zero + delta at starting node.
-                      maxCapacity:Int,
-                      violation:Array[CBLSIntVar],
+                      deltaAtNode:Array[Int], //the initial content of a vehicle is the delta at its starting node.
+                      maxCapacity:Int, //shared by all vehicles
+                      violation:Array[CBLSIntVar], //violation of each vehicle; the integral of overshoot over nodes
                       contentAtEndOfVehicleRoute:Array[CBLSIntVar]) //violation per vehicle is the integral of overshoot over leaves, counted on nodeLeave
   extends Invariant() with SeqNotificationTarget{
+
+  val overApproximatingBoundForMaxCapacity = deltaAtNode.foldLeft(0)({case (acc,delta) => acc + math.abs(delta)})
 
   registerStaticAndDynamicDependency(routes)
   this.finishInitialization()
@@ -23,12 +26,13 @@ class VehicleCapacity(routes:ChangingSeqValue,
 
   computeAndAffectViolationsFromScratch(routes.value)
 
+  //single checkpoint
   var checkpoint:IntSequence = null
   val contentOutAtCheckpoint:Array[Int] = Array.fill(n)(0)
   val nodeToLevelToNumberOfReachOutForwardAtCheckpoint:Array[RedBlackTreeMap[Int]] = Array.fill(n)(null)
 
-  var changedVehiclesSinceCheckpoint:QList[Int] = vehicles.foldLeft[QList[Int]](null)((acc,v) => QList(v,acc))
-  val isVehicleChangedSinceCheckpoint:Array[Boolean] = Array.fill(v)(true)
+  val changedVehiclesSinceCheckpoint = new MagicBoolArrayWithFastIteratorOnTrueOverApproximated(v,false)
+
   var violationsAtCheckpoint:Array[Int] = Array.fill(v)(0)
   val contentAtEndOfVehicleRouteAtCheckpoint:Array[Int] = null
 
@@ -39,167 +43,102 @@ class VehicleCapacity(routes:ChangingSeqValue,
 
   def saveCheckpoint(newCheckpoint:IntSequence){
     checkpoint = newCheckpoint
-    for(vehicle <- changedVehiclesSinceCheckpoint){
-      isVehicleChangedSinceCheckpoint(vehicle) = false
+    for(vehicle <- changedVehiclesSinceCheckpoint.indicesAtTrue){
       doPrecomputeAtCheckpoint(vehicle)
       violationsAtCheckpoint(vehicle) = violation(vehicle).newValue
       contentAtEndOfVehicleRouteAtCheckpoint(vehicle) = contentAtEndOfVehicleRoute(vehicle).newValue
     }
-    changedVehiclesSinceCheckpoint = null
+    changedVehiclesSinceCheckpoint.all = false
   }
 
   def restoreCheckpoint(){
-    for(vehicle <- changedVehiclesSinceCheckpoint){
-      isVehicleChangedSinceCheckpoint(vehicle) = false
+    for(vehicle <- changedVehiclesSinceCheckpoint.indicesAtTrue){
       violation(vehicle) := violationsAtCheckpoint(vehicle)
       contentAtEndOfVehicleRoute(vehicle) := contentAtEndOfVehicleRouteAtCheckpoint(vehicle)
     }
-    changedVehiclesSinceCheckpoint = null
+    changedVehiclesSinceCheckpoint.all = false
   }
 
   def recordTouchedVehicleSinceCheckpoint(vehicle:Int){
-    if(!isVehicleChangedSinceCheckpoint(vehicle)){
-      isVehicleChangedSinceCheckpoint(vehicle) = true
-      changedVehiclesSinceCheckpoint = QList(vehicle,changedVehiclesSinceCheckpoint)
-    }
+    changedVehiclesSinceCheckpoint(vehicle) = true
   }
 
   def addToReachCount(level:Int,addTo:RedBlackTreeMap[Int]):RedBlackTreeMap[Int] = {
     addTo.insert(level,addTo.getOrElse(level,0))
   }
 
-  def integralOfAboveThreshold(numberOfOccurrences:RedBlackTreeMap[Int],threshold:Int):Int = {
-    var integral = 0
-    var width = 0
-    var positionOfIntegrator = Int.MaxValue
-    var nextPosition = numberOfOccurrences.biggestPosition
+  /**
+   * computes the integral on x of(toFunction(x) - fromFunction(x)) with x in [minValueIncluded, maxValueIncluded]
+   * @param fromFunction
+   * @param toFunction
+   * @param minValueIncluded
+   * @param maxValueIncluded
+   * @return
+   */
+  def computeIntegralInBounds(fromFunction:RedBlackTreeMap[Int], toFunction:RedBlackTreeMap[Int], minValueIncluded:Int,maxValueIncluded:Int):Int = {
+    //the integral goes from high to low values
 
-    while(nextPosition match{
-      case None => false
-      case Some(position) =>
-        val newPivot = position.key
-        if(newPivot < threshold) false
-        else{
-          integral += width * (positionOfIntegrator - newPivot)
-          width += position.value
-          positionOfIntegrator = newPivot
-          nextPosition = position.prev
-          true
-        }
-    }){}
-    //finished, we just need to close with the width
-    integral += (positionOfIntegrator - threshold) * width
-    integral
-  }
+    @inline
+    def stepIntegral(nextPositionOnFromOpt:Option[RedBlackTreeMapExplorer[Int]], nextPositionOnToOpt:Option[RedBlackTreeMapExplorer[Int]],
+                     positionOfIntegrator:Int, width:Int, acc:Int,
+                     deltaWidth:Int, pivotValue:Int):Int = {
 
-  def integralOfFreeSpaceBelowThreshold(numberOfOccurrences:RedBlackTreeMap[Int],threshold:Int,maxWidth:Int):Int = {
-    var integral = 0
-    var width = 0
-    var positionOfIntegrator = Int.MaxValue
-    var nextPosition = numberOfOccurrences.biggestPosition
-
-    while(nextPosition match{
-      case None => false
-      case Some(position) =>
-        val newPivot = position.key
-        if(newPivot < threshold) {
-          if (positionOfIntegrator > threshold) {
-            integral += width * (threshold - newPivot)
-          } else {
-            integral += width * (positionOfIntegrator - newPivot)
-          }
-        }
-        width -= position.value
-        positionOfIntegrator = newPivot
-        nextPosition = position.prev
-        width > 0 //continue if not full width reached
-    }){}
-    integral
-  }
-
-  def integralOfDeltaAboveThreshold(integralFrom:RedBlackTreeMap[Int],
-                                    integralTo:RedBlackTreeMap[Int],
-                                    threshold:Int):Int = {
-    integralOfAboveThreshold(integralTo,threshold) - integralOfAboveThreshold(integralFrom,threshold)
-  }
-
-  def integralOfBetweenThresholds(numberOfOccurrences:RedBlackTreeMap[Int],
-                                  lowerThresholdIncluded:Int,
-                                  higherThresholdIncluded:Int):Int = {
-
-    var integral = 0
-    var width = 0
-    var positionOfIntegrator = Int.MaxValue
-    var nextPosition = numberOfOccurrences.biggestPosition
-
-    while(nextPosition match{
-      case None =>
-        if(positionOfIntegrator > lowerThresholdIncluded){
-          //need to add something
-          if(positionOfIntegrator > higherThresholdIncluded){
-            assert(integral == 0)
-            integral = width * (higherThresholdIncluded - lowerThresholdIncluded + 1)
-          }else{
-            integral += width * (positionOfIntegrator - lowerThresholdIncluded + 1)
-          }
-        }
-        false
-      case Some(position) =>
-        val newPivot = position.key
-        val addedWidth = position.value
-        if(newPivot > higherThresholdIncluded){
-          //integration has not started and will not start this time
-          width += addedWidth
-          positionOfIntegrator = newPivot
-          nextPosition = position.prev
-          true
-        }else if (newPivot >= lowerThresholdIncluded){
-          //we are integrating and not ending
-          if(positionOfIntegrator > higherThresholdIncluded){
-            //we start the integration now
-            assert(integral == 0)
-            integral = width * (higherThresholdIncluded - newPivot)
-          }else{
-            //integration had already started
-            integral += width * (positionOfIntegrator - newPivot)
-          }
-          width += addedWidth
-          positionOfIntegrator = newPivot
-          nextPosition = position.prev
-          true
+      if(pivotValue > maxValueIncluded) {
+        //this pivot is still above the integration box
+        require(acc == 0)
+        computeIntegralInBoundsOptFromOptTo(nextPositionOnFromOpt,nextPositionOnToOpt, pivotValue, width + deltaWidth, acc)
+      }else{
+        //this pivot is below or equal to the maxValueIncluded
+        val valueAboveIncluded = if(positionOfIntegrator > maxValueIncluded) maxValueIncluded else positionOfIntegrator
+        if(pivotValue >= minValueIncluded) {
+          //just a square added, and carry on
+          computeIntegralInBoundsOptFromOptTo(nextPositionOnFromOpt,nextPositionOnToOpt, pivotValue, width + deltaWidth,
+            acc + (valueAboveIncluded - pivotValue) * width)
         }else{
-          //strictly below integration threshold
-          //finish the integration
-
-          if(positionOfIntegrator > higherThresholdIncluded){
-            //we had not started integrating yet, so integrate one step and done
-            integral = width * (higherThresholdIncluded - lowerThresholdIncluded + 1)
-          }else{
-            assert(positionOfIntegrator > lowerThresholdIncluded)
-            //we were integrating, so integration must be closed
-            integral += width * (positionOfIntegrator - lowerThresholdIncluded + 1)
-          }
-
-          false
+          //add a square and finish
+          acc + (valueAboveIncluded - minValueIncluded + 1) * width
         }
-    }){}
+      }
+    }
 
-    assert(integral == integralOfAboveThreshold(numberOfOccurrences,higherThresholdIncluded)
-      - integralOfAboveThreshold(numberOfOccurrences,lowerThresholdIncluded))
+    def computeIntegralInBoundsOptFromOptTo(nextPositionOnFromOpt:Option[RedBlackTreeMapExplorer[Int]],
+                                            nextPositionOnToOpt:Option[RedBlackTreeMapExplorer[Int]],
+                                            positionOfIntegrator:Int, width:Int, acc:Int):Int = {
+      (nextPositionOnToOpt, nextPositionOnFromOpt) match {
+        case (None, None) =>
+          if(positionOfIntegrator >= maxValueIncluded){
+            acc + width * (minValueIncluded - maxValueIncluded + 1)
+          }else if (positionOfIntegrator >= minValueIncluded){
+            acc + width * (positionOfIntegrator - minValueIncluded + 1)
+          }else{
+            acc
+          }
+        case (Some(nextPositionOnFrom), None) =>
+          stepIntegral(
+            nextPositionOnFrom.prev, nextPositionOnToOpt, positionOfIntegrator, width, acc,
+            -nextPositionOnFrom.value, nextPositionOnFrom.key)
+        case (None, Some(nextPositionOnTo)) =>
+          stepIntegral(
+            nextPositionOnFromOpt, nextPositionOnTo.prev, positionOfIntegrator,width, acc,
+            nextPositionOnTo.value, nextPositionOnTo.key)
+        case (Some(nextPositionOnFrom), Some(nextPositionOnTo)) =>
+          if(nextPositionOnFrom.key == nextPositionOnTo.key)
+            stepIntegral(
+              nextPositionOnFrom.prev, nextPositionOnTo.prev, positionOfIntegrator, width, acc,
+              nextPositionOnTo.value - nextPositionOnFrom.value,
+              nextPositionOnTo.key)
+          else if(nextPositionOnFrom.key < nextPositionOnTo.key)
+            stepIntegral(
+              nextPositionOnFromOpt, nextPositionOnTo.prev, positionOfIntegrator, width, acc,
+              nextPositionOnTo.value, nextPositionOnTo.key)
+          else
+            stepIntegral(
+              nextPositionOnFrom.prev, nextPositionOnToOpt, positionOfIntegrator, width, acc,
+              -nextPositionOnFrom.value, nextPositionOnFrom.key)
+      }
+    }
 
-    integral
-  }
-
-  def integralOfDeltaBetweenThresholds(integralFrom:RedBlackTreeMap[Int],
-                                       integralTo:RedBlackTreeMap[Int],
-                                       lowerThresholdIncluded:Int,higherThresholdIncluded:Int):Int = {
-    val toReturn =
-      (integralOfBetweenThresholds(integralTo, lowerThresholdIncluded, higherThresholdIncluded) -
-        integralOfBetweenThresholds(integralFrom,lowerThresholdIncluded, higherThresholdIncluded))
-
-    assert(toReturn == integralOfDeltaAboveThreshold(integralFrom,integralTo, higherThresholdIncluded) -
-      integralOfDeltaAboveThreshold(integralFrom, integralTo, lowerThresholdIncluded))
-    toReturn
+    computeIntegralInBoundsOptFromOptTo(fromFunction.biggestPosition,toFunction.biggestPosition, Int.MaxValue, 0, 0)
   }
 
   def doPrecomputeAtCheckpoint(vehicle:Int){
@@ -241,6 +180,12 @@ class VehicleCapacity(routes:ChangingSeqValue,
     }
   }
 
+  /**
+   *
+   * @param seq
+   * @param vehicle
+   * @return (the violation of the vehicle; the content of the vehicle when returning to its home)
+   */
   def computeViolationFromScratchNoPrecompute(seq:IntSequence,vehicle:Int):(Int,Int) = {
 
     var viol = 0
@@ -309,27 +254,36 @@ class VehicleCapacity(routes:ChangingSeqValue,
   }
 
   override def notifySeqChanges(v: ChangingSeqValue, d: Int, changes: SeqUpdate) {
-    if(!digestUpdates(changes,false)) {
+    if(!digestUpdates(changes)) {
       for(v <- 0 until this.v) recordTouchedVehicleSinceCheckpoint(v)
       computeAndAffectViolationsFromScratch(changes.newValue)
     }
   }
 
-  private def digestUpdates(changes:SeqUpdate,skipNewCheckpoints:Boolean):Boolean = {
+  private def digestUpdates(changes:SeqUpdate):Boolean = {
     changes match {
-      case SeqUpdateDefineCheckpoint(prev:SeqUpdate,isActive:Boolean) =>
-        if(!digestUpdates(prev,true)){
-          computeAndAffectViolationsFromScratch(changes.newValue)
+      case SeqUpdateDefineCheckpoint(prev:SeqUpdate,isActive:Boolean, checkpointLevel) =>
+        if(checkpointLevel == 0) {
+          if (!digestUpdates(prev)) {
+            computeAndAffectViolationsFromScratch(changes.newValue)
+          }
+          saveCheckpoint(changes.newValue)
+          true
+        }else{
+          digestUpdates(prev)
         }
-        saveCheckpoint(changes.newValue)
-        true
-      case SeqUpdateRollBackToCheckpoint(checkpoint:IntSequence) =>
-        require (checkpoint quickEquals checkpoint)
-        restoreCheckpoint()
-        true
+      case r@SeqUpdateRollBackToCheckpoint(checkpoint:IntSequence,checkpointLevel) =>
+        if(checkpointLevel == 0) {
+          require(checkpoint quickEquals checkpoint)
+
+          restoreCheckpoint()
+          true
+        }else{
+          digestUpdates(r.howToRollBack)
+        }
       //TODO: handle the double Insert by supporting deltas on precomputations
       case SeqUpdateInsert(value : Int, pos : Int, prev : SeqUpdate) =>
-        if(!digestUpdates(prev,skipNewCheckpoints)) return false
+        if(!digestUpdates(prev)) return false
         val newSeq = changes.newValue
         //on which vehicle did we insert?
 
@@ -341,7 +295,7 @@ class VehicleCapacity(routes:ChangingSeqValue,
           return true //no impact, actually
         }
 
-        if(!isVehicleChangedSinceCheckpoint(vehicle)){
+        if(!changedVehiclesSinceCheckpoint(vehicle)){
           //we can evaluate incrementally
           recordTouchedVehicleSinceCheckpoint(vehicle)
 
@@ -414,12 +368,12 @@ class VehicleCapacity(routes:ChangingSeqValue,
       case x@SeqUpdateMove(fromIncluded : Int, toIncluded : Int, after : Int, flip : Boolean, prev : SeqUpdate) =>
         //on which vehicle did we move?
         //also from --> to cannot include a vehicle start.
-        if(!digestUpdates(prev,skipNewCheckpoints)) false
+        if(!digestUpdates(prev)) false
         else if(x.isNop) true
         else if(x.isSimpleFlip){
           val vehicle = vehicleSearcher(prev.newValue, fromIncluded)
 
-          if(isVehicleChangedSinceCheckpoint(vehicle)){
+          if(changedVehiclesSinceCheckpoint(vehicle)){
             //from scratch procedure
 
 
@@ -469,7 +423,7 @@ class VehicleCapacity(routes:ChangingSeqValue,
         //on which vehicle did we insert?
         val removedValue = x.removedValue
         //node cost to be considered
-        if(!digestUpdates(prev,skipNewCheckpoints)) return false
+        if(!digestUpdates(prev)) return false
 
 
         true
@@ -482,5 +436,13 @@ class VehicleCapacity(routes:ChangingSeqValue,
     }
   }
 
+
+  override def checkInternals(c : Checker) : Unit = {
+    for(v <- vehicles){
+      val (viol,contentAtEnd) = computeViolationFromScratchNoPrecompute(routes.value,v)
+      c.check(violation(v).value == viol, Some("Error on violation of vehicle " + v + " expected:" + viol + " actual output:" + violation(v).value))
+      c.check(contentAtEndOfVehicleRoute(v).value == contentAtEnd, Some("Error on content at end of vehicle route v:" + v + " expected:" + contentAtEnd + " actual output:" + contentAtEndOfVehicleRoute(v).value))
+    }
+  }
 }
 */

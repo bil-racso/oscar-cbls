@@ -19,6 +19,7 @@ import oscar.cbls.algo.quick.QList
 import oscar.cbls.algo.seq.functional.IntSequence
 import oscar.cbls.invariants.core.computation._
 import oscar.cbls.invariants.core.propagation.Checker
+import oscar.cbls.invariants.lib.routing.convention.RoutingConventionMethods
 
 import scala.collection.immutable.SortedSet
 
@@ -62,6 +63,7 @@ class NodeOfVehicle(routes:ChangingSeqValue,
 
   private val savedValues:Array[SortedSet[Int]] = null
   private var savedCheckpoint:IntSequence = null
+  //TODO: use magic array here
   private val movedNodesSinceCheckpointArray:Array[Boolean] = Array.fill(n)(false)
   private var movedNodesSinceCheckpointList:QList[Int] = null
   private val vehicleOfNodeAtCheckpointForMovedPoints:Array[Int] = Array.fill(n)(0)
@@ -102,7 +104,7 @@ class NodeOfVehicle(routes:ChangingSeqValue,
           val targetVehicleOfMove = RoutingConventionMethods.searchVehicleReachingPosition(after,oldValue,v)
           if(vehicleOfMovedSegment != targetVehicleOfMove){
             //we moved all the points to another vehicle
-            for(movedValue <- x.movedValues) {
+            for(movedValue <- x.movedValuesQList) {
               nodesOfVehicleOrUnrouted(vehicleOfMovedSegment) :-= movedValue
               nodesOfVehicleOrUnrouted(targetVehicleOfMove) :+= movedValue
               recordMovedPoint(movedValue, vehicleOfMovedSegment, targetVehicleOfMove)
@@ -126,18 +128,28 @@ class NodeOfVehicle(routes:ChangingSeqValue,
         false //impossible to go incremental
       case SeqUpdateLastNotified(value:IntSequence) =>
         true //we are starting from the previous value
-      case SeqUpdateDefineCheckpoint(prev,activeCheckpoint) =>
-        if(!digestUpdates(prev)) {
-          affect(computeValueFromScratch(changes.newValue))
+      case SeqUpdateDefineCheckpoint(prev,isStarMode,checkpointLevel) =>
+        if(checkpointLevel == 0) {
+          if (!digestUpdates(prev)) {
+            affect(computeValueFromScratch(changes.newValue))
+          }
+          saveCurrentCheckpoint(prev.newValue)
+          true
+        }else{
+          //we do not handle other checkpoint, so ignore declaration
+          digestUpdates(prev)
         }
-        saveCurrentCheckpoint(prev.newValue)
-        true
-      case SeqUpdateRollBackToCheckpoint(checkpoint) =>
+      case r@SeqUpdateRollBackToCheckpoint(checkpoint,checkpointLevel) =>
+
         if(checkpoint == null) false //it has been dropped following a Set
         else {
-          require(checkpoint quickEquals savedCheckpoint)
-          restoreCheckpoint()
-          true
+          if(checkpointLevel == 0) {
+            require(checkpoint quickEquals savedCheckpoint)
+            restoreCheckpoint()
+            true
+          }else{
+            digestUpdates(r.howToRollBack)
+          }
         }
     }
   }

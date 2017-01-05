@@ -98,7 +98,7 @@ class Successors(sequence:ChangingSeqValue, successorValues:Array[CBLSSetVar])
               Some(impactedValues
                 ++ changes.newValue.predecessorPos2Val(fromIncluded)
                 ++ changes.newValue.valueAtPosition(after)
-                ++ oldSeq.valuesBetweenPositions(fromIncluded, toIncluded))
+                ++ oldSeq.valuesBetweenPositionsQList(fromIncluded, toIncluded))
             }else{
               Some(impactedValues ++
                 changes.newValue.predecessorPos2Val(fromIncluded) +
@@ -115,10 +115,10 @@ class Successors(sequence:ChangingSeqValue, successorValues:Array[CBLSSetVar])
             Some(impactedValues + r.removedValue ++ oldSeq.predecessorPos2Val(position))
         }
 
-      case u@SeqUpdateRollBackToCheckpoint(checkpoint) =>
+      case u@SeqUpdateRollBackToCheckpoint(checkpoint,checkpointLevel) =>
         computeImpactedValues(u.howToRollBack)
 
-      case SeqUpdateDefineCheckpoint(prev:SeqUpdate,isActive) =>
+      case SeqUpdateDefineCheckpoint(prev:SeqUpdate,isActive,checkpointLevel) =>
         computeImpactedValues(prev)
 
       case SeqUpdateLastNotified(value) =>

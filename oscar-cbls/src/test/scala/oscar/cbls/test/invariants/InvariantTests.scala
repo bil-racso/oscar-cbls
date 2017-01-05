@@ -23,7 +23,7 @@ import org.scalatest.prop.Checkers
 import oscar.cbls.constraints.lib.basic.{BelongsTo, EQ, G, GE, L, LE, NE}
 import oscar.cbls.constraints.lib.global.{AllDiff, AtLeast, AtMost, MultiKnapsack, Sequence}
 import oscar.cbls.invariants.core.computation
-import oscar.cbls.invariants.core.computation.CBLSIntVar
+import oscar.cbls.invariants.core.computation.{ChangingIntValue, ChangingSeqValue, IntValue, CBLSIntVar}
 import oscar.cbls.invariants.lib.logic.{DenseCount, Elements, Filter, IntElement, IntITE, SelectLEHeapHeap, SetElement, _}
 import oscar.cbls.invariants.lib.minmax.{ArgMax, ArgMin, Max2, MaxArray, MaxLin, MaxSet, Min2, MinArray, MinLin, MinSet}
 import oscar.cbls.invariants.lib.numeric.{Abs, Div, Minus, Mod, Prod, Prod2, ProdElements, RoundUpModulo, Step, Sum, Sum2, SumElements}
@@ -645,7 +645,159 @@ class InvariantTests extends FunSuite with Checkers {
     VehicleOfNodes(route,v)
     bench.run()
   }
-  
+
+
+  test("GenericCumulativeIntegerDimensionOnVehicle"){
+    val bench = new InvBench(verbose,List(PlusOne(), MinusOne(), ToZero(), ToMin(), ToMax(), Random(), RandomDiff(), Shuffle()))
+    val n = 100
+    val v = 5
+    val route = bench.genRouteOfNodes(n,v)
+
+    val limite = 10
+    def genMatrix(node:Int):Array[Array[Int]] = {
+      val init = Int.MinValue
+      val matrix: Array[Array[Int]] = Array.tabulate(n,n)((n1:Int,n2:Int)=>init)
+      for (elt <- 0 until node) {
+        for (elt1 <- 0 until node) {
+          matrix(elt)(elt1) =  if(elt==elt1) 0 else scala.util.Random.nextInt(limite)
+        }
+      }
+      matrix
+    }
+    val matrix = genMatrix(n)
+    def genOperation(node:Int):Array[Array[Int]] = {
+      val oper: Array[Array[Int]] = Array.ofDim(n,n)
+      var t1:Array[Int] =Array.ofDim(n)
+      for (elt <- 0 until node) {
+        for (elt1 <- 0 until node) {
+          oper(elt)(elt1) =  if(matrix(elt)(elt1)==0) scala.util.Random.nextInt(3) else scala.util.Random.nextInt(4)
+        }
+      }
+      oper
+    }
+
+    val oper = genOperation(n)
+    def op(n1:Int,n2:Int,c:Int): Int= {
+      oper(n1)(n2) match {
+        case 0 => c + matrix(n1)(n2)
+        case 1 => c - matrix(n1)(n2)
+        case 2 => c * matrix(n1)(n2)
+        case 3 => c % matrix(n1)(n2)
+      }
+    }
+
+    def start() : Array[IntValue]= { Array.tabulate(v)((car:Int)=> scala.util.Random.nextInt(limite))}
+    val  s = start()
+    val inv = ForwardCumulativeIntegerDimensionOnVehicle(route,n,v,op,s,-1)
+
+    bench.run()
+  }
+
+  test("GenericCumulativeIntegerDimensionOnVehicleWithVar"){
+    val bench = new InvBench(verbose,List(PlusOne(), MinusOne(), ToZero(), ToMin(), ToMax(), Random(), RandomDiff(), Shuffle()))
+    val n = 100
+    val v = 5
+    val route = bench.genRouteOfNodes(n,v)
+    val contentAtStart = bench.genIntVarsArray(v)
+
+    val limite = 10
+    def genMatrix(node:Int):Array[Array[Int]] = {
+      val init = Int.MinValue
+      val matrix: Array[Array[Int]] = Array.tabulate(n,n)((n1:Int,n2:Int)=>init)
+      for (elt <- 0 until node) {
+        for (elt1 <- 0 until node) {
+          matrix(elt)(elt1) =  if(elt==elt1) 0 else scala.util.Random.nextInt(limite)
+        }
+      }
+      matrix
+    }
+    val matrix = genMatrix(n)
+    def genOperation(node:Int):Array[Array[Int]] = {
+      val oper: Array[Array[Int]] = Array.ofDim(n,n)
+      var t1:Array[Int] =Array.ofDim(n)
+      for (elt <- 0 until node) {
+        for (elt1 <- 0 until node) {
+          oper(elt)(elt1) =  if(matrix(elt)(elt1)==0) scala.util.Random.nextInt(3) else scala.util.Random.nextInt(4)
+        }
+      }
+      oper
+    }
+
+    val oper = genOperation(n)
+    def op(n1:Int,n2:Int,c:Int): Int= {
+      oper(n1)(n2) match {
+        case 0 => c + matrix(n1)(n2)
+        case 1 => c - matrix(n1)(n2)
+        case 2 => c * matrix(n1)(n2)
+        case 3 => c % matrix(n1)(n2)
+      }
+    }
+
+    def start() : Array[CBLSIntVar]= { Array.tabulate(v)((car:Int)=> CBLSIntVar(route.model,op(car,car,0)))}
+    val  s = start()
+
+    var inv = ForwardCumulativeIntegerDimensionOnVehicle(route,n,v,op,contentAtStart,defaultForUnroutedNodes= -1,maxContent = 6)
+
+    val go = System.nanoTime()
+    bench.run()
+    print("GenericCumulativeIntegerDimensionOnVehicleWithVar(n ="+n+" v ="+v+") : "+((System.nanoTime()-go)/Math.pow(10,9))+" s")
+  }
+
+  test("GenericCumulativeConstraint"){
+    val bench = new InvBench(verbose,List(PlusOne(), MinusOne(), ToZero(), ToMin(), ToMax(), Random(), RandomDiff(), Shuffle()))
+    val n = 100
+    val v = 5
+    val route = bench.genRouteOfNodes(n,v)
+
+
+    val limite = 10
+    def genMatrix(node:Int):Array[Array[Int]] = {
+      val init = Int.MinValue
+      val matrix: Array[Array[Int]] = Array.tabulate(n,n)((n1:Int,n2:Int)=>init)
+      for (elt <- 0 until node) {
+        for (elt1 <- 0 until node) {
+          matrix(elt)(elt1) =  if(elt==elt1) 0 else scala.util.Random.nextInt(limite)
+        }
+      }
+      matrix
+    }
+    val matrix = genMatrix(n)
+    def genOperation(node:Int):Array[Array[Int]] = {
+      val oper: Array[Array[Int]] = Array.ofDim(n, n)
+      var t1:Array[Int] =Array.ofDim(n)
+      for (elt <- 0 until node) {
+        for (elt1 <- 0 until node) {
+          oper(elt)(elt1) =  if(matrix(elt)(elt1)==0) scala.util.Random.nextInt(3) else scala.util.Random.nextInt(4)
+        }
+      }
+      oper
+    }
+
+    val oper = genOperation(n)
+    def op(n1:Int,n2:Int,c:Int): Int= {
+      oper(n1)(n2) match {
+        case 0 => c + matrix(n1)(n2)
+        case 1 => c - matrix(n1)(n2)
+        case 2 => c * matrix(n1)(n2)
+        case 3 => c % matrix(n1)(n2)
+      }
+    }
+
+    def start() : Array[Int]= { Array.tabulate(v)((car:Int)=> scala.util.Random.nextInt(limite))}
+    val  s = start()
+
+    val inv = ForwardCumulativeConstraintOnVehicle(route,n,v,op,limite,s,
+      maxCheckpointLevel = 2,
+      maxStack = 1,
+      capacityName = "test capacity"
+    )
+
+
+    val go = System.nanoTime()
+    bench.run()
+    println("GenericCumulativeConstraint(n ="+n+" v ="+v+") : "+((System.nanoTime()-go)/Math.pow(10,9)) + "s")
+  }
+
   // ---- checkpoint Tests ---- //
 
   test("Star exploration"){

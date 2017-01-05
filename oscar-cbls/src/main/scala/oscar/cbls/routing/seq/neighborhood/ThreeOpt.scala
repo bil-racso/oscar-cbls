@@ -27,6 +27,7 @@
 
 package oscar.cbls.routing.seq.neighborhood
 
+import oscar.cbls.algo.quick.QList
 import oscar.cbls.algo.search.{HotRestart, Pairs}
 import oscar.cbls.routing.seq.model.VRP
 import oscar.cbls.search.core.EasyNeighborhood
@@ -68,7 +69,7 @@ case class ThreeOpt(potentialInsertionPoints:()=>Iterable[Int], //must be routed
 
     def evalObjAndRollBack() : Int = {
       val a = obj.value
-      seq.rollbackToCurrentCheckpoint(seqValue)
+      seq.rollbackToTopCheckpoint(seqValue)
       a
     }
 
@@ -112,7 +113,7 @@ case class ThreeOpt(potentialInsertionPoints:()=>Iterable[Int], //must be routed
                   doMove(insertionPosition, segmentStartPosition, segmentEndPosition, false)
 
                   if (evaluateCurrentMoveObjTrueIfStopRequired(evalObjAndRollBack())) {
-                    seq.releaseCurrentCheckpointAtCheckpoint()
+                    seq.releaseTopCheckpoint()
                     startIndice = insertionPoint + 1
                     return
                   }
@@ -124,7 +125,7 @@ case class ThreeOpt(potentialInsertionPoints:()=>Iterable[Int], //must be routed
                   doMove(insertionPosition, segmentStartPosition, segmentEndPosition, true)
 
                   if (evaluateCurrentMoveObjTrueIfStopRequired(evalObjAndRollBack())) {
-                    seq.releaseCurrentCheckpointAtCheckpoint()
+                    seq.releaseTopCheckpoint()
                     startIndice = insertionPoint + 1
                     segmentStartPositionForInstantiation = -1
                     return
@@ -135,7 +136,7 @@ case class ThreeOpt(potentialInsertionPoints:()=>Iterable[Int], //must be routed
           }
       }
     }
-    seq.releaseCurrentCheckpointAtCheckpoint()
+    seq.releaseTopCheckpoint()
     segmentStartPositionForInstantiation = -1
   }
 
@@ -176,7 +177,7 @@ case class ThreeOptMove(segmentStartPosition:Int,
                         override val neighborhoodName:String = "ThreeOptMove")
   extends VRPSMove(objAfter, neighborhood, neighborhoodName,neighborhood.vrp){
 
-  override def impactedPoints: Iterable[Int] = neighborhood.vrp.routes.value.valuesBetweenPositions(segmentStartPosition,segmentEndPosition) + insertionPoint
+  override def impactedPoints: Iterable[Int] = QList(insertionPoint,neighborhood.vrp.routes.value.valuesBetweenPositionsQList(segmentStartPosition,segmentEndPosition))
 
   // overriding methods
   override def commit() {

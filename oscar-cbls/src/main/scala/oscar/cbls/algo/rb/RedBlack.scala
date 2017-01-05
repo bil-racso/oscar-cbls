@@ -105,10 +105,29 @@ trait RedBlackTreeMap[@specialized(Int) V]{
 
   def positionOf(k: Int):Option[RedBlackTreeMapExplorer[V]]
   protected[rb] def positionOfAcc(k:Int,positionAcc:QList[(T[V],Boolean)]):Option[RedBlackTreeMapExplorer[V]]
+
+  def anyValue:Option[V]
+
+  /**
+   * updates a set of values in the tree, designated by an interval on the keys
+   * there is a requirement that the deltaKey must not transform a key in the interval in such a way
+   * that it becomes bigger or smaller than a key out of te interval if it was not the case before the transformation
+   * this is to keep an identical structure of the tree, and maintain the same r/b colouring and balancing of the tree.
+   * this ensures that this method is somehow fast.
+   *
+   * @param fromKeyIncluded the start of the interval defining the set of keys to update
+   * @param toKeyIncluded the end of the interval defining the set of keys to update
+   * @param deltaKey the delata to apply to the keys in the interval
+   * @param transform the transform to apply on the values stored in the transformed interval
+   * @return a new updated balanced rb tree
+   */
+  def update(fromKeyIncluded:Int,toKeyIncluded:Int,deltaKey:Int,transform:(V=>V)):RedBlackTreeMap[V]
 }
 
 // A leaf node.
 case class L[@specialized(Int) V]() extends RedBlackTreeMap[V]  {
+
+  def anyValue:Option[V] = None
 
   def get(k : Int) : Option[V] = None
 
@@ -166,6 +185,8 @@ case class L[@specialized(Int) V]() extends RedBlackTreeMap[V]  {
   override def biggestPosition:Option[RedBlackTreeMapExplorer[V]] = None
 
   override def smallestPosition:Option[RedBlackTreeMapExplorer[V]] = None
+
+  override def update(fromKeyIncluded : Int, toKeyIncluded : Int, deltaKey : Int, transform : (V) => V) : RedBlackTreeMap[V] = this
 }
 
 object T{
@@ -174,7 +195,7 @@ object T{
   }
 
   def apply[V](c : Boolean, l : RedBlackTreeMap[V], k : Int, v : Option[V], r : RedBlackTreeMap[V]) =
-  new T(c,l,k,v,r)
+    new T(c,l,k,v,r)
 }
 
 // A tree node.
@@ -184,6 +205,8 @@ class T[@specialized(Int) V](private[this]val c : Boolean,
                              private[this] val v : Option[V],
                              private[this] val r : RedBlackTreeMap[V])
   extends RedBlackTreeMap[V] {
+
+  def anyValue:Option[V] = v
 
   def unapply = Some(c,l,k,v,r)
 
@@ -307,6 +330,37 @@ class T[@specialized(Int) V](private[this]val c : Boolean,
     }
   }
 
+  override def update(fromKeyIncluded : Int, toKeyIncluded : Int, deltaKey : Int, transform : (V) => V) : RedBlackTreeMap[V] = {
+    val newLeft = if(fromKeyIncluded < k) {
+      l.update(fromKeyIncluded, toKeyIncluded, deltaKey, transform)
+    }else{
+      l
+    }
+    val newRight = if(k < toKeyIncluded){
+      r.update(fromKeyIncluded,toKeyIncluded,deltaKey,transform)
+    }else{
+      r
+    }
+    if(fromKeyIncluded <= k && k <= toKeyIncluded){
+      //this one must be transformed as well
+      new T(c,
+        newLeft,
+        k + deltaKey,
+        Some(transform(v.get)),
+        newRight)
+    }else{
+      //this one does not need transform
+      if(newLeft == l && newRight == r){
+        this
+      }else{
+        new T(c,
+          newLeft,
+          k ,
+          v,
+          newRight)
+      }
+    }
+  }
 }
 
 // A helper object.
@@ -326,14 +380,14 @@ object RedBlackTreeMap {
 
 
   /**
-    * make the red black tree out of already sorted couples (key,value)
-    * they must be sorted by increasing order of key, and a key can only be present once.
-    * There is no check of these properties
-    * This is O(n); thus faster than a n*log(n) if you were building it from unsorted pairs
-    * @param args
-    * @tparam V
-    * @return
-    */
+   * make the red black tree out of already sorted couples (key,value)
+   * they must be sorted by increasing order of key, and a key can only be present once.
+   * There is no check of these properties
+   * This is O(n); thus faster than a n*log(n) if you were building it from unsorted pairs
+   * @param args
+   * @tparam V
+   * @return
+   */
   def makeFromSorted[@specialized(Int) V](args:Iterable [(Int,V)]): RedBlackTreeMap[V] = {
     //root is to be black, beside alternate red and black
     val a = args.toArray
@@ -341,18 +395,43 @@ object RedBlackTreeMap {
     else myMakeFromSorted(a,0,a.length-1,false)
   }
 
+  def makeFromSortedContinuousArray[@specialized V](args:Array[V]):RedBlackTreeMap[V] = {
+    if(args.size == 0) RedBlackTreeMap.empty [V]
+    else myMakeFromContinuousSorted(args, 0, args.length - 1, false)
+  }
+
+  private def myMakeFromContinuousSorted[@specialized(Int) V](args:Array[V],fromIncluded:Int,toIncluded:Int,targetIsRed:Boolean): RedBlackTreeMap[V] = {
+    //root is to be black, beside alternate red and black
+    if(fromIncluded == toIncluded){
+      val value = args(fromIncluded)
+      T(targetIsRed, L(),  fromIncluded, Some(value), L())
+    }else if (fromIncluded + 1 == toIncluded) {
+      val valueL = args(fromIncluded)
+      val valueH = args(toIncluded)
+      T(targetIsRed, T(!targetIsRed, L(),  fromIncluded, Some(valueL), L()),  toIncluded, Some(valueH), L())
+    }else{
+      //there is a middle point
+      val middlePoint = (fromIncluded + toIncluded)/2
+      val left = myMakeFromContinuousSorted(args,fromIncluded,middlePoint-1,!targetIsRed)
+      val right = myMakeFromContinuousSorted(args,middlePoint+1,toIncluded,!targetIsRed)
+      val value = args(middlePoint)
+      T(targetIsRed, left,  middlePoint, Some(value), right)
+    }
+  }
+
+
   /**
-    * make the red black tree out of already sorted couples (key,value)
-    * they must be sorted by increasing order of key, and a key can only be present once.
-    * There is no check of these properties
-    * This is O(n); thus faster than a n*log(n) if you were building it from unsorted pairs
-    * @param args
-    * @tparam V
-    * @return
-    */
+   * make the red black tree out of already sorted couples (key,value)
+   * they must be sorted by increasing order of key, and a key can only be present once.
+   * There is no check of these properties
+   * This is O(n); thus faster than a n*log(n) if you were building it from unsorted pairs
+   * @param args
+   * @tparam V
+   * @return
+   */
   def makeFromSortedArray[@specialized(Int) V](args:Array[(Int,V)]): RedBlackTreeMap[V] = {
     //root is to be black, beside alternate red and black
-    if(args.length <=3) this.apply(args)
+    if(args.length <=1) this.apply(args)
     else myMakeFromSorted(args,0,args.length-1,false)
   }
 

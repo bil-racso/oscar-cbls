@@ -18,6 +18,7 @@ package oscar.cbls.invariants.lib.routing
 import oscar.cbls.algo.seq.functional.{IntSequence, IntSequenceExplorer}
 import oscar.cbls.invariants.core.computation._
 import oscar.cbls.invariants.core.propagation.Checker
+import oscar.cbls.invariants.lib.routing.convention.RoutingConventionMethods
 
 import scala.collection.immutable.SortedSet
 
@@ -101,9 +102,9 @@ class RouteSuccessorAndPredecessors(routes:ChangingSeqValue,
         Some(SortedSet.empty[Int]) //we are starting from the previous value
       case SeqUpdateAssign(value : IntSequence) =>
         None //impossible to go incremental
-      case SeqUpdateDefineCheckpoint(prev:SeqUpdate,_) =>
+      case SeqUpdateDefineCheckpoint(prev:SeqUpdate,_,_) =>
         computeStartValuesOfImpactedZone(prev)
-      case u@SeqUpdateRollBackToCheckpoint(checkpoint:IntSequence) =>
+      case u@SeqUpdateRollBackToCheckpoint(_,_) =>
         computeStartValuesOfImpactedZone(u.howToRollBack)
     }
   }

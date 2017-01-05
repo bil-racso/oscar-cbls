@@ -244,7 +244,8 @@ with SetNotificationTarget{
  */
 case class Diff(left: SetValue, right: SetValue)
   extends SetInvariant(left.value.diff(right.value), left.min to left.max)
-with SetNotificationTarget{
+  with SetNotificationTarget{
+
   require(left != right,"left and right cannot he the same ionstance for Diff")
   registerStaticAndDynamicDependency(left)
   registerStaticAndDynamicDependency(right)

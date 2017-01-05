@@ -45,7 +45,7 @@ case class PickupDeliveryCoupleExchange(pdp: PDP with ClosestNeighbors,
 
     def evalObjAndRollBack() : Int = {
       val a = obj.value
-      seq.rollbackToCurrentCheckpoint(seqValue)
+      seq.rollbackToTopCheckpoint(seqValue)
       a
     }
 
@@ -82,9 +82,9 @@ case class PickupDeliveryCoupleExchange(pdp: PDP with ClosestNeighbors,
                       exchange(5), exchange(6), exchange(7),
                       exchange(8), exchange(9))
                     if (evaluateCurrentMoveObjTrueIfStopRequired(evalObjAndRollBack())) {
-                      seq.releaseCurrentCheckpointAtCheckpoint()
-                      seq.releaseCurrentCheckpointAtCheckpoint()
-                      seq.releaseCurrentCheckpointAtCheckpoint()
+                      seq.releaseTopCheckpoint()
+                      seq.releaseTopCheckpoint()
+                      seq.releaseTopCheckpoint()
                       //startIndice = insertionPoint + 1
                       return
                     }
@@ -96,7 +96,7 @@ case class PickupDeliveryCoupleExchange(pdp: PDP with ClosestNeighbors,
         }
       }
     }
-    seq.releaseCurrentCheckpointAtCheckpoint()
+    seq.releaseTopCheckpoint()
   }
 
   def doMove(firstRoute: Int, firstPickup: Int, firstDelivery: Int,

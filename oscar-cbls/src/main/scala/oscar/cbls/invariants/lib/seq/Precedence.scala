@@ -15,11 +15,12 @@ package oscar.cbls.invariants.lib.seq
   * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
   ******************************************************************************/
 
+import oscar.cbls.algo.magicArray.MagicBoolArray
 import oscar.cbls.algo.quick.QList
 import oscar.cbls.algo.seq.functional.IntSequence
 import oscar.cbls.invariants.core.computation._
 import oscar.cbls.invariants.core.propagation.Checker
-import oscar.cbls.invariants.lib.routing.CachedPositionOf
+import oscar.cbls.invariants.lib.routing.convention.CachedPositionOf
 
 import scala.collection.immutable.SortedSet
 
@@ -68,6 +69,7 @@ class Precedence(seq:ChangingSeqValue,
 
   private val isPrecedenceViolated : Array[Boolean] = Array.fill(nbPecedences)(false)
 
+  //TODO: use magic array here
   private val isViolationChangedSinceCheckpoint:Array[Boolean] = Array.fill(nbPecedences)(false)
   private var changedPrecedenceViolationsSinceCheckpoint:QList[Int] = null
   private val savedViolationAtCheckpoint:Array[Boolean] = Array.fill(nbPecedences)(false)
@@ -153,33 +155,43 @@ class Precedence(seq:ChangingSeqValue,
   }
 
   override def notifySeqChanges(v : ChangingSeqValue, d : Int, changes : SeqUpdate) {
-    if (!digestUpdates(changes, false)) {
+    if (!digestUpdates(changes)) {
       //this also updates checkpoint links
       computeAndAffectViolationsFromScratch(changes.newValue)
     }
   }
 
-  private def digestUpdates(changes : SeqUpdate, skipNewCheckpoints : Boolean) : Boolean = {
+  //should always be false when not in use
+  val tmpArrayForDigestUpdate = MagicBoolArray(seq.maxValue+1,false)
+
+  private def digestUpdates(changes : SeqUpdate) : Boolean = {
+    //println("precedence.digestUpdate(" + changes.getClass.getSimpleName + ")")
     changes match {
-      case SeqUpdateDefineCheckpoint(prev : SeqUpdate, isActive : Boolean) =>
+      case null => throw new Error()
+      case SeqUpdateDefineCheckpoint(prev : SeqUpdate, isActive : Boolean, checkpointLevel:Int) =>
         //println("define checkpoint")
-        if(!skipNewCheckpoints) {
-          if(!digestUpdates(prev, true)){
+        if(checkpointLevel == 0){
+          if(!digestUpdates(prev)){
             computeAndAffectViolationsFromScratch(changes.newValue)
           }
           defineCheckpoint(changes.newValue)
           true
         }else{
-          digestUpdates(prev, true)
+          digestUpdates(prev)
         }
-      case x@SeqUpdateRollBackToCheckpoint(rollBackCheckpoint) =>
-        require(checkpoint quickEquals rollBackCheckpoint)
-        reloadViolationsAtCheckpoint()
-        true
+
+      case x@SeqUpdateRollBackToCheckpoint(rollBackCheckpoint, checkpointLevel) =>
+        if(checkpointLevel == 0) {
+          require(checkpoint quickEquals rollBackCheckpoint)
+          reloadViolationsAtCheckpoint()
+          true
+        }else{
+          digestUpdates(x.howToRollBack)
+        }
 
       case SeqUpdateInsert(value : Int, pos : Int, prev : SeqUpdate) =>
 
-        if (!digestUpdates(prev, skipNewCheckpoints)) return false
+        if (!digestUpdates(prev)) return false
 
         var precedencesStartingAtInsertedValue = beforesToPrecedences(value)
         while (precedencesStartingAtInsertedValue != null) {
@@ -223,7 +235,7 @@ class Precedence(seq:ChangingSeqValue,
         true
 
       case x@SeqUpdateRemove(position : Int, prev : SeqUpdate) =>
-        if (!digestUpdates(prev, skipNewCheckpoints)) return false
+        if (!digestUpdates(prev)) return false
         val removedValue = x.removedValue
         cachedPositionFinderAtCheckpoint.savePos(prev.newValue,removedValue,Some(position))
 
@@ -249,7 +261,7 @@ class Precedence(seq:ChangingSeqValue,
         //println("move")
         //on which vehicle did we move?
         //also from --> to cannot include a vehicle start.
-        if (!digestUpdates(prev, skipNewCheckpoints)) false
+        if (!digestUpdates(prev)) false
         else if (x.isNop) true
         else if (x.isSimpleFlip) {
           //this is a simple flip
@@ -260,14 +272,18 @@ class Precedence(seq:ChangingSeqValue,
           //that'w why there is only the loop on precedences considering the precedences started at the flipped values,
           // not the ones ended at the flipped values
 
-          //TODO: making and querying this set costs more-less 1/2 of the run time
-          val valuesInFlip:SortedSet[Int] = prev.newValue.valuesBetweenPositions(fromIncluded,toIncluded)
+          var movedValues = x.movedValuesQList
+          tmpArrayForDigestUpdate.all = false
+          while(movedValues != null) {
+            tmpArrayForDigestUpdate(movedValues.head)
+            movedValues = movedValues.tail
+          }
 
-          for(value <- valuesInFlip){
+          for(value <- movedValues){
             //violations involved in value
             for(precedenceThatShouldOpenAtValue <- this.beforesToPrecedences(value)){
               val endValueOfPrecedence = precedencesArray(precedenceThatShouldOpenAtValue)._2
-              if(valuesInFlip.contains(endValueOfPrecedence)){
+              if(tmpArrayForDigestUpdate(endValueOfPrecedence)){
                 //the violation of this precedence is inverted
                 if(isPrecedenceViolated(precedenceThatShouldOpenAtValue)){
                   //was violated, so flip to false
@@ -410,7 +426,7 @@ class Precedence(seq:ChangingSeqValue,
             case Some(positionOfEndValue) =>
               c.check(isPrecedenceViolated(precedenceID) == (positionOfStartValue > positionOfEndValue),
                 Some("error on violation of precedence " + precedenceID + " considered as violated:" + isPrecedenceViolated(precedenceID)
-              + ":(" + precedencesArray(precedenceID) + ")"))
+                  + ":(" + precedencesArray(precedenceID) + ")"))
               if(isPrecedenceViolated(precedenceID)) nbViol += 1
           }
       }

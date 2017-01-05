@@ -68,7 +68,7 @@ case class InsertPointUnroutedFirst(unroutedNodesToInsert: () => Iterable[Int],
 
     def evalObjAndRollBack() : Int = {
       val a = obj.value
-      seq.rollbackToCurrentCheckpoint(seqValue)
+      seq.rollbackToTopCheckpoint(seqValue)
       a
     }
 
@@ -100,7 +100,7 @@ case class InsertPointUnroutedFirst(unroutedNodesToInsert: () => Iterable[Int],
             doMove(insertedPointForInstantiation, insertAtPositionForInstantiation)
 
             if (evaluateCurrentMoveObjTrueIfStopRequired(evalObjAndRollBack())) {
-              seq.releaseCurrentCheckpointAtCheckpoint()
+              seq.releaseTopCheckpoint()
               startIndice = if (hotRestartOnNextSymmetryClass) {
                 if (iterationSchemeIterator.hasNext)
                   iterationSchemeIterator.next()
@@ -113,7 +113,7 @@ case class InsertPointUnroutedFirst(unroutedNodesToInsert: () => Iterable[Int],
       }
     }
 
-    seq.releaseCurrentCheckpointAtCheckpoint()
+    seq.releaseTopCheckpoint()
     insertAtPositionForInstantiation = -1
   }
 
@@ -157,7 +157,7 @@ case class InsertPointRoutedFirst(insertionPoints:()=>Iterable[Int],
 
     def evalObjAndRollBack() : Int = {
       val a = obj.value
-      seq.rollbackToCurrentCheckpoint(seqValue)
+      seq.rollbackToTopCheckpoint(seqValue)
       a
     }
 
@@ -187,7 +187,7 @@ case class InsertPointRoutedFirst(insertionPoints:()=>Iterable[Int],
             doMove(insertedPointForInstantiation, insertAtPositionForInstantiation)
 
             if (evaluateCurrentMoveObjTrueIfStopRequired(evalObjAndRollBack())) {
-              seq.releaseCurrentCheckpointAtCheckpoint()
+              seq.releaseTopCheckpoint()
               startIndice = pointWhereToInsertAfter + 1
               insertAtPositionForInstantiation = -1
               return
@@ -197,7 +197,7 @@ case class InsertPointRoutedFirst(insertionPoints:()=>Iterable[Int],
 
 
     }
-    seq.releaseCurrentCheckpointAtCheckpoint()
+    seq.releaseTopCheckpoint()
     insertAtPositionForInstantiation = -1
   }
 

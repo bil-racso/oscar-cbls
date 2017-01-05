@@ -20,6 +20,7 @@
 
 package oscar.cbls.invariants.core.computation
 
+import oscar.cbls.algo.distributedStorage.{StorageUtilityManager, DistributedStorageUtility}
 import oscar.cbls.algo.quick.QList
 import oscar.cbls.invariants.core.propagation._
 

@@ -24,7 +24,7 @@
 
 package oscar.cbls.routing.seq.neighborhood
 
-import oscar.cbls.invariants.lib.routing.RoutingConventionMethods
+import oscar.cbls.invariants.lib.routing.convention.{VehicleLocation, RoutingConventionMethods}
 import oscar.cbls.routing.seq.model.VRP
 import oscar.cbls.algo.search.HotRestart
 import oscar.cbls.search.core.EasyNeighborhood
@@ -83,7 +83,7 @@ case class TwoOpt1(segmentStartValues:()=>Iterable[Int],
 
     def evalObjAndRollBack() : Int = {
       val a = obj.value
-      seq.rollbackToCurrentCheckpoint(seqValue)
+      seq.rollbackToTopCheckpoint(seqValue)
       a
     }
 
@@ -95,6 +95,8 @@ case class TwoOpt1(segmentStartValues:()=>Iterable[Int],
 
     val nodesToVehicle = vrp.getVehicleOfAllNodes
 
+    val vehicleSearcher = VehicleLocation(v,seqValue.positionOfAnyOccurrence(_).get)
+
     for (segmentStartValue <- iterationSchemeOnZone if segmentStartValue >= v) {
       assert(vrp.isRouted(segmentStartValue),
         "The search zone should be restricted to routed.")
@@ -103,7 +105,7 @@ case class TwoOpt1(segmentStartValues:()=>Iterable[Int],
       val segmentStartPosition = segmentStartPositionExplorer.position
       val predecessorOfSegmentStartValue = segmentStartPositionExplorer.prev.head.value
 
-      val vehicleReachingSegmentStart = RoutingConventionMethods.searchVehicleReachingPosition(segmentStartPosition,seqValue,v)
+      val vehicleReachingSegmentStart = vehicleSearcher.vehicleReachingPosition(segmentStartPosition)
 
       for (
         segmentEndValue <- relevantNeighborsNow(predecessorOfSegmentStartValue)
@@ -121,7 +123,7 @@ case class TwoOpt1(segmentStartValues:()=>Iterable[Int],
           doMove(segmentStartPosition, segmentEndPosition)
 
           if (evaluateCurrentMoveObjTrueIfStopRequired(evalObjAndRollBack())) {
-            seq.releaseCurrentCheckpointAtCheckpoint()
+            seq.releaseTopCheckpoint()
             startIndice = segmentStartValue + 1
             segmentStartPositionForInstantiate = -1
             return
@@ -129,7 +131,7 @@ case class TwoOpt1(segmentStartValues:()=>Iterable[Int],
         }
       }
     }
-    seq.releaseCurrentCheckpointAtCheckpoint()
+    seq.releaseTopCheckpoint()
     segmentStartPositionForInstantiate = -1
   }
 
@@ -173,11 +175,13 @@ case class TwoOpt2(segmentStartValues:()=>Iterable[Int],
 
     def evalObjAndRollBack() : Int = {
       val a = obj.value
-      seq.rollbackToCurrentCheckpoint(seqValue)
+      seq.rollbackToTopCheckpoint(seqValue)
       a
     }
 
     val relevantNeighborsNow = closeNeighbors()
+    val vehicleSearcher = VehicleLocation(v,seqValue.positionOfAnyOccurrence(_).get)
+
 
     val nodesOfVehicle:Array[SortedSet[Int]] = Array.fill(v)(null)
     for (segmentStartValue <- iterationSchemeOnZone if segmentStartValue >= v) {
@@ -188,7 +192,8 @@ case class TwoOpt2(segmentStartValues:()=>Iterable[Int],
       val segmentStartPosition = segmentStartPositionExplorer.position
       val predecessorOfSegmentStartValue = segmentStartPositionExplorer.prev.head.value
 
-      val vehicleReachingSegmentStart = RoutingConventionMethods.searchVehicleReachingPosition(segmentStartPosition,seqValue,v)
+      val vehicleReachingSegmentStart = vehicleSearcher.vehicleReachingPosition(segmentStartPosition)
+
       if(nodesOfVehicle(vehicleReachingSegmentStart) == null){
         nodesOfVehicle(vehicleReachingSegmentStart) = vrp.getNodesOfVehicle(vehicleReachingSegmentStart)
       }
@@ -211,7 +216,7 @@ case class TwoOpt2(segmentStartValues:()=>Iterable[Int],
           doMove(segmentStartPosition, segmentEndPosition)
 
           if (evaluateCurrentMoveObjTrueIfStopRequired(evalObjAndRollBack())) {
-            seq.releaseCurrentCheckpointAtCheckpoint()
+            seq.releaseTopCheckpoint()
             startIndice = segmentStartValue + 1
             segmentStartPositionForInstantiate = -1
             return
@@ -219,7 +224,7 @@ case class TwoOpt2(segmentStartValues:()=>Iterable[Int],
         }
       }
     }
-    seq.releaseCurrentCheckpointAtCheckpoint()
+    seq.releaseTopCheckpoint()
     segmentStartPositionForInstantiate = -1
   }
 
@@ -245,7 +250,7 @@ case class TwoOptMove(segmentStartPosition:Int,
                       override val neighborhoodName:String = "TwoOptMove")
   extends VRPSMove(objAfter, neighborhood, neighborhoodName, vrp){
 
-  override def impactedPoints: Iterable[Int] = vrp.routes.value.valuesBetweenPositions(segmentStartPosition,segmentEndPosition)
+  override def impactedPoints: Iterable[Int] = vrp.routes.value.valuesBetweenPositionsQList(segmentStartPosition,segmentEndPosition)
 
   override def commit() {
     neighborhood.doMove(segmentStartPosition, segmentEndPosition)

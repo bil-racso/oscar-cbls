@@ -80,14 +80,14 @@ object TestCheckPoint extends App{
       )
   ))
 
+  //For  test purpose, we create an additional checkpoint here.
   var checkPoint = myVRP.routes.defineCurrentValueAsCheckpoint(true)
   var movesBeforeRollBack = 1
   var moves = 0
 
   val search = Profile(BestSlopeFirst(List(insertPoint,onePointMove,twoOpt,threeOpt,doubleInsert))).afterMove({
     if(moves == movesBeforeRollBack && movesBeforeRollBack < maxMovesBeforeRollBack) {
-      myVRP.routes.rollbackToCurrentCheckpoint(checkPoint)
-      println("rolled back")
+      myVRP.routes.rollbackToTopCheckpoint(checkPoint)
       movesBeforeRollBack += 1
       moves = 0
     }

@@ -26,6 +26,7 @@ object Map {
   }
 }
 
+
 class MapConstantFun(seq:ChangingSeqValue,
           transform:Int=>Int,maxTransform:Int)
   extends SeqInvariant(seq.value.map(transform),maxTransform,
@@ -41,29 +42,38 @@ with SeqNotificationTarget{
     digestUdpate(changes : SeqUpdate)
   }
 
-  var inputCheckpoint:IntSequence = null
-  var checkpoint:IntSequence = null
+  var checkpointStack = new SeqCheckpointedValueStack[IntSequence]()
+
   def digestUdpate(changes : SeqUpdate) {
     changes match {
-      case SeqUpdateDefineCheckpoint(prev, isActive) =>
-        //TODO: checkpoint release is not fine
+      case SeqUpdateDefineCheckpoint(prev, isActive, checkpointLevel) =>
         digestUdpate(prev)
-        inputCheckpoint = prev.newValue
-        checkpoint = this.newValue
+
+        this.releaseTopCheckpointsToLevel(checkpointLevel,true)
         defineCurrentValueAsCheckpoint(isActive)
+        checkpointStack.defineCheckpoint(prev.newValue,checkpointLevel,this.newValue)
+
       case SeqUpdateInsert(value, position, prev) =>
         digestUdpate(prev)
         insertAtPosition(transform(value), position)
+
       case SeqUpdateLastNotified(seq) => ;
+
       case SeqUpdateMove(fromIncluded, toIncluded, after, flip, prev) =>
         digestUdpate(prev)
         move(fromIncluded, toIncluded, after, flip)
+
       case SeqUpdateRemove(position, prev) =>
         digestUdpate(prev)
         remove(position)
-      case x@SeqUpdateRollBackToCheckpoint(checkpoint) =>
-        require(checkpoint quickEquals inputCheckpoint)
-        rollbackToCurrentCheckpoint(this.checkpoint)
+
+      case x@SeqUpdateRollBackToCheckpoint(checkpoint,checkpointLevel) =>
+
+        this.releaseTopCheckpointsToLevel(checkpointLevel,false)
+        rollbackToTopCheckpoint(checkpointStack.rollBackAndOutputValue(checkpoint,checkpointLevel))
+        require(checkpointStack.topCheckpoint quickEquals checkpoint)
+
+
       case SeqUpdateAssign(seq) =>
         this := seq.map(transform)
     }
@@ -101,7 +111,7 @@ class MapThroughArray(seq:ChangingSeqValue,
 
   def digestUdpate(changes : SeqUpdate) {
     changes match {
-      case SeqUpdateDefineCheckpoint(prev, isActive) =>
+      case SeqUpdateDefineCheckpoint(prev, isActive,chechpointLevel) =>
         digestUdpate(prev)
        case SeqUpdateInsert(value, position, prev) =>
         digestUdpate(prev)
@@ -113,7 +123,7 @@ class MapThroughArray(seq:ChangingSeqValue,
       case SeqUpdateRemove(position, prev) =>
         digestUdpate(prev)
         remove(position)
-      case x@SeqUpdateRollBackToCheckpoint(checkpoint) =>
+      case x@SeqUpdateRollBackToCheckpoint(checkpoint,chechpointLevel) =>
         digestUdpate(x.howToRollBack)
       case SeqUpdateAssign(seq) =>
         this := seq.map(v => transform(v).value)

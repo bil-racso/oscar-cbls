@@ -8,17 +8,18 @@ import oscar.cbls.invariants.core.propagation.{ErrorChecker, Checker}
   *
   *                       THIS IS EXPERIMENTAL!
   */
-case class SubSequence(v: SeqValue,index:Int, length: Int, override val maxPivotPerValuePercent:Int = 10,
+case class SubSequence(v: SeqValue,index:Int, length: Int,
+                       override val maxPivotPerValuePercent:Int = 10,
                        override val maxHistorySize:Int = 10)
   extends SeqInvariant(IntSequence.empty(), v.max, maxPivotPerValuePercent, maxHistorySize)
     with SeqNotificationTarget{
 
-  //setName("Flip(" + v.name + ")")
+  setName("SubSequence(" + v.name + ")")
 
   registerStaticAndDynamicDependency(v)
   finishInitialization()
 
-  def printAll() ={
+  def internalPrint() ={
     val seq = v.value.toList
     for(i <- seq.indices){
       if(i == index){
@@ -61,8 +62,7 @@ case class SubSequence(v: SeqValue,index:Int, length: Int, override val maxPivot
     }
   }
 
-  var checkpoint:IntSequence = null
-  var outputAtCheckpoint:IntSequence = null
+  val checkpointStack = new SeqCheckpointedValueStack[IntSequence]()
 
   def digestChanges(changes : SeqUpdate) : Boolean = {
     changes match {
@@ -109,18 +109,21 @@ case class SubSequence(v: SeqValue,index:Int, length: Int, override val maxPivot
 
         true
 
-      case u@SeqUpdateRollBackToCheckpoint(checkpoint) =>
-        require(checkpoint quickEquals this.checkpoint)
-        this.rollbackToCurrentCheckpoint(outputAtCheckpoint)
+      case u@SeqUpdateRollBackToCheckpoint(checkpoint,checkPointLevel) =>
+
+        this.releaseTopCheckpointsToLevel(checkPointLevel,false)
+        rollbackToTopCheckpoint(checkpointStack.rollBackAndOutputValue(checkpoint,checkPointLevel))
         true
 
-      case SeqUpdateDefineCheckpoint(prev : SeqUpdate, isActive) =>
+      case SeqUpdateDefineCheckpoint(prev : SeqUpdate, isActive, checkpointLevel) =>
         if(!digestChanges(prev)){
           this := computeFromScratch(prev.newValue)
         }
-        outputAtCheckpoint = this.newValue
-        checkpoint = prev.newValue
-        this.defineCurrentValueAsCheckpoint(true)
+
+        releaseTopCheckpointsToLevel(checkpointLevel,true)
+        this.defineCurrentValueAsCheckpoint(isActive)
+        //we perform this after the define checkpoint above, so that hte saved value is the regularized one (I do not know, but his might be a good idea)
+        checkpointStack.defineCheckpoint(prev.newValue,checkpointLevel,this.newValue)
         true
 
       case SeqUpdateLastNotified(value) =>
@@ -225,9 +228,6 @@ case class SubSequenceVar(originalSeq: SeqValue, index:ChangingIntValue, length:
     }
   }
 
-  var checkpoint:IntSequence = null
-  var outputAtCheckpoint:IntSequence = null
-
   def digestChanges(changes : SeqUpdate) : Boolean = {
     val currentIndex = index.value
     changes match {
@@ -274,19 +274,12 @@ case class SubSequenceVar(originalSeq: SeqValue, index:ChangingIntValue, length:
 
         true
 
-      case u@SeqUpdateRollBackToCheckpoint(checkpoint) =>
-        require(checkpoint quickEquals this.checkpoint)
-        this.rollbackToCurrentCheckpoint(outputAtCheckpoint)
-        true
+      case u@SeqUpdateRollBackToCheckpoint(checkpoint,checkpointLevel) =>
+        digestChanges(u.howToRollBack)
 
-      case SeqUpdateDefineCheckpoint(prev : SeqUpdate, isActive) =>
-        if(!digestChanges(prev)){
-          this := computeFromScratch(prev.newValue,index.value)
-        }
-        outputAtCheckpoint = this.newValue
-        checkpoint = prev.newValue
-        this.defineCurrentValueAsCheckpoint(true)
-        true
+
+      case SeqUpdateDefineCheckpoint(prev, isActive, checkpointLevel) =>
+        digestChanges(prev)
 
       case SeqUpdateLastNotified(value) =>
         true
@@ -300,7 +293,5 @@ case class SubSequenceVar(originalSeq: SeqValue, index:ChangingIntValue, length:
     println(this.newValue,originalSeq.value.size)
     c.check(this.newValue.toList equals computeFromScratch(originalSeq.value,index.value).toList, Some("this.newValue(=" + this.newValue.toList + ") == v.value.subSequence(=" + originalSeq.value.toList.reverse + ")"))
   }
-
-
 }
 

@@ -21,11 +21,14 @@ import oscar.cbls.invariants.core.propagation.{ErrorChecker, Checker}
 
 
 /**
- * sum(v) (the sum of all element in v; if a value has multiple occurrences, they are all summed)
+ * sum(f(v))
+ * the sum of all element in v after passing through f;
+ * if a value has multiple occurrences, their f-transformed occurrences are summed
  * @param v is a SeqValue, containing a number of values, to sum
+ * @param f is a function that is applied to every value in f prior to the sum
  * @author renaud.delandtsheer@cetic.be
  */
-case class SeqSum(v: SeqValue)
+case class SeqSum(v: SeqValue, f:(Int => Int) = (a:Int) => a)
   extends IntInvariant()
   with SeqNotificationTarget{
 
@@ -35,6 +38,9 @@ case class SeqSum(v: SeqValue)
   finishInitialization()
 
   this := computeSumFromScratch(v.value)
+
+  val checkpointStack = new SeqCheckpointedValueStack[Int]()
+
   override def notifySeqChanges(v: ChangingSeqValue, d: Int, changes: SeqUpdate) {
     checkInternals(new ErrorChecker())
     if (!digestChanges(changes)) {
@@ -48,21 +54,18 @@ case class SeqSum(v: SeqValue)
     while(contentWithOccurences match{
       case Nil => return sum
       case (value,occ) :: tail =>
-        sum += (value*occ)
+        sum += (f(value)*occ)
         contentWithOccurences = tail
         true
     }){}
     0
   }
 
-  var checkpoint:IntSequence = null
-  var outputAtCheckpoint:Int = -1
-
   def digestChanges(changes : SeqUpdate) : Boolean = {
     changes match {
       case s@SeqUpdateInsert(value : Int, pos : Int, prev : SeqUpdate) =>
         if (!digestChanges(prev)) return false
-        this :+= value
+        this :+= f(value)
         true
 
       case SeqUpdateMove(fromIncluded : Int, toIncluded : Int, after : Int, flip : Boolean, prev : SeqUpdate) =>
@@ -70,23 +73,21 @@ case class SeqSum(v: SeqValue)
 
       case r@SeqUpdateRemove(position : Int, prev : SeqUpdate) =>
         if (!digestChanges(prev)) return false
-        this :-= r.removedValue
+        this :-= f(r.removedValue)
         true
 
-      case u@SeqUpdateRollBackToCheckpoint(checkpoint) =>
-        require(checkpoint quickEquals this.checkpoint)
-        this := outputAtCheckpoint
+      case u@SeqUpdateRollBackToCheckpoint(checkpoint:IntSequence,checkpointLevel:Int) =>
+        this := checkpointStack.rollBackAndOutputValue(checkpoint,checkpointLevel)
         true
 
-      case SeqUpdateDefineCheckpoint(prev : SeqUpdate, isActive) =>
+      case SeqUpdateDefineCheckpoint(prev : SeqUpdate, isActive,checkpointLevel) =>
         if(!digestChanges(prev)){
-          checkpoint = prev.newValue
-          outputAtCheckpoint = computeSumFromScratch(changes.newValue)
-          this := outputAtCheckpoint
+          val myOutput = computeSumFromScratch(changes.newValue)
+          checkpointStack.defineCheckpoint(prev.newValue,checkpointLevel,myOutput)
+          this := myOutput
           true
         }else{
-          checkpoint = prev.newValue
-          outputAtCheckpoint = this.newValue
+          checkpointStack.defineCheckpoint(prev.newValue,checkpointLevel,this.newValue)
           true
         }
 

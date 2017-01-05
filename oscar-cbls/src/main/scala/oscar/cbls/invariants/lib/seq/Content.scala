@@ -22,6 +22,7 @@ import oscar.cbls.invariants.core.propagation.Checker
 
 import scala.collection.immutable.SortedSet
 
+
 /**
  * content of v
  * @param v is a SeqValue, the values appearing in the sequence
@@ -34,22 +35,9 @@ case class Content(v:SeqValue)
   registerStaticAndDynamicDependency(v)
   finishInitialization()
 
-  //TODO: handle inactive checkpoints as well.
-  //note sure that such checkpoint actually help...
-  var savedCheckpoint:IntSequence = v.value
-  var updatesFromThisCheckpointInReverseOrder:QList[(Int,Boolean)]=null
-
-  private def saveNewCheckpoint(u:IntSequence){
-    savedCheckpoint = u
-    updatesFromThisCheckpointInReverseOrder = null
-  }
-
   override def notifySeqChanges(v: ChangingSeqValue, d: Int, changes: SeqUpdate) : Unit = {
-
-    if(!digestUpdates(changes,false)) {
+    if(!digestUpdates(changes)) {
       updateFromScratch(changes.newValue)
-      savedCheckpoint = null
-      updatesFromThisCheckpointInReverseOrder = null
     }
   }
 
@@ -58,27 +46,24 @@ case class Content(v:SeqValue)
   }
 
   //true if could be incremental, false otherwise
-  def digestUpdates(changes : SeqUpdate, skipNewCheckpoints:Boolean):Boolean = {
+  def digestUpdates(changes : SeqUpdate):Boolean = {
     changes match {
       case SeqUpdateInsert(value : Int, pos : Int, prev : SeqUpdate) =>
-        if (!digestUpdates(prev, skipNewCheckpoints)) return false
-        updatesFromThisCheckpointInReverseOrder = QList((value, true), updatesFromThisCheckpointInReverseOrder)
+        if (!digestUpdates(prev)) return false
         this :+= value
         true
       case SeqUpdateMove(fromIncluded : Int, toIncluded : Int, after : Int, flip : Boolean, prev : SeqUpdate) =>
-        digestUpdates(prev, skipNewCheckpoints)
+        digestUpdates(prev)
       case r@SeqUpdateRemove(position : Int, prev : SeqUpdate) =>
-        if (!digestUpdates(prev, skipNewCheckpoints)) return false
+        if (!digestUpdates(prev)) return false
         val value = r.removedValue
         if (changes.newValue.nbOccurrence(value) == 0){
           this :-= value
-          updatesFromThisCheckpointInReverseOrder = QList((value, false), updatesFromThisCheckpointInReverseOrder)
         }
         true
-      case SeqUpdateRollBackToCheckpoint(checkpoint:IntSequence) =>
-        require(checkpoint quickEquals savedCheckpoint)
-        comeBackToSavedCheckPoint()
-        true
+      case r@SeqUpdateRollBackToCheckpoint(checkpoint:IntSequence,checkpointLevel:Int) =>
+        digestUpdates(r.howToRollBack)
+
       case SeqUpdateLastNotified(value) =>
         require(value quickEquals v.value)
         //start at the previous value; easy game.
@@ -86,29 +71,8 @@ case class Content(v:SeqValue)
       case SeqUpdateAssign(value:IntSequence) =>
         //raw assign, no incremental possible
         false
-      case SeqUpdateDefineCheckpoint(prev:SeqUpdate,isActive:Boolean) =>
-        if(skipNewCheckpoints || !isActive) {
-          digestUpdates(prev,true)
-        } else {
-          if(!digestUpdates(prev,true)){
-            //update was not incremental, do the computation now
-            updateFromScratch(prev.newValue)
-          }
-          saveNewCheckpoint(prev.newValue)
-          true
-        }
-    }
-  }
-
-  private def comeBackToSavedCheckPoint(){
-    while(updatesFromThisCheckpointInReverseOrder!= null){
-      val (valueToUndo,wasInserted) = updatesFromThisCheckpointInReverseOrder.head
-      updatesFromThisCheckpointInReverseOrder = updatesFromThisCheckpointInReverseOrder.tail
-      if(wasInserted){
-        this :-= valueToUndo
-      }else{
-        this :+= valueToUndo
-      }
+      case SeqUpdateDefineCheckpoint(prev:SeqUpdate,isStarMode:Boolean,checkpointLevel) =>
+        digestUpdates(prev)
     }
   }
 

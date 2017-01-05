@@ -99,10 +99,10 @@ class Concatenate(a:ChangingSeqValue,b:ChangingSeqValue,maxPivotPerValuePercent:
         this.remove(if (isFirst) position else position + a.value.size)
         true
 
-      case u@SeqUpdateRollBackToCheckpoint(checkpoint) =>
+      case u@SeqUpdateRollBackToCheckpoint(checkpoint,checkpointLevel) =>
         digestChanges(isFirst, u.howToRollBack)
 
-      case SeqUpdateDefineCheckpoint(prev : SeqUpdate, isActive) =>
+      case SeqUpdateDefineCheckpoint(prev : SeqUpdate, isStarMode, checkpointLevel) =>
         digestChanges(isFirst, prev)
 
       case SeqUpdateLastNotified(value) =>
@@ -119,6 +119,7 @@ class Concatenate(a:ChangingSeqValue,b:ChangingSeqValue,maxPivotPerValuePercent:
 }
 
 
+
 class ConcatenateFirstConstant(a:List[Int],b:ChangingSeqValue,maxPivotPerValuePercent: Int, maxHistorySize:Int)
   extends SeqInvariant(IntSequence(a ++ b.value), math.max(a.max,b.max), maxPivotPerValuePercent, maxHistorySize)
   with SeqNotificationTarget {
@@ -127,8 +128,7 @@ class ConcatenateFirstConstant(a:List[Int],b:ChangingSeqValue,maxPivotPerValuePe
 
   finishInitialization()
 
-  var checkpoint:IntSequence = null
-  var outputAtCheckpoint:IntSequence = null
+  var checkpointStack = new SeqCheckpointedValueStack[IntSequence]()
 
   var offsetForSecond = a.size
 
@@ -155,25 +155,20 @@ class ConcatenateFirstConstant(a:List[Int],b:ChangingSeqValue,maxPivotPerValuePe
         this.remove(position + offsetForSecond)
         true
 
-      case u@SeqUpdateRollBackToCheckpoint(checkpoint) =>
-        require(checkpoint quickEquals this.checkpoint)
-        this.rollbackToCurrentCheckpoint(outputAtCheckpoint)
+      case u@SeqUpdateRollBackToCheckpoint(checkpoint,checkpointLevel) =>
+        require(checkpoint quickEquals checkpointStack.topCheckpoint)
+        this.releaseTopCheckpointsToLevel(checkpointLevel,false)
+        this.rollbackToTopCheckpoint(checkpointStack.rollBackAndOutputValue(checkpoint,checkpointLevel))
         true
 
-      case SeqUpdateDefineCheckpoint(prev : SeqUpdate, isActive) =>
-        //TODO: checkpoint release is not fine
-        if(!digestChanges(prev)){
-          checkpoint = prev.newValue
-          outputAtCheckpoint =IntSequence(a ++ prev.newValue)
-          this := outputAtCheckpoint
-          this.defineCurrentValueAsCheckpoint(true)
-          true
-        }else{
-          checkpoint = prev.newValue
-          outputAtCheckpoint = this.newValue
-          this.defineCurrentValueAsCheckpoint(true)
-          true
+      case SeqUpdateDefineCheckpoint(prev : SeqUpdate, isActive, checkpointLevel) =>
+        if(!digestChanges(prev)) {
+          this := IntSequence(a ++ prev.newValue)
         }
+        this.releaseTopCheckpointsToLevel(checkpointLevel,true)
+        this.defineCurrentValueAsCheckpoint(isActive)
+        checkpointStack.defineCheckpoint(prev.newValue,checkpointLevel,this.newValue)
+        true
 
       case SeqUpdateLastNotified(value) =>
         true
@@ -198,8 +193,7 @@ class ConcatenateSecondConstant(a:ChangingSeqValue,b:List[Int],maxPivotPerValueP
   registerStaticAndDynamicDependency(a)
   finishInitialization()
 
-  var checkpoint:IntSequence = null
-  var outputAtCheckpoint:IntSequence = null
+  var checkpointStack = new SeqCheckpointedValueStack[IntSequence]()
 
   override def notifySeqChanges(v : ChangingSeqValue, d : Int, changes : SeqUpdate) : Unit = {
     if (!digestChanges(changes)) {
@@ -224,24 +218,20 @@ class ConcatenateSecondConstant(a:ChangingSeqValue,b:List[Int],maxPivotPerValueP
         this.remove(position)
         true
 
-      case u@SeqUpdateRollBackToCheckpoint(checkpoint) =>
-        require(checkpoint quickEquals this.checkpoint)
-        this.rollbackToCurrentCheckpoint(outputAtCheckpoint)
+      case u@SeqUpdateRollBackToCheckpoint(checkpoint,checkpointLevel) =>
+        require(checkpoint quickEquals checkpointStack.topCheckpoint)
+        this.releaseTopCheckpointsToLevel(checkpointLevel,false)
+        this.rollbackToTopCheckpoint(checkpointStack.rollBackAndOutputValue(checkpoint,checkpointLevel))
         true
 
-      case SeqUpdateDefineCheckpoint(prev : SeqUpdate, isActive) =>
-        if(!digestChanges(prev)){
-          checkpoint = prev.newValue
-          outputAtCheckpoint = IntSequence(prev.newValue ++ b)
-          this := outputAtCheckpoint
-          this.defineCurrentValueAsCheckpoint(true)
-          true
-        }else{
-          checkpoint = prev.newValue
-          outputAtCheckpoint = this.newValue
-          this.defineCurrentValueAsCheckpoint(true)
-          true
+      case SeqUpdateDefineCheckpoint(prev : SeqUpdate, isActive, checkpointLevel) =>
+        if(!digestChanges(prev)) {
+          this := IntSequence(prev.newValue ++ b)
         }
+        this.releaseTopCheckpointsToLevel(checkpointLevel,true)
+        this.defineCurrentValueAsCheckpoint(isActive)
+        checkpointStack.defineCheckpoint(prev.newValue,checkpointLevel,this.newValue)
+        true
 
       case SeqUpdateLastNotified(value) =>
         true

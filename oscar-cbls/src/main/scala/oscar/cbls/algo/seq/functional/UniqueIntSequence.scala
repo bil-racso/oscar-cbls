@@ -241,6 +241,7 @@ class ConcreteUniqueIntSequence(private[seq] val internalPositionToValue:RedBlac
     //now, update the fct knowing the move and remove
     val externalPositionAssociatedToLargestInternalPosition = externalToInternalPosition.backward(largestInternalPosition)
 
+    //TODO: this is overly complex.
     val newExternalToInternalPosition = externalToInternalPosition.updateBefore(
       (externalPositionAssociatedToLargestInternalPosition,
         externalPositionAssociatedToLargestInternalPosition,

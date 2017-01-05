@@ -64,7 +64,7 @@ case class SegmentExchange(val vrp: VRP,
 
     def evalObjAndRollBack() : Int = {
       val a = obj.value
-      seq.rollbackToCurrentCheckpoint(seqValue)
+      seq.rollbackToTopCheckpoint(seqValue)
       a
     }
 
@@ -148,7 +148,7 @@ case class SegmentExchange(val vrp: VRP,
                         secondSegmentStartPosition, secondSegmentEndPosition, flipSecondSegment)
 
                       if (evaluateCurrentMoveObjTrueIfStopRequired(evalObjAndRollBack())) {
-                        seq.releaseCurrentCheckpointAtCheckpoint()
+                        seq.releaseTopCheckpoint()
                         startVehicle = firstVehicle + 1
                         return
                       }
@@ -159,7 +159,7 @@ case class SegmentExchange(val vrp: VRP,
                           secondSegmentStartPosition, secondSegmentEndPosition, flipSecondSegment)
 
                         if (evaluateCurrentMoveObjTrueIfStopRequired(evalObjAndRollBack())) {
-                          seq.releaseCurrentCheckpointAtCheckpoint()
+                          seq.releaseTopCheckpoint()
                           startVehicle = firstVehicle + 1
                           return
                         }
@@ -174,7 +174,7 @@ case class SegmentExchange(val vrp: VRP,
       }//end loop on first node first segment
 
     }//end loop on vehicles
-    seq.releaseCurrentCheckpointAtCheckpoint()
+    seq.releaseTopCheckpoint()
   } //end def
 
   override def instantiateCurrentMove(newObj: Int): SegmentExchangeMove = {
@@ -207,8 +207,8 @@ case class SegmentExchangeMove(firstSegmentStartPosition:Int,
   extends VRPSMove(objAfter, neighborhood, neighborhoodName,neighborhood.vrp){
 
   override def impactedPoints: Iterable[Int] =
-    neighborhood.vrp.routes.value.valuesBetweenPositions(firstSegmentStartPosition,firstSegmentEndPosition) ++
-      neighborhood.vrp.routes.value.valuesBetweenPositions(secondSegmentStartPosition,secondSegmentEndPosition)
+    neighborhood.vrp.routes.value.valuesBetweenPositionsQList(firstSegmentStartPosition,firstSegmentEndPosition) ++
+      neighborhood.vrp.routes.value.valuesBetweenPositionsQList(secondSegmentStartPosition,secondSegmentEndPosition)
 
   override def commit() {
     neighborhood.doMove(
@@ -261,7 +261,7 @@ case class PickupDeliverySegmentExchange(pdp: PDP,
 
     def evalObjAndRollBack() : Int = {
       val a = obj.value
-      seq.rollbackToCurrentCheckpoint(seqValue)
+      seq.rollbackToTopCheckpoint(seqValue)
       a
     }
 
@@ -298,7 +298,7 @@ case class PickupDeliverySegmentExchange(pdp: PDP,
             else {
               doMove(firstSegmentStartPosition, firstSegmentEndPosition, secondSegmentStartPosition, secondSegmentEndPosition)
               if (evaluateCurrentMoveObjTrueIfStopRequired(evalObjAndRollBack())) {
-                seq.releaseCurrentCheckpointAtCheckpoint()
+                seq.releaseTopCheckpoint()
                 startVehicle = firstVehicle + 1
                 return
               }
@@ -307,7 +307,7 @@ case class PickupDeliverySegmentExchange(pdp: PDP,
         }
       }
     }
-    seq.releaseCurrentCheckpointAtCheckpoint()
+    seq.releaseTopCheckpoint()
   }
 
   override def instantiateCurrentMove(newObj: Int): PickupDeliverySegmentExchangeMove = {
@@ -328,6 +328,9 @@ case class PickupDeliverySegmentExchange(pdp: PDP,
   }
 }
 
+
+
+
 case class PickupDeliverySegmentExchangeMove(firstSegmentStartPosition:Int,
                                              firstSegmentEndPosition:Int,
                                              secondSegmentStartPosition: Int,
@@ -337,8 +340,8 @@ case class PickupDeliverySegmentExchangeMove(firstSegmentStartPosition:Int,
   extends VRPSMove(objAfter, neighborhood, neighborhoodName,neighborhood.pdp){
 
   override def impactedPoints: Iterable[Int] =
-    neighborhood.pdp.routes.value.valuesBetweenPositions(firstSegmentStartPosition,firstSegmentEndPosition) ++
-      neighborhood.pdp.routes.value.valuesBetweenPositions(secondSegmentStartPosition,secondSegmentEndPosition)
+    neighborhood.pdp.routes.value.valuesBetweenPositionsQList(firstSegmentStartPosition,firstSegmentEndPosition) ++
+      neighborhood.pdp.routes.value.valuesBetweenPositionsQList(secondSegmentStartPosition,secondSegmentEndPosition)
 
   override def commit() {
     neighborhood.doMove(
@@ -351,6 +354,3 @@ case class PickupDeliverySegmentExchangeMove(firstSegmentStartPosition:Int,
       " secondSegmentStartPosition:" + secondSegmentStartPosition + " secondSegmentEndPosition:" + secondSegmentEndPosition + objToString + ")"
   }
 }
-
-
-

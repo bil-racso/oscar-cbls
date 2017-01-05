@@ -49,35 +49,37 @@ object TSProutePoints extends App {
   val n = 10000
   val v = 100
 
+  val verbose = 0
+  val maxPivotPerValuePercent = 4
+  new TSPRoutePointsS(1000,100,4,verbose)
+  System.gc()
 
-
-  new TSPRoutePointsS(1000,1,4)
+  val nbTrials = 3
 
   println()
-  println("n\tv\tpercent\ttime\ttime\ttime")
+  print("n\tv\tpercent")
+  for (t <- 1 to nbTrials) {
+    print("\ttime")
+  }
+  println
 
-  for(n <- 1000 to 11000 by 2000){
-      for (maxPivotPerValuePercent <- List(20)){
-        for(v <- List(100)){
-          print(n + "\t" + v + "\t" + maxPivotPerValuePercent + "\t")
-          new TSPRoutePointsS(n,v,maxPivotPerValuePercent)
+
+  for(n <- 5000 to 11000 by 2000){
+    for(v <- List(100)){
+      for (maxPivotPerValuePercent <- List(0,1,2,3,4,5,20)) {
+        print(n + "\t" + v + "\t" + maxPivotPerValuePercent + "\t")
+        for (t <- 1 to nbTrials){
+          new TSPRoutePointsS(n, v, maxPivotPerValuePercent, verbose)
           print("\t")
           System.gc()
-          new TSPRoutePointsS(n,v,maxPivotPerValuePercent)
-          print("\t")
-          System.gc()
-          new TSPRoutePointsS(n,v,maxPivotPerValuePercent)
-          print("\n")
-          System.gc()
+        }
+        println
       }
     }
   }
 }
 
-class TSPRoutePointsS(n:Int,v:Int,maxPivotPerValuePercent:Int) extends StopWatch{
-
-
-
+class TSPRoutePointsS(n:Int,v:Int,maxPivotPerValuePercent:Int, verbose:Int) extends StopWatch{
 
   val symmetricDistanceMatrix = RoutingMatrixGenerator(n)._1
 
@@ -90,10 +92,12 @@ class TSPRoutePointsS(n:Int,v:Int,maxPivotPerValuePercent:Int) extends StopWatch
 
   model.close()
 
-  val routeUnroutdPoint =  Profile(new InsertPointUnroutedFirst(myVRP.unrouted,()=>myVRP.kFirst(10,myVRP.closestNeighboursForward,myVRP.isRouted), myVRP,neighborhoodName = "InsertUF"))
+  val bestInsert = false
+
+  val routeUnroutdPoint =  Profile(new InsertPointUnroutedFirst(myVRP.unrouted,()=>myVRP.kFirst(10,myVRP.closestNeighboursForward,myVRP.isRouted), myVRP,best=bestInsert,neighborhoodName = "InsertUF"))
 
   //TODO: using post-filters on k-nearest is probably crap
-  val routeUnroutdPoint2 =  Profile(new InsertPointRoutedFirst(myVRP.routed,()=>myVRP.kFirst(10,myVRP.closestNeighboursForward,x => !myVRP.isRouted(x)),myVRP,neighborhoodName = "InsertRF")  guard(() => myVRP.size < n/2))
+  val routeUnroutdPoint2 =  Profile(new InsertPointRoutedFirst(myVRP.routed,()=>myVRP.kFirst(10,myVRP.closestNeighboursForward,x => !myVRP.isRouted(x)),myVRP,best=bestInsert,neighborhoodName = "InsertRF")  guard(() => myVRP.size < n/2))
 
   def onePtMove(k:Int) = Profile(new OnePointMove(myVRP.routed, () => myVRP.kFirst(k,myVRP.closestNeighboursForward,myVRP.isRouted), myVRP))
 
@@ -103,9 +107,9 @@ class TSPRoutePointsS(n:Int,v:Int,maxPivotPerValuePercent:Int) extends StopWatch
 
   val search = (BestSlopeFirst(List(routeUnroutdPoint2, routeUnroutdPoint, onePtMove(10),twoOpt, threeOpt(10,true))) exhaust threeOpt(20,true))
 
- // val search = (new RoundRobin(List(routeUnroutdPoint2,onePtMove(10) guard (() => myVRP.unrouted.value.size != 0)),10)) exhaust BestSlopeFirst(List(onePtMove(20),twoOpt, threeOpt(10,true))) exhaust threeOpt(20,true)
+  // val search = (new RoundRobin(List(routeUnroutdPoint2,onePtMove(10) guard (() => myVRP.unrouted.value.size != 0)),10)) exhaust BestSlopeFirst(List(onePtMove(20),twoOpt, threeOpt(10,true))) exhaust threeOpt(20,true)
 
-  search.verbose = 0
+  search.verbose = verbose
   //search.verboseWithExtraInfo(1, ()=> "" + myVRP)
 
   search.doAllMoves(obj=myVRP.obj)

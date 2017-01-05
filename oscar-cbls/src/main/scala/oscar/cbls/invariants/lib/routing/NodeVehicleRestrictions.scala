@@ -20,6 +20,7 @@ import oscar.cbls.algo.seq.functional.IntSequence
 import oscar.cbls.invariants.core.computation._
 import oscar.cbls.invariants.core.propagation.Checker
 import oscar.cbls.invariants.lib.logic.Filter
+import oscar.cbls.invariants.lib.routing.convention.RoutingConventionMethods
 import oscar.cbls.invariants.lib.set.BelongsTo
 
 import scala.collection.immutable.SortedSet
@@ -129,6 +130,8 @@ class NodeVehicleRestrictions(routes:ChangingSeqValue,
   //TODO: improve complexity of the pre-computation: make them lazy per vehicle, only pre-compute when needed
   //node n => vehicle v => number of node from start of vehicle reaching n that cannot be reached by vehicle v
   val precomputationAtCheckpoint:Array[Array[Int]] = Array.tabulate(n)(_=>Array.fill(v)(0))
+  //TODO use magic array here
+
   val vehicleChangedSinceCheckpoint:Array[Boolean] = Array.fill(v)(true)
   var changedVehicleSinceCheckpoint:QList[Int] = vehicles.foldLeft[QList[Int]](null)((acc,v) => QList(v,acc))
 
@@ -217,13 +220,13 @@ class NodeVehicleRestrictions(routes:ChangingSeqValue,
     //TODO: propose something more incremental that supports a few vehicle changes before reverting to inefficient update
     if(vehicleChangedSinceCheckpoint(vehicle)){
       violationOnNodesFromScratch(
-        seqWithSegment.valuesBetweenPositions(
+        seqWithSegment.valuesBetweenPositionsQList(
           seqWithSegment.positionOfAnyOccurrence(fromValue).head,
           seqWithSegment.positionOfAnyOccurrence(toValue).head),vehicle)
     }else{
       val toReturn = violationOnSegmentFromPrecomputation(fromValue,toValue,vehicle)
       assert(toReturn == violationOnNodesFromScratch(
-        seqWithSegment.valuesBetweenPositions(
+        seqWithSegment.valuesBetweenPositionsQList(
           seqWithSegment.positionOfAnyOccurrence(fromValue).head,
           seqWithSegment.positionOfAnyOccurrence(toValue).head),vehicle))
       toReturn
@@ -233,14 +236,14 @@ class NodeVehicleRestrictions(routes:ChangingSeqValue,
   def violationOnVehicle(vehicle:Int,seq:IntSequence):Int = {
     if(vehicleChangedSinceCheckpoint(vehicle)){
       violationOnNodesFromScratch(
-        seq.valuesBetweenPositions(
+        seq.valuesBetweenPositionsQList(
           seq.positionOfAnyOccurrence(vehicle).head,
           if(vehicle == v-1) seq.size-1 else seq.positionOfAnyOccurrence(vehicle+1).head),
         vehicle)
     }else{
       val toReturn = violationOnSegmentFromPrecomputation(vehicle,if(vehicle == v-1) seq.last else seq.predecessorPos2Val(seq.positionOfAnyOccurrence(vehicle+1).head).head,vehicle)
       assert(toReturn == violationOnNodesFromScratch(
-        seq.valuesBetweenPositions(
+        seq.valuesBetweenPositionsQList(
           seq.positionOfAnyOccurrence(vehicle).head,
           if(vehicle == v-1) seq.size-1 else seq.positionOfAnyOccurrence(vehicle+1).head),
         vehicle))
@@ -249,7 +252,7 @@ class NodeVehicleRestrictions(routes:ChangingSeqValue,
   }
 
   override def notifySeqChanges(v : ChangingSeqValue, d : Int, changes : SeqUpdate) {
-    if (!digestUpdates(changes, false)) {
+    if (!digestUpdates(changes)) {
       setAllVehicleChangedSinceCheckpoint()
       for (vehicle <- vehicles) {
         violationPerVehicle(vehicle) := violationOnVehicle(vehicle:Int,changes.newValue)
@@ -257,13 +260,12 @@ class NodeVehicleRestrictions(routes:ChangingSeqValue,
     }
   }
 
-  private def digestUpdates(changes : SeqUpdate, skipNewCheckpoints : Boolean) : Boolean = {
+  private def digestUpdates(changes : SeqUpdate) : Boolean = {
     changes match {
-      case SeqUpdateDefineCheckpoint(prev : SeqUpdate, isActive : Boolean) =>
-        if(skipNewCheckpoints) {
-          digestUpdates(prev, true)
-        }else{
-          if (!digestUpdates(prev, true)) {
+      case SeqUpdateDefineCheckpoint(prev : SeqUpdate, isStarMode : Boolean, checkpointLevel:Int) =>
+
+        if(checkpointLevel == 0){
+          if (!digestUpdates(prev)) {
             this.checkpoint = prev.newValue
             doUpdateAllPrecomputationsToCheckpointAndSaveCheckpoint()
             for(vehicle <- vehicles) violationPerVehicle(vehicle) := violationOnVehicle(vehicle,checkpoint)
@@ -273,21 +275,27 @@ class NodeVehicleRestrictions(routes:ChangingSeqValue,
           }
           vehicleSearcher = RoutingConventionMethods.cachedVehicleReachingPosition(checkpoint, v)
           true
-        }
-      case SeqUpdateRollBackToCheckpoint(checkpoint : IntSequence) =>
-        require(checkpoint quickEquals this.checkpoint)
-        while(changedVehicleSinceCheckpoint!=null){
-          val vehicle = changedVehicleSinceCheckpoint.head
-          changedVehicleSinceCheckpoint = changedVehicleSinceCheckpoint.tail
-          violationPerVehicle(vehicle) := violationAtCheckpoint(vehicle)
-          vehicleChangedSinceCheckpoint(vehicle) = false
+        }else{
+          digestUpdates(prev)
         }
 
-        true
+      case r@SeqUpdateRollBackToCheckpoint(checkpoint : IntSequence, checkpointLevel:Int) =>
+        if(checkpointLevel == 0) {
+          require(checkpoint quickEquals this.checkpoint)
+          while (changedVehicleSinceCheckpoint != null) {
+            val vehicle = changedVehicleSinceCheckpoint.head
+            changedVehicleSinceCheckpoint = changedVehicleSinceCheckpoint.tail
+            violationPerVehicle(vehicle) := violationAtCheckpoint(vehicle)
+            vehicleChangedSinceCheckpoint(vehicle) = false
+          }
+          true
+        }else{
+          digestUpdates(r.howToRollBack)
+        }
       case SeqUpdateInsert(value : Int, pos : Int, prev : SeqUpdate) =>
         //on which vehicle did we insert?
 
-        if (!digestUpdates(prev, skipNewCheckpoints)) return false
+        if (!digestUpdates(prev)) return false
 
         val vehicleOfInsert = vehicleSearcher(changes.newValue, pos)
 
@@ -300,7 +308,7 @@ class NodeVehicleRestrictions(routes:ChangingSeqValue,
       case x@SeqUpdateMove(fromIncluded : Int, toIncluded : Int, after : Int, flip : Boolean, prev : SeqUpdate) =>
         //on which vehicle did we move?
         //also from --> to cannot include a vehicle start.
-        if (!digestUpdates(prev, skipNewCheckpoints)) false
+        if (!digestUpdates(prev)) false
         else if (x.isNop) true
         else if (x.isSimpleFlip) {
           //this is a simple flip, no change on vehicle violation, since obeys routing rule!
@@ -364,7 +372,7 @@ class NodeVehicleRestrictions(routes:ChangingSeqValue,
 
       case x@SeqUpdateRemove(position : Int, prev : SeqUpdate) =>
         //on which vehicle did we remove?
-        if (!digestUpdates(prev, skipNewCheckpoints)) return false
+        if (!digestUpdates(prev)) return false
         val removedNode = x.removedValue
         val vehicleOfMovedSegment = vehicleSearcher(prev.newValue, position)
         if(isForbidden(removedNode,vehicleOfMovedSegment)){

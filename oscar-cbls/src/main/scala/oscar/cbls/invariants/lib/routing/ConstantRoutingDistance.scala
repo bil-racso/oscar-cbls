@@ -19,6 +19,7 @@ import oscar.cbls.algo.quick.QList
 import oscar.cbls.algo.seq.functional.IntSequence
 import oscar.cbls.invariants.core.computation._
 import oscar.cbls.invariants.core.propagation.Checker
+import oscar.cbls.invariants.lib.routing.convention.RoutingConventionMethods
 
 object ConstantRoutingDistance {
 
@@ -112,8 +113,11 @@ class ConstantRoutingDistance(routes:ChangingSeqValue,
   //TODO: handle inactive checkpoints
   private val savedValues:Array[Int] = computeValueFromScratch(routes.value)
   protected var checkpoint = routes.value
-  protected[this] val isVehicleChangedSinceCheckpoint:Array[Boolean] = Array.fill(v)(false)
+
+  protected[this] val isVehicleChangedSinceCheckpoint:Array[Boolean] = Array.fill(v)(true)
   protected var changedVehiclesSinceCheckpoint:QList[Int] = null
+
+  //only one level of stack for checkpoint here.
 
   protected var vehicleSearcher:((IntSequence,Int)=>Int) = if(v == 1) ((_,_) => 0) else
     RoutingConventionMethods.cachedVehicleReachingPosition(routes.value, v)
@@ -121,30 +125,43 @@ class ConstantRoutingDistance(routes:ChangingSeqValue,
   affect(savedValues)
 
   override def notifySeqChanges(v: ChangingSeqValue, d: Int, changes: SeqUpdate) {
-    if(!digestUpdates(changes,false)) {
+    if(!digestUpdates(changes)) {
       for(v <- 0 until this.v) recordTouchedVehicle(v)
       affect(computeValueFromScratch(changes.newValue))
     }
   }
 
-  private def digestUpdates(changes:SeqUpdate,skipNewCheckpoints:Boolean):Boolean = {
+  private def digestUpdates(changes:SeqUpdate):Boolean = {
     changes match {
-      case SeqUpdateDefineCheckpoint(prev:SeqUpdate,isActive:Boolean) =>
-        if(!digestUpdates(prev,true)){
-          affect(computeValueFromScratch(changes.newValue))
+      case SeqUpdateDefineCheckpoint(prev,isStarMode,checkpointLevel) =>
+        //we only consider level 0; other are not managed.
+        if(checkpointLevel == 0) {
+
+          if (!digestUpdates(prev)) {
+            affect(computeValueFromScratch(changes.newValue))
+          }
+          saveCurrentCheckpoint(changes.newValue)
+          true
+        }else{
+          //ignore it altogether
+          digestUpdates(prev)
         }
-        saveCurrentCheckpoint(changes.newValue)
-        true
-      case SeqUpdateRollBackToCheckpoint(checkpoint:IntSequence) =>
-        require (checkpoint quickEquals this.checkpoint)
-        restoreCheckpoint()
-        true
+
+      case r@SeqUpdateRollBackToCheckpoint(checkpoint:IntSequence,checkpointLevel:Int) =>
+        if(checkpointLevel == 0) {
+          require(checkpoint quickEquals this.checkpoint)
+          restoreCheckpoint()
+          true
+        }else{
+          digestUpdates(r.howToRollBack)
+        }
+
       case SeqUpdateInsert(value : Int, pos : Int, prev : SeqUpdate) =>
         //on which vehicle did we insert?
-        if(!digestUpdates(prev,skipNewCheckpoints)) return false
+        if(!digestUpdates(prev)) return false
         val newSeq = changes.newValue
 
-        val oldPrev = prev.newValue.valueAtPosition(pos-1).head
+        val oldPrev = prev.newValue.valueAtPosition(pos-1).get
 
         val oldSucc =prev.newValue.valueAtPosition(pos) match{
           case None => v-1 //at the end
@@ -155,7 +172,6 @@ class ConstantRoutingDistance(routes:ChangingSeqValue,
         val newDistance = distanceMatrix(oldPrev)(value) + distanceMatrix(value)(oldSucc)
         val nodeCost = distanceMatrix(value)(value)
 
-
         if(perVehicle) {
           val vehicle = vehicleSearcher(newSeq, pos)
           recordTouchedVehicle(vehicle)
@@ -164,15 +180,16 @@ class ConstantRoutingDistance(routes:ChangingSeqValue,
           distance(0) :+= (newDistance + nodeCost - oldDistance)
         }
         true
+
       case x@SeqUpdateMove(fromIncluded : Int, toIncluded : Int, after : Int, flip : Boolean, prev : SeqUpdate) =>
         //on which vehicle did we move?
         //also from --> to cannot include a vehicle start.
-        if(!digestUpdates(prev,skipNewCheckpoints)) false
+        if(!digestUpdates(prev)) false
         else if(x.isNop) true
         else if(x.isSimpleFlip){
           //this is a simple flip
 
-          val oldPrevFromValue = prev.newValue.valueAtPosition(fromIncluded - 1).head
+          val oldPrevFromValue = prev.newValue.valueAtPosition(fromIncluded - 1).get
           val oldSuccToValue = RoutingConventionMethods.routingSuccPos2Val(toIncluded,prev.newValue,v)
 
           val fromValue = x.fromValue
@@ -219,7 +236,7 @@ class ConstantRoutingDistance(routes:ChangingSeqValue,
           true
         }else {
           //actually moving, not simple flip
-          val oldPrevFromValue = prev.newValue.valueAtPosition(fromIncluded - 1).head
+          val oldPrevFromValue = prev.newValue.valueAtPosition(fromIncluded - 1).get
           val oldSuccToIfNoLoopOpt = prev.newValue.valueAtPosition(toIncluded + 1)
           val oldSuccToValue = oldSuccToIfNoLoopOpt match {
             case None => v - 1
@@ -318,11 +335,11 @@ class ConstantRoutingDistance(routes:ChangingSeqValue,
         //on which vehicle did we insert?
         val removedValue = x.removedValue
         //node cost to be considered
-        if(!digestUpdates(prev,skipNewCheckpoints)) return false
+        if(!digestUpdates(prev)) return false
 
         val positionOfDelete = x.position
 
-        val oldPrevValue = prev.newValue.valueAtPosition(positionOfDelete-1).head //vehicles are never deleted
+        val oldPrevValue = prev.newValue.valueAtPosition(positionOfDelete-1).get //vehicles are never deleted
         val oldSuccValue = RoutingConventionMethods.routingSuccPos2Val(positionOfDelete, prev.newValue,v)
         val newDistance = distanceMatrix(oldPrevValue)(oldSuccValue)
         val oldDistanceBefore = distanceMatrix(oldPrevValue)(removedValue)
@@ -346,6 +363,11 @@ class ConstantRoutingDistance(routes:ChangingSeqValue,
     }
   }
 
+  /**
+   * engages the saving of output values at this checkpoint.
+   * you also must call  recordTouchedVehicle(v:Int) for this saving to be effective.
+   * @param s
+   */
   protected def saveCurrentCheckpoint(s:IntSequence){
     checkpoint = s
     if(perVehicle) {
@@ -398,21 +420,21 @@ class ConstantRoutingDistance(routes:ChangingSeqValue,
   //datastruct for checkpoint: forward et bw labeling per vehicle. labeling: node -> (forward,backward) in a redBlack
   protected def computeValueBetween(s:IntSequence, vehicle:Int, fromPosIncluded:Int, fromValueIncluded:Int, toPosIncluded:Int, toValueIncluded:Int):Int = {
     if(fromPosIncluded <= toPosIncluded) {
-      var e = s.explorerAtPosition(fromPosIncluded).head
+      var e = s.explorerAtPosition(fromPosIncluded).get
       var toReturn = distanceMatrix(e.value)(e.value)
 
       while (e.position < toPosIncluded) {
-        val nextPos = e.next.head
+        val nextPos = e.next.get
         toReturn += distanceMatrix(e.value)(nextPos.value) + distanceMatrix(nextPos.value)(nextPos.value)
         e = nextPos
       }
       toReturn
     }else{
-      var e = s.explorerAtPosition(fromPosIncluded).head
+      var e = s.explorerAtPosition(fromPosIncluded).get
       var toReturn = distanceMatrix(e.value)(e.value)
 
       while (e.position > toPosIncluded) {
-        val prevPos = e.prev.head
+        val prevPos = e.prev.get
         toReturn += distanceMatrix(e.value)(prevPos.value) + distanceMatrix(prevPos.value)(prevPos.value)
         e = prevPos
       }
@@ -420,6 +442,11 @@ class ConstantRoutingDistance(routes:ChangingSeqValue,
     }
   }
 
+  /**
+   *
+   * @param s a sequence of integers representing routes
+   * @return the distance per vehicle or the total distance in a singleton array, according to the global "perVehicle" flag
+   */
   private def computeValueFromScratch(s:IntSequence):Array[Int] = {
     val toReturn = Array.tabulate(v)(v => distanceMatrix(v)(v))
     val it = s.iterator
@@ -506,13 +533,26 @@ class ConstantRoutingDistancePrecompute(routes:ChangingSeqValue,
 
   val n = routes.maxValue + 1
 
+  //TODO: for stacked updates, we will use someting like magic arrays here, indiced by level of checkpoints, with constant limit on the stack, so that all arrays can be allocated at startups
   val isFWPrecomputeUpToDate:Array[Boolean] = Array.fill(v)(false)
   val isBWPrecomputeUpToDate:Array[Boolean] = Array.fill(v)(false)
   private val precomputedForwardCumulatedCostAtCheckpoint : Array[Int] = if(precomputeFW) Array.fill(n)(0) else null
   private val precomputedBackwardCumulatedCostAtCheckpont : Array[Int] = if(precomputeBW) Array.fill(n)(0) else null
 
+
+  /* forward pour commencer
+  * node => distance
+  *
+  * is vehicle pre-computed: array v->bool
+  * is vehicle changed:
+  * push --> reset array at this level, all out of date
+  *
+  *
+  *
+  * */
+
   def computePrecomputedForwardCumulatedCostAtCheckpoint(vehicle : Int, seq : IntSequence) {
-    var explorerOPt = seq.explorerAtAnyOccurrence(vehicle).head.next
+    var explorerOPt = seq.explorerAtAnyOccurrence(vehicle).get.next
     var prevValue = vehicle
     while(explorerOPt match{
       case None => false //we finished the last vehicle
@@ -531,7 +571,7 @@ class ConstantRoutingDistancePrecompute(routes:ChangingSeqValue,
   }
 
   def computePrecomputedBackwardCumulatedCostAtCheckpoint(vehicle : Int, seq : IntSequence) {
-    var explorerOPt = seq.explorerAtAnyOccurrence(vehicle).head.next
+    var explorerOPt = seq.explorerAtAnyOccurrence(vehicle).get.next
     var prevValue = vehicle
     while(explorerOPt match{
       case None => false
@@ -557,7 +597,8 @@ class ConstantRoutingDistancePrecompute(routes:ChangingSeqValue,
 
     if(fromPosIncluded == toPosIncluded) {
       distanceMatrix(fromValueIncluded)(fromValueIncluded)
-    } else if((atCheckpoint || !isVehicleChangedSinceCheckpoint(vehicle))&& precomputeFW && forwardRequired){
+    } else if(((atCheckpoint && !perVehicle)|| (perVehicle && !isVehicleChangedSinceCheckpoint(vehicle)))&& precomputeFW && forwardRequired){
+      //we need the or here above because we could be in single vehicle mode, where isVehicleChanged is always true
       //Forward
       doFWPrecomputeForVehicle(vehicle)
       val toReturn = (precomputedForwardCumulatedCostAtCheckpoint(toValueIncluded)
@@ -573,7 +614,7 @@ class ConstantRoutingDistancePrecompute(routes:ChangingSeqValue,
         - precomputedBackwardCumulatedCostAtCheckpont(toValueIncluded))
       assert(toReturn == super.computeValueBetween(s, vehicle, fromPosIncluded, fromValueIncluded, toPosIncluded, toValueIncluded))
       toReturn
-    }else if((atCheckpoint || !isVehicleChangedSinceCheckpoint(vehicle)) && (precomputeFW || precomputeBW) && distanceIsSymmetric){
+    }else if(((atCheckpoint && !perVehicle) || (perVehicle && !isVehicleChangedSinceCheckpoint(vehicle))) && (precomputeFW || precomputeBW) && distanceIsSymmetric){
       //gt the other distance from the available pre-compute
       if(precomputeFW){
         //getting a BW distance from a FW precompute

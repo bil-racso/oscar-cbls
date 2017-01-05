@@ -26,52 +26,68 @@ case class Flip(v: SeqValue,override val maxPivotPerValuePercent:Int = 10, overr
     }
   }
 
-  var checkpoint:IntSequence = null
-  var outputAtCheckpoint:IntSequence = null
+  val checkpointStack = new SeqCheckpointedValueStack[IntSequence]()
 
-    def digestChanges(changes : SeqUpdate) : Boolean = {
+  def digestChanges(changes : SeqUpdate) : Boolean = {
     changes match {
       case s@SeqUpdateInsert(value : Int, pos : Int, prev : SeqUpdate) =>
         if (!digestChanges(prev)) return false
-        this.insertAtPosition(value, prev.newValue.size - pos) //TODO: build on the original value instead of maintaining two data structs? , changes.newValue.flip(fast=true)
+
+        //build on the original value instead of maintaining two data structs? , changes.newValue.flip(fast=true)
+        this.insertAtPosition(value, prev.newValue.size - pos)
+
         true
 
-      case SeqUpdateMove(fromIncluded : Int, toIncluded : Int, after : Int, flip : Boolean, prev : SeqUpdate) =>
+      case m@SeqUpdateMove(fromIncluded : Int, toIncluded : Int, after : Int, flip : Boolean, prev : SeqUpdate) =>
         if (!digestChanges(prev)) return false
-        val prevSize = prev.newValue.size-1
-        println("digesting " + changes)
+        if(m.isNop) {
+          ;
+        }else if(m.isSimpleFlip){
+          this.flip(0,prev.newValue.size -1)
+        }else {
+          //Complete move with a flip
 
-        val tentativeFlippedAfter = prevSize - after - 2
-        val flippedFromIncluded = prevSize - toIncluded - 1
-        val flippedToIncluded = prevSize - fromIncluded - 1
-        val flippedAfter = if(tentativeFlippedAfter == flippedToIncluded) flippedFromIncluded - 1 else tentativeFlippedAfter
-        this.move(flippedFromIncluded, flippedToIncluded, flippedAfter, flip)
+          //there is a special case if the after is -1
+          if (after == -1){
+            //the segment to move starts at zero, and ends later
+            val numberOfMovesPointsMinusOne = toIncluded - fromIncluded
+            val prevSize = prev.newValue.size
+            val flippedFromIncluded = prevSize - toIncluded - 1
+            val flippedToIncluded = prevSize - fromIncluded - 1
+            this.move(flippedFromIncluded, flippedToIncluded, prev.newValue.size-1, flip)
+
+          }else {
+            val prevSize = prev.newValue.size
+            val tentativeFlippedAfter = prevSize - after - 2
+            val flippedFromIncluded = prevSize - toIncluded - 1
+            val flippedToIncluded = prevSize - fromIncluded - 1
+            val flippedAfter = if (tentativeFlippedAfter == flippedToIncluded) flippedFromIncluded - 1 else tentativeFlippedAfter
+            this.move (flippedFromIncluded, flippedToIncluded, flippedAfter, flip)
+          }
+        }
         true
 
       case r@SeqUpdateRemove(position : Int, prev : SeqUpdate) =>
         if (!digestChanges(prev)) return false
-        this.remove(prev.newValue.size - position - 1)
+        this.remove(prev.newValue.size - position - 1,changes.newValue.flip(fast=true))
         true
 
-      case u@SeqUpdateRollBackToCheckpoint(checkpoint) =>
-        require(checkpoint quickEquals this.checkpoint)
-        this.rollbackToCurrentCheckpoint(outputAtCheckpoint)
+      case u@SeqUpdateRollBackToCheckpoint(checkPoint,level) =>
+        releaseTopCheckpointsToLevel(level,false)
+        this.rollbackToTopCheckpoint(checkpointStack.rollBackAndOutputValue(checkPoint,level))
+        require(checkPoint quickEquals checkpointStack.topCheckpoint)
+        assert(this.newValue quickEquals checkpointStack.outputAtTopCheckpoint(checkPoint))
         true
 
-      case SeqUpdateDefineCheckpoint(prev : SeqUpdate, isActive) =>
-        this.releaseCheckpoint()
+      case SeqUpdateDefineCheckpoint(prev : SeqUpdate, isStarMode, level) =>
         if(!digestChanges(prev)){
-          checkpoint = prev.newValue
-          outputAtCheckpoint = changes.newValue.flip(false,true) //we do a rework since a checkpoint is defined
-          this := outputAtCheckpoint
-          this.defineCurrentValueAsCheckpoint(true)
-          true
-        }else{
-          checkpoint = prev.newValue
-          outputAtCheckpoint = this.newValue
-          this.defineCurrentValueAsCheckpoint(true)
-          true
+          this := changes.newValue.flip(false,true)
         }
+
+        releaseTopCheckpointsToLevel(level,true)
+        this.defineCurrentValueAsCheckpoint(isStarMode)
+        checkpointStack.defineCheckpoint(prev.newValue,level,this.newValue)
+        true
 
       case SeqUpdateLastNotified(value) =>
         true
@@ -82,7 +98,6 @@ case class Flip(v: SeqValue,override val maxPivotPerValuePercent:Int = 10, overr
   }
 
   override def checkInternals(c: Checker) {
-    println(this.newValue,v.value.size)
     c.check(this.newValue.toList equals v.value.toList.reverse, Some("this.newValue(=" + this.newValue.toList + ") == v.value.flip(=" + v.value.toList.reverse + ")"))
     c.check(this.newValue.toList.reverse equals v.value.toList, Some("this.newValue.flip(="+ this.newValue.toList.reverse +") == v.value(="+ v.value.toList+ ")"))
   }
