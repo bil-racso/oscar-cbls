@@ -10,7 +10,7 @@ object QuadraticAssignmentLNS extends CPModel with App {
   var d: Array[Array[Int]] = Array.ofDim(n,n) //distance matrix
 
   // fill distance and weight matrix randomly
-  val random = solver.getRandom()
+  val random = solver.getRandom
   for (i <- 0 until n; j <- i+1 until n) {
     w(i)(j) = random.nextInt(100)
     w(j)(i) = w(i)(j)
@@ -38,7 +38,7 @@ object QuadraticAssignmentLNS extends CPModel with App {
     // do a new run, not limiting number of solution and with 60 backtrack limit
     startSubjectTo(failureLimit = 1000) {
       // relax randomly 50% of the variables
-      add((0 until n).filter(i => random.nextInt(100) < 50).map(i => x(i) == bestSol(i)))
+      add((0 until n).filter(i => random.nextInt(100) < 50).map(i => x(i) === bestSol(i)))
     }
   }
 

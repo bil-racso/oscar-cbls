@@ -2,7 +2,6 @@ package oscar.examples.cp
 
 import oscar.cp._
 import scala.io.Source
-import oscar.cp.core.CPOutcome._
 import oscar.util._
 
 /**
@@ -36,7 +35,7 @@ object ATSP extends CPModel with App {
         case Some(x) => {
           // Select the closest successors of the city x
           val v = selectMin(0 until n)(succ(x).hasValue(_))(distMatrixSucc(x)(_)).get
-          branch(add(succ(x) == v))(add(succ(x) != v))
+          branch(add(succ(x) === v))(add(succ(x) !== v))
         }
       }
     }  

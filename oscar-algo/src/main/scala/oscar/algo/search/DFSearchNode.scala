@@ -1,15 +1,17 @@
 package oscar.algo.search
 
 
+import oscar.algo.Inconsistency
+
 import scala.util.Random
-import oscar.algo.reversible.ReversibleContext
+import oscar.algo.reversible.ReversibleContextImpl
 import oscar.algo.reversible.ReversibleBoolean
 
 /**
  * @author Pierre Schaus pschaus@gmail.com
  * @author Renaud Hartert ren.hartert@gmail.com
  */
-class DFSearchNode extends ReversibleContext {
+class DFSearchNode extends ReversibleContextImpl with ConstrainableContext {
 
   var silent = false
 
@@ -18,7 +20,7 @@ class DFSearchNode extends ReversibleContext {
   /**
     * @return The Random generator of this node potentially used in other algorithms
     */
-  def getRandom(): Random = random
+  def getRandom: Random = random
 
 
   protected val failed = new ReversibleBoolean(this, false)
@@ -27,16 +29,19 @@ class DFSearchNode extends ReversibleContext {
 
   protected var heuristic: Branching = null
 
-
   final def searchEngine: DFSearch = searchStrategy
 
   final def onSolution(action: => Unit): DFSearchNode = {
     searchStrategy.onSolution(action); this
+    //statusBehaviourDelegate.onSolution(action); this
   }
 
+  final def onFailure(action: => Unit): DFSearchNode = {
+    searchStrategy.onFailure(action); this
+  }
 
   /** @return  true if this node can surely not lead to any solution */
-  def isFailed(): Boolean = failed.value
+  def isFailed: Boolean = failed.value
 
   /** Set the node in a failed state */
   def fail(): Unit = failed.setTrue()
@@ -44,37 +49,60 @@ class DFSearchNode extends ReversibleContext {
   /** This function is executed when the node becomes a solution */
   def solFound(): Unit = Unit
 
-  def start(nSols: Int = Int.MaxValue, failureLimit: Int = Int.MaxValue, timeLimit: Int = Int.MaxValue, maxDiscrepancy: Int = Int.MaxValue): SearchStatistics = {
-    startSubjectTo(nSols, failureLimit, timeLimit, maxDiscrepancy)()
+  def start(nSols: Int = Int.MaxValue, failureLimit: Int = Int.MaxValue, timeLimit: Int = Int.MaxValue, maxDiscrepancy: Int = Int.MaxValue, listener: DFSearchListener = null): SearchStatistics = {
+    startSubjectTo(nSols, failureLimit, timeLimit, maxDiscrepancy, listener)()
   }
 
   def start(stopCondition: => Boolean): SearchStatistics = {
+    startSubjectTo(stopCondition, Int.MaxValue, null)(Unit)
+  }
+
+  def start(stopCondition: => Boolean, listener: DFSearchListener): SearchStatistics = {
     startSubjectTo(stopCondition, Int.MaxValue)(Unit)
   }
 
   def start(stopCondition: => Boolean, maxDiscrepancy: Int): SearchStatistics = {
-    startSubjectTo(stopCondition, maxDiscrepancy)(Unit)
+    startSubjectTo(stopCondition, maxDiscrepancy, null)(Unit)
   }
 
-  def startSubjectTo(nSols: Int = Int.MaxValue, failureLimit: Int = Int.MaxValue, timeLimit: Int = Int.MaxValue, maxDiscrepancy: Int = Int.MaxValue)(block: => Unit = Unit): SearchStatistics = {
+  def start(stopCondition: => Boolean, maxDiscrepancy: Int, listener: DFSearchListener): SearchStatistics = {
+    startSubjectTo(stopCondition, maxDiscrepancy, listener)(Unit)
+  }
+
+  def startSubjectTo(nSols: Int = Int.MaxValue, failureLimit: Int = Int.MaxValue, timeLimit: Int = Int.MaxValue, maxDiscrepancy: Int = Int.MaxValue, listener: DFSearchListener = null)(block: => Unit = Unit): SearchStatistics = {
     val stopCondition = buildStopCondition(nSols, failureLimit, timeLimit)
-    startSubjectTo(stopCondition, maxDiscrepancy)(block)
+    startSubjectTo(stopCondition, maxDiscrepancy, listener)(block)
   }
 
   def startSubjectTo(stopCondition: => Boolean)(block: => Unit): SearchStatistics = {
-    startSubjectTo((s: DFSearch) => stopCondition, Int.MaxValue)(block)
+    startSubjectTo(stopCondition, Int.MaxValue, null)(block)
+  }
+
+  def startSubjectTo(stopCondition: => Boolean, listener: DFSearchListener)(block: => Unit): SearchStatistics = {
+    startSubjectTo(stopCondition, Int.MaxValue, listener)(block)
   }
 
   def startSubjectTo(stopCondition: => Boolean, maxDiscrepancy: Int)(block: => Unit): SearchStatistics = {
-    startSubjectTo((s: DFSearch) => stopCondition, maxDiscrepancy)(block)
+    startSubjectTo((s: DFSearch) => stopCondition, maxDiscrepancy, null)(block)
   }
 
-  def startSubjectTo(stopCondition: DFSearch => Boolean, maxDiscrepancy: Int)(block: => Unit): SearchStatistics = {
+  def startSubjectTo(stopCondition: => Boolean, maxDiscrepancy: Int, listener: DFSearchListener)(block: => Unit): SearchStatistics = {
+    startSubjectTo((s: DFSearch) => stopCondition, maxDiscrepancy, listener)(block)
+  }
+
+  def startSubjectTo(stopCondition: DFSearch => Boolean, maxDiscrepancy: Int, listener: DFSearchListener)(block: => Unit): SearchStatistics = {
     val t0 = System.currentTimeMillis()
     pushState() // Store the current state
-    block // Apply the before search action
+    try {
+      block // Apply the before search action
+    }
+    catch {
+      case _: Inconsistency => fail()
+    }
+    searchStrategy.searchListener = listener // Set the listener
     searchStrategy.start(heuristic.maxDiscrepancy(maxDiscrepancy), stopCondition)
     pop() // Restore the current state
+    searchStrategy.searchListener = null  // Remove the listener
     // Build the statistic object
     new SearchStatistics(
       searchStrategy.nNodes,

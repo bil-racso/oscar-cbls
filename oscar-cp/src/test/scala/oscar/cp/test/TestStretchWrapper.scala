@@ -15,14 +15,14 @@
 package oscar.cp.test
 
 import org.scalatest.FunSuite
-import org.scalatest.matchers.ShouldMatchers
+import oscar.cp.testUtils.TestSuite
 
 import oscar.cp.constraints._
 import oscar.cp._
 
 
 
-class TestStretchWrapper extends FunSuite with ShouldMatchers  {
+class TestStretchWrapper extends TestSuite  {
 
 
   test("test stretch 1") {
@@ -30,7 +30,7 @@ class TestStretchWrapper extends FunSuite with ShouldMatchers  {
     var x = Array.fill(6)(CPIntVar(0 to 2)(cp))
     val automaton = stretchAutomaton(x, 2, 2)
     cp.add(regular(x,automaton))
-    cp.add(x(5) == 0)
+    cp.add(x(5) === 0)
     cp.isFailed should be(false)
     
     //  0-2  0-2  1-2  1-2  0   0

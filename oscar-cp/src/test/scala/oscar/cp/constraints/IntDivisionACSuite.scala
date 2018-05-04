@@ -1,5 +1,6 @@
 package oscar.cp.constraints
 
+import oscar.cp._
 import oscar.cp.testUtils._
 import oscar.cp.core.CPSolver
 import oscar.cp.core.variables.CPIntVar
@@ -89,8 +90,7 @@ class IntDivisionACSuite extends TestSuite {
     implicit val solver = CPSolver()
     val a = CPIntVar(Set(1, 4, 5, 9))
     val b = CPIntVar(Set(2, 6, 7, 11, 18))
-    solver.post(new IntDivisionAC(a, b, 3)) 
-    assert(solver.isFailed)
+    postAndCheckFailure(solver, new IntDivisionAC(a, b, 3))
   }
   
   test("values in [v*c; v*c+c[ should be removed from b when v is removed from a") {
@@ -102,7 +102,7 @@ class IntDivisionACSuite extends TestSuite {
     solver.post(new IntDivisionAC(a, b, c)) 
     assert(!solver.isFailed)
     def removeAndCheck(v: Int): Unit = {     
-      solver.post(a != v)
+      solver.post(a !== v)
       for (i <- (v*c) until (v*c+c)) {
         assert(!b.hasValue(i), i + " should not be in " + b)
       }
@@ -119,7 +119,7 @@ class IntDivisionACSuite extends TestSuite {
     val c = 5
     solver.post(new IntDivisionAC(a, b, c)) 
     assert(!solver.isFailed)
-    solver.post(b != 13)
+    solver.post(b !== 13)
     assert(!a.hasValue(2), "2 should not be in " + a)
   } 
   
@@ -130,7 +130,7 @@ class IntDivisionACSuite extends TestSuite {
     val c = 5
     solver.post(new IntDivisionAC(a, b, c)) 
     assert(!solver.isFailed)
-    solver.post(b != 12)
+    solver.post(b !== 12)
     assert(a.hasValue(2), "2 should be in " + a)
     assert(b.hasValue(10), "10 should be in " + b)
     assert(b.hasValue(11), "11 should be in " + b)

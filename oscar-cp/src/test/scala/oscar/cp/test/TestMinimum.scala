@@ -15,14 +15,14 @@
 package oscar.cp.test
 
 import org.scalatest.FunSuite
-import org.scalatest.matchers.ShouldMatchers
+import oscar.cp.testUtils.TestSuite
 
 import oscar.cp.constraints._
 
 import oscar.cp._
 
 
-class TestMinimum extends FunSuite with ShouldMatchers  {
+class TestMinimum extends TestSuite  {
 
 
   test("Minimum1") {
@@ -32,7 +32,7 @@ class TestMinimum extends FunSuite with ShouldMatchers  {
     
     var y = CPIntVar(0 to 6)(cp)
    
-    cp.add(minimum(x) == y)
+    cp.add(minimum(x) === y)
     
     y.min should be(1)
     y.max should be(3)
@@ -51,7 +51,7 @@ class TestMinimum extends FunSuite with ShouldMatchers  {
     
     var y = CPIntVar(0 to 6)(cp)
    
-    cp.add(minimum(x) == y)
+    cp.add(minimum(x) === y)
     
     cp.add(y >= 2)
     
@@ -67,7 +67,7 @@ class TestMinimum extends FunSuite with ShouldMatchers  {
     
     var y = CPIntVar(0 to 6)(cp)
    
-    cp.add(minimum(x) == y)
+    cp.add(minimum(x) === y)
     
     cp.add(y >= 2)
     

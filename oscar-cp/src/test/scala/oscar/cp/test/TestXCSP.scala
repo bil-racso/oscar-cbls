@@ -10,6 +10,7 @@ import oscar.cp._
 class TestXCSP extends TestSuite {
 
   test("test format") {
+
     val solver = new XCSPSolver with DefaultConstraints
     val str: String = """<?xml version="1.0" encoding="UTF-8"?> 
 	    <instance> 
@@ -573,7 +574,7 @@ class TestXCSP extends TestSuite {
 	    		<variable name="V2" domain="D0"/>
 	    		<variable name="C" domain="D1"/>
 	  		</variables>
-	    <constraints nbConstraints="1">
+	    <constraints nbConstraints="2">
 	    <constraint name="C1" arity="3" scope="V1 V2 C" reference="global:minimum_weight_all_different">
 	  	<parameters>
 	  		[ V1 V2]
@@ -586,6 +587,11 @@ class TestXCSP extends TestSuite {
 	  		C
 	  	</parameters>
 	  </constraint>
+                        <constraint name="C2" arity="2" scope="V1 V2" reference="global:allDifferent">
+                        	  		<parameters>[      V1 V2 2 ]</parameters>
+                        	  	</constraint>
+
+
 	    </constraints>
 
 	  	</instance>"""

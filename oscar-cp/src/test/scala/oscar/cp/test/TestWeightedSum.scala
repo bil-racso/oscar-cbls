@@ -1,11 +1,11 @@
 package oscar.cp.test
 
 import org.scalatest.FunSuite
-import org.scalatest.matchers.ShouldMatchers
+import oscar.cp.testUtils.TestSuite
 
 import oscar.cp._
 
-class TestWeightedSum extends FunSuite with ShouldMatchers {
+class TestWeightedSum extends TestSuite {
 
   test("Weighted Sum 1") {
     val cp = CPSolver()
@@ -50,7 +50,7 @@ class TestWeightedSum extends FunSuite with ShouldMatchers {
     if (!decomp)
       cp.add(weightedSum(w, x, y))
     else
-      cp.add(sum(w.zip(x).map { case (wi, xi) => xi * wi }) == y)
+      cp.add(sum(w.zip(x).map { case (wi, xi) => xi * wi }) === y)
     cp.search {
       binaryFirstFail(x)
     } onSolution {

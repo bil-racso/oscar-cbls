@@ -15,30 +15,63 @@
 
 package oscar.cp.core
 
-import oscar.algo.search._
+import oscar.algo.search.{DFSLinearizer, DFSReplayer, _}
 import oscar.cp._
+import oscar.cp.isInconsistent
 import oscar.cp.core._
 import oscar.cp.constraints._
+
 import scala.collection.mutable.Stack
 import oscar.algo.reversible._
 import oscar.util._
 import oscar.cp.multiobjective.ListPareto
 import oscar.cp.multiobjective.Pareto
 import oscar.cp.constraints.ParetoConstraint
-import oscar.cp.core.CPOutcome._
 import java.util.LinkedList
 import java.util.Collection
+
+import scala.reflect.ClassTag
 
 class CPSolver(propagStrength: CPPropagStrength) extends CPOptimizer(propagStrength) {
 
 
-  def this() = this(CPPropagStrength.Weak)
+  def this() = this(CPPropagStrength.Automatic)
 
-  override def startSubjectTo(stopCondition: DFSearch => Boolean, maxDiscrepancy: Int)(block: => Unit): SearchStatistics = {
+  override def startSubjectTo(stopCondition: DFSearch => Boolean, maxDiscrepancy: Int, listener: DFSearchListener)(block: => Unit): SearchStatistics = {
     deactivateNoSolExceptions()
-    val stat = super.startSubjectTo(stopCondition,maxDiscrepancy)(block)
+    val stat = super.startSubjectTo(stopCondition,maxDiscrepancy,listener)(block)
     cleanQueues()
     stat
+  }
+
+  //the solution variables are the variables that must be assigned to have a solution
+  final def replay(dfsLinearizer: DFSLinearizer, solutionVariables: Seq[CPIntVar]): SearchStatistics = {
+    replaySubjectTo(dfsLinearizer,solutionVariables){}
+  }
+
+  final def replaySubjectTo(dfsLinearizer: DFSLinearizer, solutionVariables: Seq[CPIntVar], timeLimit: Int = Int.MaxValue)(block: => Unit): SearchStatistics = {
+    pushState() // Store the current state
+    block
+    val stats = new DFSReplayer(this, solutionVariables).replay(dfsLinearizer.decisions, timeLimit)
+    pop()
+    stats
+  }
+
+
+
+  @inline private def buildStopCondition(nSols: Int, failureLimit: Int, timeLimit: Int): Function1[DFSearch, Boolean] = {
+    // Build the stop condition
+    val checkSol = nSols < Int.MaxValue
+    val checkFailures = failureLimit < Int.MaxValue
+    val checkTime = timeLimit < Int.MaxValue
+    val maxTime = (timeLimit * 1000) + System.currentTimeMillis()
+    (s: DFSearch) => {
+      var stop = false
+      stop |= (checkSol && s.nSolutions >= nSols)
+      stop |= (checkFailures && s.nBacktracks >= failureLimit)
+      stop |= (checkTime && System.currentTimeMillis() >= maxTime)
+      stop
+    }
   }
 
 
@@ -58,6 +91,7 @@ class CPSolver(propagStrength: CPPropagStrength) extends CPOptimizer(propagStren
 
   /** Deactivate the no solution exception when an add is used and an inconsistent model is detected */
   def deactivateNoSolExceptions(): Unit = throwNoSolExceptions = false
+  def activateNoSolExceptions(): Unit = throwNoSolExceptions = true
 
   /**
    * return true if every variable is bound
@@ -99,61 +133,69 @@ class CPSolver(propagStrength: CPPropagStrength) extends CPOptimizer(propagStren
     objective.tighten()
   }
 
-  override def add(c: Constraint, st: CPPropagStrength): CPOutcome = {
-    val outcome = post(c, st)
-    if ((outcome == Failure || isFailed) && throwNoSolExceptions) {
+  override def add(c: Constraint, st: CPPropagStrength): Unit = {
+    //TODO GUILLAUME est-ce qu'on doit catch l'inconsistency ici??
+    val inconsistent = isInconsistent(post(c, st))
+    if ((inconsistent || isFailed) && throwNoSolExceptions) {
       throw new NoSolutionException(s"the stored failed when adding constraint $c")
     }
-    outcome
   }
 
-  override def add(c: Constraint): CPOutcome = add(c, propagStrength)
+  override def add(c: Constraint): Unit = add(c, propagStrength)
 
   /**
    * Add a constraint to the store (b == true) in a reversible way and trigger the fix-point algorithm. <br>
    * In a reversible way means that the constraint is present in the store only for descendant nodes.
-   * @param c
    * @throws NoSolutionException if the fix point detects a failure that is one of the domain became empty
    */
-  override def add(b: CPBoolVar): CPOutcome = {
-    val outcome = post(new EqCons(b, 1))
-    if ((outcome == Failure || isFailed) && throwNoSolExceptions) {
+  override def add(b: CPBoolVar): Unit = {
+    //TODO GUILLAUME est-ce qu'on doit catch l'inconsistency ici??
+    val inconsistent = isInconsistent(post(b.constraintTrue))
+    if ((inconsistent || isFailed) && throwNoSolExceptions) {
       throw new NoSolutionException(s"the stored failed when setting " + b.name + " to true")
     }
-    return outcome
   }
     
-  override def addCut(c: Constraint): CPOutcome = {
-    val outcome = postCut(c)
-    if ((outcome == Failure || isFailed) && throwNoSolExceptions) {
+  override def addCut(c: Constraint): Unit = {
+    //TODO GUILLAUME est-ce qu'on doit catch l'inconsistency ici??
+    val inconsistent = isInconsistent(postCut(c))
+    if ((inconsistent || isFailed) && throwNoSolExceptions) {
       throw new NoSolutionException(s"the stored failed when adding constraint $c")
     }
-    outcome
   }
 
   /**
    * Add a set of constraints to the store in a reversible way and trigger the fix-point algorithm afterwards.
    * In a reversible way means that the posted constraints are present in the store only for descendant nodes.
-   * @param constraints
+    *
+    * @param constraints
    * @param st the propagation strength asked for the constraint. Will be used only if available for the constraint (see specs of the constraint)
    * @throws NoSolutionException if the fix point detects a failure that is one of the domain became empty, Suspend otherwise.
    */
-  override def add(constraints: Array[Constraint], st: CPPropagStrength): CPOutcome = {
-    val outcome = post(constraints, st);
-    if ((outcome == Failure || isFailed) && throwNoSolExceptions) {
+  override def add(constraints: Array[Constraint], st: CPPropagStrength): Unit = {
+    //TODO GUILLAUME est-ce qu'on doit catch l'inconsistency ici??
+    val inconsistent = isInconsistent(post(constraints, st))
+    if ((inconsistent|| isFailed) && throwNoSolExceptions) {
       throw new NoSolutionException(s"the stored failed when adding constraint $constraints");
     }
-    return outcome
   }
   
-  override def add(constraints: Array[Constraint]): CPOutcome = add(constraints, propagStrength)
+  override def add(constraints: Array[Constraint]): Unit = add(constraints, propagStrength)
 
-  override def add(constraints: Iterable[Constraint], st: CPPropagStrength): CPOutcome = add(constraints.toArray, st)
+  override def add(constraints: Iterable[Constraint], st: CPPropagStrength): Unit = add(constraints.toArray, st)
 
-  override def add(constraints: Iterable[Constraint]): CPOutcome = add(constraints.toArray, propagStrength)
+  override def add[T: ClassTag](boolVars: Iterable[CPBoolVar]): Unit = {
+    //TODO GUILLAUME est-ce qu'on doit catch l'inconsistency ici??
+    val inconsistent = isInconsistent(post(boolVars))
+    if ((inconsistent || isFailed) && throwNoSolExceptions) {
+      throw new NoSolutionException(s"the stored failed when setting those boolVars to true and propagate $boolVars");
+    }
+  }
 
-  override def +=(c: Constraint, st: CPPropagStrength): CPOutcome = add(c, st)
-  override def +=(c: Constraint): CPOutcome = add(c, propagStrength)
+  override def add(constraints: Iterable[Constraint]): Unit = add(constraints.toArray, propagStrength)
+
+  override def +=(c: Constraint, st: CPPropagStrength): Unit = add(c, st)
+  override def +=(c: Constraint): Unit = add(c, propagStrength)
 }
 
 object CPSolver {

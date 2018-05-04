@@ -17,13 +17,13 @@
 package oscar.cp.test
 
 import org.scalatest.FunSuite
-import org.scalatest.matchers.ShouldMatchers
+import oscar.cp.testUtils.TestSuite
 
 import oscar.cp.constraints._
 
 import oscar.cp._
 
-class StableMarriage extends FunSuite with ShouldMatchers {
+class StableMarriage extends TestSuite {
 
   test("StableMarriage") {
     val n = 5
@@ -61,8 +61,8 @@ class StableMarriage extends FunSuite with ShouldMatchers {
       val pref_m = element(rankMen(m), wife(m), Weak) // preference of m for his wife
       val pref_w = element(rankWomen(w), husband(w), Weak) // preference of w for her husband
 
-      cp.add((pref_m >>= rankMen(m)(w)) ==> (pref_w <<= rankWomen(w)(m)))
-      cp.add((pref_w >>= rankWomen(w)(m)) ==> (pref_m <<= rankMen(m)(w)))
+      cp.add((pref_m ?> rankMen(m)(w)) ==> (pref_w ?< rankWomen(w)(m)))
+      cp.add((pref_w ?> rankWomen(w)(m)) ==> (pref_m ?< rankMen(m)(w)))
     }
 
     cp.search {

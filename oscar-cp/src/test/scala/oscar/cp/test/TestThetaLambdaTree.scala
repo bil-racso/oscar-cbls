@@ -6,14 +6,14 @@ package oscar.cp.test
 
 
 import org.scalatest.FunSuite
-import org.scalatest.matchers.ShouldMatchers
+import oscar.cp.testUtils.TestSuite
 import oscar.cp._
 import oscar.cp.scheduling.util.ThetaLambdaTree
 
 /**
  * Created by saschavancauwelaert on 17/12/14.
  */
-class TestThetaLambdaTree extends FunSuite with ShouldMatchers {
+class TestThetaLambdaTree extends TestSuite {
 
   test("unary unit fig2.8 of petr vilim's thesis") {
     implicit val cp = CPSolver()
@@ -21,7 +21,7 @@ class TestThetaLambdaTree extends FunSuite with ShouldMatchers {
     val durs = Array(CPIntVar(5),CPIntVar(6),CPIntVar(4),CPIntVar(10))
     val ends = Array(CPIntVar(0 to 5),CPIntVar(0 to 31),CPIntVar(0 to 34),CPIntVar(0 to 52))
     for (i <- 0 until starts.length) {
-      cp.add(starts(i) + durs(i) == ends(i))
+      cp.add(starts(i) + durs(i) === ends(i))
     }
 
     val tlTree = new ThetaLambdaTree(starts.length)
@@ -59,7 +59,7 @@ class TestThetaLambdaTree extends FunSuite with ShouldMatchers {
     val durs = Array(CPIntVar(5),CPIntVar(9),CPIntVar(5),CPIntVar(10))
     val ends = Array(CPIntVar(0 to 100),CPIntVar(0 to 100),CPIntVar(0 to 100),CPIntVar(0 to 100))
     for (i <- 0 until starts.length) {
-      cp.add(starts(i) + durs(i) == ends(i))
+      cp.add(starts(i) + durs(i) === ends(i))
     }
 
     val tlTree = new ThetaLambdaTree(starts.length)

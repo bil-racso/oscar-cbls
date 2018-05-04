@@ -18,12 +18,13 @@ package oscar.examples.cp
 import oscar.cp._
 import oscar.algo.reversible._
 import oscar.visual._
+
 import scala.collection.JavaConversions._
 import oscar.cp.constraints.BinPackingFlow
 import oscar.visual.shapes.VisualRectangle
 import oscar.visual.plot.PlotLine
 import oscar.cp.core.CPPropagStrength
-import oscar.cp.core.CPOutcome
+import oscar.cp.core.variables.CPVar
 
 /**
  * Chemical Tanker Problem:
@@ -95,11 +96,12 @@ object ChemicalTanker extends CPModel with App {
    */
   class ChemicalConstraint(val cargo: Cargo, val tanks: Array[Tank], val cargos: Array[CPIntVar]) extends Constraint(cargos(0).store) {
 
+    override def associatedVars(): Iterable[CPVar] = ??? //TODO
+
     val curCapa = new ReversibleInt(s, 0)
 
     override def setup(l: CPPropagStrength) = {
       cargos.zipWithIndex.foreach(e => e._1.callValBindIdxWhenBind(this, e._2))
-      CPOutcome.Suspend
     }
 
     override def valBindIdx(x: CPIntVar, tank: Int) = {
@@ -110,12 +112,8 @@ object ChemicalTanker extends CPModel with App {
           for (c <- cargos; if (!c.isBound)) {
             c.removeValue(cargo.id) // should never fail here
           }
-          CPOutcome.Success
-        } else {
-          CPOutcome.Suspend
+          deactivate()
         }
-      } else {
-        CPOutcome.Suspend
       }
     }
   }
@@ -213,7 +211,7 @@ object ChemicalTanker extends CPModel with App {
       val unboundTanks = cargo.zipWithIndex.filter { case (x, c) => !x.isBound }
       val (tankVar, tank) = unboundTanks.maxBy { case (x, c) => (tanks(c).capa, -x.getSize) }
       val cargoToPlace = (0 until cargos.size).filter(tankVar.hasValue(_)).maxBy(volumeLeft(_))
-      branch(post(tankVar == cargoToPlace))(post(tankVar != cargoToPlace))      
+      branch(post(tankVar === cargoToPlace))(post(tankVar !== cargoToPlace))
     }
   } start(0)
 
@@ -221,7 +219,7 @@ object ChemicalTanker extends CPModel with App {
     startSubjectTo(Int.MaxValue, 300) {
       //fix randomly 90% of the slabs to the position of the current best solution
       for (i <- 0 until cargos.size; if rnd.nextInt(100) <= 70; if (!solver.isFailed)) {
-        add(cargo(i) == cargosol(i))
+        add(cargo(i) === cargosol(i))
       }
     }
   }

@@ -15,21 +15,21 @@
 package oscar.cp.test
 
 import org.scalatest.FunSuite
-import org.scalatest.matchers.ShouldMatchers
+import oscar.cp.testUtils.TestSuite
 import oscar.cp.constraints._
 import oscar.cp._
 
 
 
-class TestConstraintDegree extends FunSuite with ShouldMatchers  {
+class TestConstraintDegree extends TestSuite  {
 
 
   test("ConstraintDegree1") {
     val cp = CPSolver()
     var x = Array.fill(3)(CPIntVar(1 to 3)(cp))
     
-    cp.post(x(0) != x(1))
-    cp.post(x(0) != x(2))
+    cp.post(x(0) !== x(1))
+    cp.post(x(0) !== x(2))
     x(0).constraintDegree should be(2)
     x(1).constraintDegree should be(1)
     	

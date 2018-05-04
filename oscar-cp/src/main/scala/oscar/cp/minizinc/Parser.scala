@@ -4,6 +4,7 @@ import scala.util.parsing.combinator._
 import FZType._
 import oscar.cp._
 import java.io.FileReader
+
 import scala.Equals
 import oscar.cp.constraints.EqReifVar
 import oscar.cp.constraints.GrEqVarReif
@@ -16,10 +17,13 @@ import oscar.cp.constraints.Automaton
 import oscar.cp.constraints.Sum
 import oscar.cp.constraints.SetDiff
 import java.sql.Time
+
 import oscar.cp.constraints.ScalarProduct
 import oscar.cp.constraints.WeightedSum
+
 import scala.collection.mutable.HashMap
 import java.util.Collection
+
 import oscar.algo.search.Branching
 import oscar.cp.constraints.MulCte
 import oscar.cp.constraints.SubCircuit
@@ -27,7 +31,6 @@ import oscar.cp.core.variables.CPVar
 import oscar.cp.core.NoSolutionException
 import oscar.cp.core.variables.CPSetVar
 import oscar.cp.core.CPPropagStrength
-import oscar.cp.core.CPOutcome
 import oscar.cp.core.Constraint
 
 class Parser extends JavaTokenParsers { // RegexParsers {
@@ -555,7 +558,6 @@ class Parser extends JavaTokenParsers { // RegexParsers {
    * @param ann : the list of annotations for the variable
    * @param id : the name of the variable
    * @param s : the inital domain of the variable
-   * @param hasDomain : true of the inital domain is given
    */
   def addCPIntVar(ann: List[Annotation], id: String, s: Set[Int]) {
     if (!bool2Int.contains(id)) {
@@ -699,16 +701,16 @@ class Parser extends JavaTokenParsers { // RegexParsers {
    * @param cpvar : CPIntVar
    */
   def shrinkDom(s: Set[Int], cpvar: CPIntVar) {
-    if (cpvar.updateMax(s.max) == CPOutcome.Failure) {
+    if (isInconsistent(cpvar.updateMax(s.max))) {
       throw new NoSolutionException("VarInt domains are incompatible")
     }
-    if (cpvar.updateMin(s.min) == CPOutcome.Failure) {
+    if (isInconsistent(cpvar.updateMin(s.min))) {
       throw new NoSolutionException("VarInt domains are incompatible")
     }
     if (!(s.max - s.min + 1 == s.size)) {
       for (e <- cpvar.iterator) {
         if (!(s contains e)) {
-          if (cpvar.removeValue(e) == CPOutcome.Failure) {
+          if (isInconsistent(cpvar.removeValue(e))) {
             throw new NoSolutionException("VarInt domains are incompatible")
           }
         }
@@ -724,7 +726,7 @@ class Parser extends JavaTokenParsers { // RegexParsers {
   def shrinkDom(s: Set[Int], cpvar: CPSetVar) {
     for (e <- cpvar.possibleNotRequiredValues.toSet[Int]) {
       if (!(s contains e)) {
-        if (cpvar.excludes(e) == CPOutcome.Failure) {
+        if (isInconsistent(cpvar.excludes(e))) {
           throw new NoSolutionException("Sets domains are incompatible")
         }
       }
@@ -838,7 +840,7 @@ class Parser extends JavaTokenParsers { // RegexParsers {
       case "set_card" =>
         val s = getCPSetVar(varList(0))
         val i = getCPIntVar(varList(1))
-        addCstr(s.card == i, ann)
+        addCstr(s.card.eq(i), ann)
       case "set_diff" =>
         set_cstr(varList, ann, cstr)
       case "set_eq" =>
@@ -859,7 +861,7 @@ class Parser extends JavaTokenParsers { // RegexParsers {
         // to be tested
         val array = getCPIntVarArray(varList(0))
         for (i <- 0 to array.length - 2) {
-          addCstr(array(i) == array(i + 1), ann)
+          addCstr(array(i).eq(array(i + 1)), ann)
         }
       case "oscar_among" =>
         // no need to create the vals, can get while adding constraint, what is better ?
@@ -911,7 +913,7 @@ class Parser extends JavaTokenParsers { // RegexParsers {
       case "oscar_decreasing_int" =>
         val array = getCPIntVarArray(varList(0))
         for (i <- 0 to array.length - 2) {
-          addCstr(array(i) >= array(i + 1), ann)
+          addCstr(array(i).grEq(array(i + 1)), ann)
         }
       case "oscar_diffn" =>
         val x = getCPIntVarArray(varList(0))
@@ -942,7 +944,7 @@ class Parser extends JavaTokenParsers { // RegexParsers {
       case "oscar_increasing_int" =>
         val array = getCPIntVarArray(varList(0))
         for (i <- 0 to array.length - 2) {
-          addCstr(array(i) <= array(i + 1), ann)
+          addCstr(array(i).leEq(array(i + 1)), ann)
         }
       case "oscar_int_set_channel" =>
         System.err.println(cstr + " not implemented")
@@ -1206,7 +1208,7 @@ class Parser extends JavaTokenParsers { // RegexParsers {
    * @param x, y
    */
   def diff_array_cstr(x: Array[CPIntVar], y: Array[CPIntVar]) {
-    addCstr(sum(x) != sum(y))
+    addCstr(sum(x).diff(sum(y)))
   }
 
   /**
@@ -1287,31 +1289,31 @@ class Parser extends JavaTokenParsers { // RegexParsers {
       cpvar :+= getCPBoolVar(e)
     }
     cstr match {
-      case "bool_and" => addCstr((cpvar(0) && cpvar(1)) == cpvar(2))
-      case "bool_eq" => addCstr(cpvar(0) == cpvar(1))
+      case "bool_and" => addCstr((cpvar(0) && cpvar(1)).eq(cpvar(2)))
+      case "bool_eq" => addCstr(cpvar(0).eq(cpvar(1)))
       case "bool_eq_reif" => {
         if (cpvar(0).isBoundTo(0)) {
-          addCstr(cpvar(1) != cpvar(2))
+          addCstr(cpvar(1).diff(cpvar(2)))
         } else if(cpvar(1).isBoundTo(0)) {
-          addCstr(cpvar(0) != cpvar(2))
+          addCstr(cpvar(0).diff(cpvar(2)))
         } else {
           addCstr(new EqReifVar(cpvar(0), cpvar(1), cpvar(2)))
         }
         
       }
-      case "bool_le" => addCstr(cpvar(0) <= cpvar(1))
+      case "bool_le" => addCstr(cpvar(0).leEq(cpvar(1)))
       case "bool_le_reif" => addCstr(new GrEqVarReif(cpvar(1), cpvar(0), cpvar(2)))
       case "bool_lt" => {
-        addCstr(cpvar(0) == 0)
-        addCstr(cpvar(1) == 1)
+        addCstr(cpvar(0).eq(0))
+        addCstr(cpvar(1).eq(1))
         //cp.add(!cpvar(0) && cpvar(1))
       }
       case "bool_lt_reif" => {
         addCstr(new GrEqVarReif(cpvar(1) - 1, cpvar(0), cpvar(2)))
         //cp.add((!cpvar(0) && cpvar(1)) == cpvar(2))
       }
-      case "bool_not" => addCstr(!cpvar(0) == cpvar(1))
-      case "bool_or" => addCstr((cpvar(0) || cpvar(1)) == cpvar(2))
+      case "bool_not" => addCstr(cpvar(0).diff(cpvar(1)))
+      case "bool_or" => addCstr(cpvar(0).or(cpvar(1)).eq(cpvar(2)))
       case "bool_xor" => addCstr(new DiffReifVar(cpvar(0), cpvar(1), cpvar(2)))
     }
   }
@@ -1329,14 +1331,14 @@ class Parser extends JavaTokenParsers { // RegexParsers {
     }
     cstr match {
       case "int_abs" => addCstr(new Abs(cpvar(0), cpvar(1)))
-      case "int_eq" => addCstr(cpvar(0) == cpvar(1))
+      case "int_eq" => addCstr(cpvar(0).eq((1)))
       case "int_le" =>
         //addCstr(cpvar(0) <= cpvar(1), ann) //example of adding constraint with annotation
-        addCstr(cpvar(0) <= cpvar(1))
-      case "int_lt" => addCstr(cpvar(0) < cpvar(1))
-      case "int_ne" => addCstr(cpvar(0) != cpvar(1))
-      case "int_plus" => addCstr(cpvar(0) + cpvar(1) == cpvar(2))
-      case "int_times" => addCstr(cpvar(0) * cpvar(1) == cpvar(2))
+        addCstr(cpvar(0).leEq(cpvar(1)))
+      case "int_lt" => addCstr(cpvar(0).le(cpvar(1)))
+      case "int_ne" => addCstr(cpvar(0).diff(cpvar(1)))
+      case "int_plus" => addCstr((cpvar(0) + cpvar(1)).eq(cpvar(2)))
+      case "int_times" => addCstr((cpvar(0) * cpvar(1)).eq(cpvar(2)))
     }
   }
 
@@ -2183,7 +2185,7 @@ class Parser extends JavaTokenParsers { // RegexParsers {
    */
   def varChoiceAnn2(args: List[Any], array: Array[CPIntVar]): Branching = {
     args(1) match {
-      case "input_order" => binaryStatic(array, assignAnn(args))
+      case "input_order" => binaryStaticIdx(array,i => assignAnn(args)(array(i)))
       case "first_fail" => {
         binaryFirstFail(array, assignAnn(args))
       }

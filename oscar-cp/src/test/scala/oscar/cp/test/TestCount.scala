@@ -15,7 +15,7 @@
 package oscar.cp.test
 
 import org.scalatest.FunSuite
-import org.scalatest.matchers.ShouldMatchers
+import oscar.cp.testUtils.TestSuite
 
 import oscar.cp.constraints._
 
@@ -25,12 +25,12 @@ import oscar.cp._
  * Testing of Count constraint
  * @author: Pierre Schaus pschaus@gmail.com
  */
-class TestCount extends FunSuite with ShouldMatchers {
+class TestCount extends TestSuite {
 
   val rand = new scala.util.Random(0)
 
   def countDecomp(cp: CPSolver, N: CPIntVar, X: Array[CPIntVar], Y: CPIntVar) = {
-    cp.add(sum(X.map(_ === Y)) == N)
+    cp.add(sum(X.map(_ ?=== Y)) === N)
   }
 
   def nbSol(nmin: Int, nmax: Int, domx: Array[Set[Int]], domy: Set[Int], decomp: Boolean = false): (Int, Int) = {

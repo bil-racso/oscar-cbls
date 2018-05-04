@@ -16,6 +16,7 @@ package oscar.cp.test
 
 import org.scalatest.FunSuite
 import org.scalatest.Matchers
+import oscar.algo.Inconsistency
 import oscar.cp._
 import oscar.util.RandomGenerator
 
@@ -54,7 +55,7 @@ class TestReservoirResource extends FunSuite with Matchers {
     val initialAmount = 0
 
     for (i <- startVars.indices) {
-      add(startVars(i) + durationVars(i) == endVars(i))
+      add(startVars(i) + durationVars(i) === endVars(i))
     }
     add(reservoirResource(startVars, durationVars, endVars, productionVars, consumptionVars, minCapacity, maxCapacity, initialAmount))
 
@@ -84,7 +85,7 @@ class TestReservoirResource extends FunSuite with Matchers {
     val initialAmount = 1
 
     for (i <- startVars.indices) {
-      add(startVars(i) + durationVars(i) == endVars(i))
+      add(startVars(i) + durationVars(i) === endVars(i))
     }
     add(reservoirResource(startVars, durationVars, endVars, productionVars, consumptionVars, minCapacity, maxCapacity, initialAmount))
 
@@ -120,12 +121,14 @@ class TestReservoirResource extends FunSuite with Matchers {
       val initialAmount = minCapacity + math.min(1, maxCapacity)
 
       for (i <- startVars.indices) {
-        add(startVars(i) + durationVars(i) == endVars(i))
+        add(startVars(i) + durationVars(i) === endVars(i))
       }
+
       try {
         add(reservoirResource(startVars, durationVars, endVars, productionVars, consumptionVars, minCapacity, maxCapacity, initialAmount))
-      } catch {
-        case e: NoSolutionException => // The instance is not solvable
+      }
+      catch {
+        case e: NoSolutionException =>
         case _: Throwable => println("A problem has occured")
       }
 
@@ -135,7 +138,7 @@ class TestReservoirResource extends FunSuite with Matchers {
       }
 
       search(binaryFirstFail(startVars))
-      
+
       minimize(makespan)
       start()
     }
@@ -161,7 +164,7 @@ class TestReservoirResource extends FunSuite with Matchers {
       val initialAmount = minCapacity + math.min(1, maxCapacity)
 
       for (i <- startVars.indices) {
-        add(startVars(i) + durationVars(i) == endVars(i))
+        add(startVars(i) + durationVars(i) === endVars(i))
       }
       try {
         add(reservoirResource(startVars, durationVars, endVars, productionVars, consumptionVars, minCapacity, maxCapacity, initialAmount))

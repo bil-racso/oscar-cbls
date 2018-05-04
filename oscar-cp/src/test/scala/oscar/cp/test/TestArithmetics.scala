@@ -15,7 +15,7 @@
 package oscar.cp.test
 
 import org.scalatest.FunSuite
-import org.scalatest.matchers.ShouldMatchers
+import oscar.cp.testUtils.TestSuite
 
 import oscar.cp.constraints._
 
@@ -23,7 +23,7 @@ import oscar.cp._
 
 
 
-class TestArithmetics extends FunSuite with ShouldMatchers  {
+class TestArithmetics extends TestSuite  {
 
 
   test("Arithmetics") {
@@ -61,11 +61,11 @@ class TestArithmetics extends FunSuite with ShouldMatchers  {
     val Array(a,b,c,d,e,f,g,h,i,j) = x
     
     cp.add(a + j*10 + j*100 + i*1000 + a*10000 + b*100000 + 
-           b + a*10 + g*100 + f*1000 + h*10000 + d*100000 == 705713)
+           b + a*10 + g*100 + f*1000 + h*10000 + d*100000 === 705713)
     
     val sol = Array(1, 2, 3, 4, 5, 6, 7, 8, 9, 0)
     for (i <- 0 until sol.size) {
-        cp.add(x(i) == sol(i))        	
+        cp.add(x(i) === sol(i))
     }
     cp.isFailed should be(false)
 

@@ -17,17 +17,17 @@
 package oscar.cp.test
 
 import org.scalatest.FunSuite
-import org.scalatest.matchers.ShouldMatchers
+import oscar.cp.testUtils.TestSuite
 import oscar.cp.core.Constraint
 import oscar.algo.reversible._
-import oscar.cp.core.CPOutcome
 import oscar.cp._
 import oscar.cp.core.CPPropagStrength
+import oscar.cp.core.variables.CPVar
 
 /**
  * @author Pierre Schaus pschaus@gmail.com
  */
-class TestIdempotency extends FunSuite with ShouldMatchers {
+class TestIdempotency extends TestSuite {
 
   test("test idempotency") {
 
@@ -35,26 +35,26 @@ class TestIdempotency extends FunSuite with ShouldMatchers {
 
     class MyCons(val X: CPIntVar, idempot: Boolean) extends Constraint(X.store, "MyCons") {
       idempotent = idempot
-      override def setup(l: CPPropagStrength): CPOutcome = {
+      override def setup(l: CPPropagStrength): Unit = {
         X.callPropagateWhenDomainChanges(this)
-        CPOutcome.Suspend
       }
-      override def propagate(): CPOutcome = {
+      override def propagate(): Unit = {
         nbCallToPropagate += 1
         X.removeValue(0)
       }
+      override def associatedVars(): Iterable[CPVar] = ???
     }
 
     val cp = CPSolver()
     val x = CPIntVar(0 to 3)(cp)
     cp.add(new MyCons(x, false))
-    cp.add(x != 3)
+    cp.add(x !== 3)
     nbCallToPropagate should equal(2)
     
     nbCallToPropagate = 0
     val y = CPIntVar(0 to 3)(cp)
     cp.add(new MyCons(y, true))
-    cp.add(y != 3)
+    cp.add(y !== 3)
     nbCallToPropagate should equal(1)
   }
 }

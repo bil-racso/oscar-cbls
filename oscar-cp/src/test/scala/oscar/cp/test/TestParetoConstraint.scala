@@ -17,7 +17,7 @@
 package oscar.cp.test
 
 import org.scalatest.FunSuite
-import org.scalatest.matchers.ShouldMatchers
+import oscar.cp.testUtils.TestSuite
 import oscar.cp._
 import oscar.cp.constraints.MinAssignment
 import oscar.util.selectMin
@@ -26,7 +26,7 @@ import oscar.cp.multiobjective.ListPareto
 import oscar.cp.constraints.ParetoConstraint
 import oscar.cp.core.CPSol
 
-class TestParetoConstraint extends FunSuite with ShouldMatchers {
+class TestParetoConstraint extends TestSuite {
 
   val coord1 = Array((985, 588), (847, 313), (254, 904), (434, 606), (978, 748), (569, 473), (317, 263), (562, 234), (592, 262), (596, 189))
   val coord2 = Array((108, 372), (40, 67), (389, 350), (606, 719), (847, 68), (94, 86), (434, 614), (514, 416), (67, 399), (530, 231))
@@ -103,7 +103,7 @@ class TestParetoConstraint extends FunSuite with ShouldMatchers {
     val totDists = for (o <- Objs) yield CPIntVar(0, distMatrices(o).flatten.sum)(cp)
 
     cp.post(circuit(succ), Strong)
-    for (o <- Objs) cp.add(sum(Cities)(i => distMatrices(o)(i)(succ(i))) == totDists(o))
+    for (o <- Objs) cp.add(sum(Cities)(i => distMatrices(o)(i)(succ(i))) === totDists(o))
     cp.post(new ParetoConstraint(paretoSet, isMax, totDists.toArray))
 
     cp.search {
@@ -112,7 +112,7 @@ class TestParetoConstraint extends FunSuite with ShouldMatchers {
         case Some(i) => {
           val j = if (isMax(0)) selectMin(Cities)(succ(i).hasValue(_))(-distMatrices(0)(i)(_)).get
           else selectMin(Cities)(succ(i).hasValue(_))(distMatrices(0)(i)(_)).get
-          branch(cp.post(succ(i) == j))(cp.post(succ(i) != j))
+          branch(cp.post(succ(i) === j))(cp.post(succ(i) !== j))
         }
       }
     } onSolution {

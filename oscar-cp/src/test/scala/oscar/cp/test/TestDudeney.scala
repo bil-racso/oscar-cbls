@@ -15,14 +15,14 @@
 package oscar.cp.test
 
 import org.scalatest.FunSuite
-import org.scalatest.matchers.ShouldMatchers
+import oscar.cp.testUtils.TestSuite
 
 import oscar.cp.constraints._
 
 import oscar.cp._
 import collection.immutable.SortedSet
 
-class TestDudeney extends FunSuite with ShouldMatchers  {
+class TestDudeney extends TestSuite  {
 
 
   test("Dudeney") {
@@ -38,9 +38,9 @@ class TestDudeney extends FunSuite with ShouldMatchers  {
     val nb = CPIntVar(1 to math.pow(10, n).toInt - 1)(cp)
     val s = CPIntVar(1 to 9 * n)(cp)
 
-    cp.add(nb == (s * s * s))
-    cp.add(sum(0 until n)(i => x(i) * (math.pow(10, (n - i - 1)).toInt)) == nb)
-    cp.add(sum(x) == s)
+    cp.add(nb === (s * s * s))
+    cp.add(sum(0 until n)(i => x(i) * (math.pow(10, (n - i - 1)).toInt)) === nb)
+    cp.add(sum(x) === s)
     cp.search {
       binaryFirstFail(x)
     } onSolution {

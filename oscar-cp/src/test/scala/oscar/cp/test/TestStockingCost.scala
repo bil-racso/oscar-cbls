@@ -1,11 +1,11 @@
 package oscar.cp.test
 
 import org.scalatest.FunSuite
-import org.scalatest.matchers.ShouldMatchers
+import oscar.cp.testUtils.TestSuite
 import oscar.cp._
 import oscar.cp.core.CPPropagStrength
 
-class TestStockingCost extends FunSuite with ShouldMatchers {
+class TestStockingCost extends TestSuite {
 
   def StockingCostDecomp0(cp: CPSolver, X: Array[CPIntVar], d: Array[Int], H: CPIntVar, c: Int) = {
 
@@ -13,7 +13,7 @@ class TestStockingCost extends FunSuite with ShouldMatchers {
     val min = X.map(_.min).min
 
     for (t <- min to max) {
-      cp.add((sum(0 until X.size)(k => X(k) === t)) <= c)
+      cp.add((sum(0 until X.size)(k => X(k) ?=== t)) <= c)
     }
 
     cp.add((-sum(0 until X.size)(k => X(k) - d(k))) === H)

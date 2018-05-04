@@ -15,13 +15,14 @@
 
 package oscar.cp.scheduling.search
 
+import oscar.algo.branchings.{LCSearchSimplePhaseAssign, SplitLastConflict}
 import oscar.cp.testUtils._
 import oscar.cp._
+
 import scala.util.Random
 import oscar.algo.search.Branching
-import oscar.cp.searches.SplitLastConflict
-import oscar.cp.searches.LCSearchSimplePhaseAssign
 import oscar.util.RandomGenerator
+
 import scala.collection.mutable.ArrayBuffer
 /**
  *  @author Cyrille Dejemeppe cyrille.dejemeppe@gmail.com
@@ -167,7 +168,7 @@ abstract class SchedulingSearchSuite(seed: Int, scalable: Boolean) extends TestS
 
       solver.silent = true
 
-      add(startVars(0) == 0)
+      add(startVars(0) === 0)
       add(maxCumulativeResource(startVars, durationVars, endVars, demandVars, CPIntVar(capa)), Strong)
       search { searchHeuristic(startVars, durationVars, endVars, i => i) }
 

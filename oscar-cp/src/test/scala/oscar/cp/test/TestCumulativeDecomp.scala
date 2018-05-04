@@ -1,11 +1,11 @@
 package oscar.cp.test
 
 import org.scalatest.FunSuite
-import org.scalatest.matchers.ShouldMatchers
+import oscar.cp.testUtils.TestSuite
 import oscar.cp._
 import oscar.cp.scheduling.constraints.CumulativeDecomp
 
-class TestCumulativeDecomp extends FunSuite with ShouldMatchers {
+class TestCumulativeDecomp extends TestSuite {
 
   private class CPSched(durationsData: Array[Int], demandsData: Array[Int], horizon: Int) extends CPSolver {
     implicit val solver = this
@@ -16,7 +16,7 @@ class TestCumulativeDecomp extends FunSuite with ShouldMatchers {
     val ends = Array.tabulate(nTasks)(t => CPIntVar(durations(t).min to horizon))
     val demands = Array.tabulate(nTasks)(t => CPIntVar(demandsData(t)))
     val resources = Array.fill(nTasks)(CPIntVar(0))
-    Tasks.foreach(t => this.post(ends(t) == starts(t) + durations(t)))
+    Tasks.foreach(t => this.post(ends(t) === starts(t) + durations(t)))
   }
 
   private def cumulative(cp: CPSched, capacity: Int): CumulativeDecomp = {

@@ -15,13 +15,14 @@
 package oscar.cp.test
 
 import org.scalatest.FunSuite
-import org.scalatest.matchers.ShouldMatchers
+import oscar.algo.Inconsistency
+import oscar.cp.testUtils.TestSuite
 import oscar.cp.constraints._
 import oscar.cp._
 import oscar.cp.core.CPPropagStrength
 
 
-class TestCumulativeAlternative extends FunSuite with ShouldMatchers  {
+class TestCumulativeAlternative extends TestSuite  {
 
   test("issue76") {
     implicit val solver = new CPSolver()
@@ -30,7 +31,7 @@ class TestCumulativeAlternative extends FunSuite with ShouldMatchers  {
     val es = Array(CPIntVar(0 to 20))
     val dems = Array(CPIntVar(6))
     val rs = Array(CPIntVar(0))
-    add(ss(0) + ds(0) == es(0))
+    add(ss(0) + ds(0) === es(0))
     intercept[NoSolutionException] {
     	add(maxCumulativeResource(ss, ds, es, dems, rs, CPIntVar(3), 0), CPPropagStrength.Strong)
     }
@@ -43,7 +44,7 @@ class TestCumulativeAlternative extends FunSuite with ShouldMatchers  {
     val es = Array(CPIntVar(0 to 20))
     val dems = Array(CPIntVar(6))
     val rs = Array(CPIntVar(0))
-    add(ss(0) + ds(0) == es(0))
+    add(ss(0) + ds(0) === es(0))
     val capa = CPIntVar(0 to 6)
     add(maxCumulativeResource(ss, ds, es, dems, rs, capa, 0), CPPropagStrength.Strong)
     intercept[NoSolutionException] {
@@ -58,7 +59,7 @@ class TestCumulativeAlternative extends FunSuite with ShouldMatchers  {
     val es = Array(CPIntVar(0 to 20))
     val dems = Array(CPIntVar(6))
     val rs = Array(CPIntVar(0 to 1))
-    add(ss(0) + ds(0) == es(0))
+    add(ss(0) + ds(0) === es(0))
     val capa = CPIntVar(0 to 6)
     add(maxCumulativeResource(ss, ds, es, dems, rs, capa, 0), CPPropagStrength.Strong)
     add(capa < 6)

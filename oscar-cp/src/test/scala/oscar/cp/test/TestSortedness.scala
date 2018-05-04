@@ -17,13 +17,13 @@
 package oscar.cp.test
 
 import org.scalatest.FunSuite
-import org.scalatest.matchers.ShouldMatchers
+import oscar.cp.testUtils.TestSuite
 
 import oscar.cp.constraints._
 
 import oscar.cp._
 
-class TestSortedness extends FunSuite with ShouldMatchers {
+class TestSortedness extends TestSuite {
 
   
   test("Sortedness1") {
@@ -68,7 +68,7 @@ class TestSortedness extends FunSuite with ShouldMatchers {
     val p = Array.tabulate(x_.size)(i => CPIntVar(p_(i))(cp))
     cp.add(sortedness(x,s,p),Strong)
     for (i <- 0 until x_.size) {
-      cp.add(x(i) == x_(i))
+      cp.add(x(i) === x_(i))
     }
     
     //println(p.mkString(","))
@@ -91,7 +91,7 @@ class TestSortedness extends FunSuite with ShouldMatchers {
    
     cp.add(sortedness(x,s,p),Strong)
     for (i <- 0 until x.size) {
-      cp.add(x(i) == sol(i))
+      cp.add(x(i) === sol(i))
     }
     cp.allBounds(p) should be(true)
     cp.allBounds(s) should be(true)
@@ -111,7 +111,7 @@ class TestSortedness extends FunSuite with ShouldMatchers {
     val p = Array.tabulate(x_.size)(i => CPIntVar(0 to 4)(cp))
     cp.add(sortedness(x,s,p),Strong)
     for (i <- 0 until x_.size) {
-      cp.add(x(i) == x_(i))
+      cp.add(x(i) === x_(i))
     }
     for (i <- 0 until x.size) {
       s(i).value should be(s_(i))

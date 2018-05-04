@@ -2,7 +2,6 @@ package oscar.cp.constraints
 
 import oscar.cp._
 import oscar.cp.testUtils._
-import oscar.cp.core.CPOutcome._
 
 // Test the sum constraint on CPIntVar
 class SumSuite extends TestSuite {
@@ -29,9 +28,9 @@ class SumSuite extends TestSuite {
       if (i > 0) {
         nbVal = nbVal - cumulatedCounters(i - 1)
       }
-      s.post(nbVal <= max) should not be (Failure)
-      s.post(nbVal >= min) should not be (Failure)
-      s.isFailed() should be(false)
+      s.post(nbVal <= max)
+      s.post(nbVal >= min)
+      s.isFailed should be(false)
     }
   }
 
@@ -59,7 +58,7 @@ class SumSuite extends TestSuite {
     val x = Array(CPIntVar(0, 5)(cp), CPIntVar(0, 5)(cp), CPIntVar(0, 5)(cp))
     val y = CPIntVar(5)(cp)
     cp.add(sum(x, y))
-    cp.add(x(1) == 0)
+    cp.add(x(1) === 0)
     cp.add(x(0) >= 1)
     x(0).max should be(5)
 
@@ -79,7 +78,7 @@ class SumSuite extends TestSuite {
         val variable = optVar.get
         val value = variable.min
         branch {
-          solver.post(variable == value)
+          solver.post(variable === value)
         }{
           solver.post(variable > value)
         }

@@ -1,16 +1,15 @@
 package oscar.cp.test
 
 
+import oscar.algo.branchings.BinaryStaticOrderBranching
 import oscar.cp.core.Constraint
 import oscar.cp.scheduling.constraints._
 import oscar.cp._
 import oscar.cp.testUtils._
-import oscar.cp.searches.BinaryStaticOrderBranching
 import oscar.cp.core.CPPropagStrength
-import oscar.cp.core.CPOutcome._
 
 
-abstract class TestCumulativeConstraint(val cumulativeName: String, val nTests: Int = 1000, val minDuration: Int = 0, val k: Int = 5) extends TestSuite {
+abstract class TestCumulativeConstraint(val cumulativeName: String, val nTests: Int = 100, val minDuration: Int = 0, val k: Int = 5) extends TestSuite {
 
   type Sol = List[Int]
 
@@ -37,7 +36,7 @@ abstract class TestCumulativeConstraint(val cumulativeName: String, val nTests: 
     val ends = Array.tabulate(nTasks)(t => CPIntVar(durations(t).min to instance.horizon))
     val demands = Array.tabulate(nTasks)(t => CPIntVar(instance.demands(t)))
     val resources = Array.tabulate(nTasks)(t => CPIntVar(instance.resources(t)))
-    Tasks.foreach(t => post(ends(t) == starts(t) + durations(t)))
+    Tasks.foreach(t => post(ends(t) === starts(t) + durations(t)))
   }
 
   def cumulative(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar], demands: Array[CPIntVar], resources: Array[CPIntVar], capacity: CPIntVar, id: Int): Array[Constraint]  // returning array is useful when testing non-checking constraints, such as edge-finding, to couple with cumulativedecomp  
@@ -53,17 +52,18 @@ abstract class TestCumulativeConstraint(val cumulativeName: String, val nTests: 
   }
 
   def solveAll(cp: CPSched, capacity: Array[Int], decomp: Boolean, cons: CPPropagStrength): Set[Sol] = {
-    if (!decomp) cp.Resources.foreach(r => cp.post(cumulative(cp.starts, cp.durations, cp.ends, cp.demands, cp.resources, CPIntVar(capacity(r))(cp), r),cons))
-    else cp.Resources.foreach(r => cp.post(new CumulativeDecomp(cp.starts, cp.durations, cp.ends, cp.demands, cp.resources, CPIntVar(capacity(r))(cp), r)))
+    cp.deactivateNoSolExceptions()
+    if (!decomp) cp.Resources.foreach(r => cp.add(cumulative(cp.starts, cp.durations, cp.ends, cp.demands, cp.resources, CPIntVar(capacity(r))(cp), r),cons))
+    else cp.Resources.foreach(r => cp.add(new CumulativeDecomp(cp.starts, cp.durations, cp.ends, cp.demands, cp.resources, CPIntVar(capacity(r))(cp), r)))
     var sols: List[Sol] = List()
     
-    cp.post(cp.starts(0)+2 >= cp.starts(4))
-    cp.post(cp.starts(4) >= cp.ends(3)-1)
+    cp.add(cp.starts(0)+2 >= cp.starts(4))
+    cp.add(cp.starts(4) >= cp.ends(3)-1)
     
 
     cp.search {
-      val b1 = binaryStatic(cp.starts,_.randomValue)
-      val b2 = binaryStatic(cp.durations,_.randomValue)
+      val b1 = binaryStaticIdx(cp.starts,i => cp.starts(i).randomValue)
+      val b2 = binaryStaticIdx(cp.durations,i => cp.durations(i).randomValue)
       val b3 = binaryStatic(cp.resources)
       b1 ++ b2 ++ b3
     }

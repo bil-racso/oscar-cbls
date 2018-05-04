@@ -15,14 +15,14 @@
 package oscar.cp.test
 
 import org.scalatest.FunSuite
-import org.scalatest.matchers.ShouldMatchers
+import oscar.cp.testUtils.TestSuite
 
 import oscar.cp.constraints._
 
 import oscar.cp._
 
 
-class TestAnd extends FunSuite with ShouldMatchers  {
+class TestAnd extends TestSuite  {
   
   
   test("and1") { 
@@ -30,7 +30,7 @@ class TestAnd extends FunSuite with ShouldMatchers  {
 	  val A = Array.fill(3)(CPBoolVar()(cp))
 	  val B = CPBoolVar()(cp)
 	  cp.add(new And(A,B))
-	  cp.add(A(0) == 0)
+	  cp.add(A(0) === 0)
 	  B.isBoundTo(0) should be(true)
   }  
 
@@ -39,10 +39,10 @@ class TestAnd extends FunSuite with ShouldMatchers  {
 	  val A = Array.fill(3)(CPBoolVar()(cp))
 	  val B = CPBoolVar()(cp)
 	  cp.add(new And(A,B))
-	  cp.add(A(0) == 1)
-	  cp.add(A(1) == 1)
+	  cp.add(A(0) === 1)
+	  cp.add(A(1) === 1)
 	  B.isBoundTo(1) should be(false)
-	  cp.add(A(2) == 1)
+	  cp.add(A(2) === 1)
 	  B.isBoundTo(1) should be(true)
   }
   
@@ -51,10 +51,10 @@ class TestAnd extends FunSuite with ShouldMatchers  {
 	  val A = Array.fill(3)(CPBoolVar()(cp))
 	  val B = CPBoolVar()(cp)
 	  cp.add(new And(A,B))
-	  cp.add(B == 0)
-	  cp.add(A(0) == 1)
+	  cp.add(B === 0)
+	  cp.add(A(0) === 1)
 	  A(1).isBound should be(false)
-	  cp.add(A(1) == 1)
+	  cp.add(A(1) === 1)
 	  A(2).isBoundTo(0) should be(true)
   } 
   
@@ -63,7 +63,7 @@ class TestAnd extends FunSuite with ShouldMatchers  {
 	  val A = Array.fill(3)(CPBoolVar()(cp))
 	  val B = CPBoolVar()(cp)
 	  cp.add(new And(A,B))
-	  cp.add(B == 1)
+	  cp.add(B === 1)
 	  A.forall(_.isBoundTo(1)) should be(true)
   }    
 

@@ -3,6 +3,7 @@ package oscar.cp.constraints
 import oscar.cp.testUtils.TestSuite
 import oscar.cp.core.variables.CPIntVar
 import oscar.cp.core.CPSolver
+import oscar.cp._
 
 /** @author Renaud Hartert ren.hartert@gmail.com */
 class InverseSuite extends TestSuite {
@@ -34,28 +35,25 @@ class InverseSuite extends TestSuite {
     val solver = CPSolver()
     val prev = Array.fill(5)(CPIntVar(0 to 4)(solver))
     val next = Array.fill(5)(CPIntVar(0 to 3)(solver))
-    solver.post(new Inverse(prev, next))
-    assert(solver.isFailed)
+    postAndCheckFailure(solver,new Inverse(prev, next))
   } 
   
   test("Inverse should fail if i is not in prev(j) and next(i) == j") {
     val solver = CPSolver()
     val prev = Array.fill(5)(CPIntVar(0 to 4)(solver))
     val next = Array.fill(5)(CPIntVar(0 to 4)(solver))
-    solver.post(prev(3) != 0)
-    solver.post(next(0) == 3)
-    solver.post(new Inverse(prev, next))
-    assert(solver.isFailed)
+    solver.post(prev(3) !== 0)
+    solver.post(next(0) === 3)
+    postAndCheckFailure(solver, new Inverse(prev, next))
   }
   
   test("Inverse should fail if i is not in next(j) and prev(i) == j") {
     val solver = CPSolver()
     val prev = Array.fill(5)(CPIntVar(0 to 4)(solver))
     val next = Array.fill(5)(CPIntVar(0 to 4)(solver))
-    solver.post(next(3) != 0)
-    solver.post(prev(0) == 3)
-    solver.post(new Inverse(prev, next))
-    assert(solver.isFailed)
+    solver.post(next(3) !== 0)
+    solver.post(prev(0) === 3)
+    postAndCheckFailure(solver, new Inverse(prev, next))
   }
   
   test("Inverse should assign prev(i) == j when next(j) == i") {
@@ -63,11 +61,11 @@ class InverseSuite extends TestSuite {
     val prev = Array.fill(5)(CPIntVar(0 to 4)(solver))
     val next = Array.fill(5)(CPIntVar(0 to 4)(solver))
     solver.post(new Inverse(prev, next))
-    solver.post(next(0) == 3)
+    solver.post(next(0) === 3)
     assert(!solver.isFailed)
     assert(prev(3).isBound)
     assert(prev(3).min == 0) 
-    solver.post(next(1) == 1)  
+    solver.post(next(1) === 1)
     assert(!solver.isFailed)
     assert(prev(1).isBound)
     assert(prev(1).min == 1)
@@ -78,11 +76,11 @@ class InverseSuite extends TestSuite {
     val prev = Array.fill(5)(CPIntVar(0 to 4)(solver))
     val next = Array.fill(5)(CPIntVar(0 to 4)(solver))
     solver.post(new Inverse(prev, next))
-    solver.post(prev(0) == 3)
+    solver.post(prev(0) === 3)
     assert(!solver.isFailed)
     assert(next(3).isBound)
     assert(next(3).min == 0) 
-    solver.post(prev(1) == 1)  
+    solver.post(prev(1) === 1)
     assert(!solver.isFailed)
     assert(next(1).isBound)
     assert(next(1).min == 1)
@@ -93,9 +91,9 @@ class InverseSuite extends TestSuite {
     val prev = Array.fill(5)(CPIntVar(0 to 4)(solver))
     val next = Array.fill(5)(CPIntVar(0 to 4)(solver))
     solver.post(new Inverse(prev, next))
-    solver.post(prev(0) != 3)
+    solver.post(prev(0) !== 3)
     assert(!next(3).hasValue(0)) 
-    solver.post(prev(1) != 1)
+    solver.post(prev(1) !== 1)
     assert(!next(1).hasValue(1)) 
   }
   
@@ -104,9 +102,9 @@ class InverseSuite extends TestSuite {
     val prev = Array.fill(5)(CPIntVar(0 to 4)(solver))
     val next = Array.fill(5)(CPIntVar(0 to 4)(solver))
     solver.post(new Inverse(prev, next))
-    solver.post(next(0) != 3)
+    solver.post(next(0) !== 3)
     assert(!prev(3).hasValue(0)) 
-    solver.post(next(1) != 1)
+    solver.post(next(1) !== 1)
     assert(!prev(1).hasValue(1)) 
   }
 }
