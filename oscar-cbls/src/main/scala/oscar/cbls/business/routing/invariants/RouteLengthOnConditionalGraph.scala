@@ -37,6 +37,10 @@ object RouteLengthOnConditionalGraph{
   }
 }
 
+//TODO: some pair of nodes have their shortest path without condition.
+// A O(1) routing should exist in such case, possibly even in the A* search itself,
+// so could be used to speed up AStar in general
+
 class RouteLengthOnConditionalGraph(routes:SeqValue,
                                     n:Int,
                                     v:Int,
