@@ -41,9 +41,9 @@ class SingleFrameWindow(val panel:JPanel, title:String, width:Int, height:Int, b
   frame.setVisible(true)
 
   def saveWindowAsPng(savingFile: File): Unit ={
-    val bi = new BufferedImage(frame.getWidth, frame.getHeight, BufferedImage.TYPE_INT_ARGB)
+    val bi = new BufferedImage(panel.getWidth, panel.getHeight, BufferedImage.TYPE_INT_ARGB)
     val g = bi.createGraphics
-    frame.repaint() //this == JComponent
+    panel.paintAll(g) //this == JComponent
 
     try
       ImageIO.write(bi,"png", savingFile)
