@@ -20,7 +20,7 @@ object TimeWindowConstraintWithLogReduction {
     * @param violations An array of CBLSIntVar maintaining the violation of each vehicle
     * @return a time window constraint
     */
-  def apply(gc: GlobalConstraintDefinition,
+  def apply(gc: GlobalConstraintCore,
             n: Int,
             v: Int,
             earliestArrivalTime: Array[Long],
@@ -53,7 +53,7 @@ object TimeWindowConstraintWithLogReduction {
     * @param violations An array of CBLSIntVar maintaining the violation of each vehicle
     * @return a time window constraint
     */
-  def apply(gc: GlobalConstraintDefinition,
+  def apply(gc: GlobalConstraintCore,
             n: Int,
             v: Int,
             earliestArrivalTime: Array[Long],
@@ -71,7 +71,7 @@ object TimeWindowConstraintWithLogReduction {
   }
 }
 
-class TimeWindowConstraintWithLogReduction(gc: GlobalConstraintDefinition,
+class TimeWindowConstraintWithLogReduction(gc: GlobalConstraintCore,
                                            n: Int,
                                            v: Int,
                                            earliestArrivalTime: Array[Long],
@@ -88,7 +88,7 @@ class TimeWindowConstraintWithLogReduction(gc: GlobalConstraintDefinition,
 
   //val preComputedValues: Array[Array[TransferFunction]] = Array.fill(n)(Array.fill(n)(EmptyTransferFunction))
 
-  // Initialize the vehicles value, the precomputation value and link these invariant to the GlobalConstraintDefinition
+  // Initialize the vehicles value, the precomputation value and link these invariant to the GlobalConstraintCore
   gc.register(this)
   vehiclesValueAtCheckpoint0 = Array.fill(v)(false)
   currentVehiclesValue = Array.fill(v)(false)

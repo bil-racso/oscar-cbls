@@ -25,7 +25,7 @@ object VRPTestingGlobalConstraint extends App {
   val (symetricDistanceMatrix,_) = RoutingMatrixGenerator(nbNode)
 
 
-  val gc = GlobalConstraintDefinition(problem.routes, nbVehicle)
+  val gc = GlobalConstraintCore(problem.routes, nbVehicle)
 
   val routeLengths : Array[CBLSIntVar] = Array.tabulate(nbVehicle)({_ => CBLSIntVar(model,0)})
   val routeLengthPerVehicle = new RouteLength(gc,nbNode,nbVehicle,routeLengths, (from: Long, to: Long) => symetricDistanceMatrix(from)(to))

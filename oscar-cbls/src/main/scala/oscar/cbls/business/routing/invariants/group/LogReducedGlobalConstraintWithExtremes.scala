@@ -5,7 +5,7 @@ import oscar.cbls.algo.seq.{IntSequence, IntSequenceExplorer}
 import oscar.cbls.core.ChangingSeqValue
 import oscar.cbls._
 
-abstract class LogReducedGlobalConstraintWithExtremes[T:Manifest](gc: GlobalConstraintDefinition, n: Long, v: Long)
+abstract class LogReducedGlobalConstraintWithExtremes[T:Manifest](gc: GlobalConstraintCore, n: Long, v: Long)
   extends LogReducedGlobalConstraint[T](gc,n,v){
   var preComputeTime = 0L
   var preComputeCount = 0

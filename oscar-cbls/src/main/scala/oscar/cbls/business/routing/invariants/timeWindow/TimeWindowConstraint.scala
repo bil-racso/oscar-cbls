@@ -33,7 +33,7 @@ object TimeWindowConstraint {
     * @param violations An array of CBLSIntVar maintaining the violation of each vehicle
     * @return a time window constraint
     */
-  def apply(gc: GlobalConstraintDefinition,
+  def apply(gc: GlobalConstraintCore,
             n: Long,
             v: Long,
             earliestArrivalTime: Array[Long],
@@ -64,7 +64,7 @@ object TimeWindowConstraint {
     * @param violations An array of CBLSIntVar maintaining the violation of each vehicle
     * @return a time window constraint
     */
-  def apply(gc: GlobalConstraintDefinition,
+  def apply(gc: GlobalConstraintCore,
             n: Long,
             v: Long,
             earliestArrivalTime: Array[Long],
@@ -95,7 +95,7 @@ object TimeWindowConstraint {
   * @param travelTimeMatrix A matrix representing the different travel time between the nodes
   * @param violations An array of CBLSIntVar maintaining the violation of each vehicle
   */
-class TimeWindowConstraint (gc: GlobalConstraintDefinition,
+class TimeWindowConstraint (gc: GlobalConstraintCore,
                             n: Long,
                             v: Long,
                             earliestArrivalTime: Array[Long],
@@ -104,7 +104,7 @@ class TimeWindowConstraint (gc: GlobalConstraintDefinition,
                             latestLeavingTime: Array[Long],
                             travelTimeMatrix: Array[Array[Long]],
                             val violations: Array[CBLSIntVar]
-                           ) extends GlobalConstraintMethods(gc,v) {
+                           ) extends GlobalConstraintDefinition(gc,v) {
 
   type U = Boolean
 
@@ -117,7 +117,7 @@ class TimeWindowConstraint (gc: GlobalConstraintDefinition,
 
   val preComputedValues: Array[Array[TransferFunction]] = Array.fill(n)(Array.fill(n)(EmptyTransferFunction))
 
-  // Initialize the vehicles value, the precomputation value and link these invariant to the GlobalConstraintDefinition
+  // Initialize the vehicles value, the precomputation value and link these invariant to the GlobalConstraintCore
   gc.register(this)
   vehiclesValueAtCheckpoint0 = Array.fill(v)(false)
   currentVehiclesValue = Array.fill(v)(false)

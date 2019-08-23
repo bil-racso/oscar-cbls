@@ -16,7 +16,7 @@ object WeightedNodesPerVehicle{
     * @param v number of vehicle
     * @param weightPerVehicle an array telling how many nodes are reached per vehicle
     */
-  def apply(gc: GlobalConstraintDefinition, n: Long, v : Int, nodeWeight:Array[Long], weightPerVehicle : Array[CBLSIntVar]) =
+  def apply(gc: GlobalConstraintCore, n: Long, v : Int, nodeWeight:Array[Long], weightPerVehicle : Array[CBLSIntVar]) =
     new WeightedNodesPerVehicle(gc, n, v, nodeWeight, weightPerVehicle)
 }
 
@@ -28,8 +28,8 @@ object WeightedNodesPerVehicle{
   * @param v                number of vehicle
   * @param weightPerVehicle an array telling how many nodes are reached per vehicle
   */
-class WeightedNodesPerVehicle(gc: GlobalConstraintDefinition, n: Long, v : Int, nodeWeight:Array[Long], weightPerVehicle : Array[CBLSIntVar])
-  extends GlobalConstraintMethods(gc,v){
+class WeightedNodesPerVehicle(gc: GlobalConstraintCore, n: Long, v : Int, nodeWeight:Array[Long], weightPerVehicle : Array[CBLSIntVar])
+  extends GlobalConstraintDefinition(gc,v){
 
   type U = Long
 

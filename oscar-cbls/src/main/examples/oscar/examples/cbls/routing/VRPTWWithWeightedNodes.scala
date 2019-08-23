@@ -3,7 +3,7 @@ package oscar.examples.cbls.routing
 import oscar.cbls._
 import oscar.cbls.business.routing._
 import oscar.cbls.business.routing.invariants.WeightedNodesPerVehicle
-import oscar.cbls.business.routing.invariants.group.GlobalConstraintDefinition
+import oscar.cbls.business.routing.invariants.group.GlobalConstraintCore
 import oscar.cbls.business.routing.invariants.timeWindow.TimeWindowConstraintWithLogReduction
 import oscar.cbls.business.routing.model.extensions.TimeWindows
 import oscar.cbls.core.search.First
@@ -70,7 +70,7 @@ class VRPTWWithWeightedNodes(n: Int, v: Int, minLat: Double, maxLat: Double, min
 
   // The STRONG timeWindow constraint (vehicleTimeWindowViolations contains the violation of each vehicle)
   val vehicleTimeWindowViolations = Array.fill(v)(new CBLSIntVar(store, 0L, Domain(0L, n)))
-  val gc = GlobalConstraintDefinition(myVRP.routes, v)
+  val gc = GlobalConstraintCore(myVRP.routes, v)
   val timeWindowStrongConstraint =
     TimeWindowConstraintWithLogReduction(
       gc,

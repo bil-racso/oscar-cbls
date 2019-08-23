@@ -171,8 +171,8 @@ object LogReducedFlippedPreComputedSubSequence {
     * @param v the number of vehicles
     * @tparam T the type of pre-computation, which is on subsequences (not on nodes)
     */
-  abstract class LogReducedGlobalConstraint[T:Manifest](gc: GlobalConstraintDefinition, n: Long, v :Long)
-    extends GlobalConstraintMethods(gc,v){
+  abstract class LogReducedGlobalConstraint[T:Manifest](gc: GlobalConstraintCore, n: Long, v :Long)
+    extends GlobalConstraintDefinition(gc,v){
 
     /**
       * this method delivers the value of the node

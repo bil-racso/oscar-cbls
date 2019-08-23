@@ -10,14 +10,14 @@ case class PreComputedDistances(distanceFromStart:Long,
                                 distanceToStart:Long)
 
 @deprecated("needs testing","")
-class RouteLength(gc: GlobalConstraintDefinition, n: Int, v:Int, vehicleToRouteLength:Array[CBLSIntVar], assymetricDistance:(Long,Long)=>Long)
-  extends GlobalConstraintMethods(gc,v){
+class RouteLength(gc: GlobalConstraintCore, n: Int, v:Int, vehicleToRouteLength:Array[CBLSIntVar], assymetricDistance:(Long,Long)=>Long)
+  extends GlobalConstraintDefinition(gc,v){
 
   type U = Long
 
   val preComputedVals: Array[PreComputedDistances] = Array.fill(n)(PreComputedDistances(0,0))
 
-  // Initialize the vehicles value, the precomputation value and link these invariant to the GlobalConstraintDefinition
+  // Initialize the vehicles value, the precomputation value and link these invariant to the GlobalConstraintCore
   gc.register(this)
   vehiclesValueAtCheckpoint0 = Array.fill(v)(0)
   currentVehiclesValue = Array.fill(v)(0)

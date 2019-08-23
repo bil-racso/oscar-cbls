@@ -5,7 +5,7 @@ import java.io.File
 import oscar.cbls._
 import oscar.cbls.business.routing._
 import oscar.cbls.business.routing.invariants.WeightedNodesPerVehicle
-import oscar.cbls.business.routing.invariants.group.{GlobalConstraintDefinition, RouteLength}
+import oscar.cbls.business.routing.invariants.group.{GlobalConstraintCore, RouteLength}
 import oscar.cbls.business.routing.invariants.timeWindow.{TimeWindowConstraint, TimeWindowConstraintWithLogReduction}
 import oscar.cbls.business.routing.model.extensions.TimeWindows
 import oscar.cbls.business.routing.neighborhood.{InsertPointUnroutedFirst, RemovePoint}
@@ -99,7 +99,7 @@ class Gehring_Homberger_benchmark_VRPTW(n: Int, v: Int, c: Int, distanceMatrix: 
   val penaltyForUnrouted = 1000000
   val penaltyForMovingVehicle = 10000
 
-  val gc = GlobalConstraintDefinition(myVRP.routes, v)
+  val gc = GlobalConstraintCore(myVRP.routes, v)
 
   val travelDurationMatrix = RoutingMatrixGenerator.generateLinearTravelTimeFunction(n,distanceMatrix)
   val nodeWeight = demands

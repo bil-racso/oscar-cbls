@@ -2,7 +2,7 @@ package oscar.examples.cbls.routing
 
 import oscar.cbls._
 import oscar.cbls.business.routing._
-import oscar.cbls.business.routing.invariants.group.{GlobalConstraintDefinition, RouteLength}
+import oscar.cbls.business.routing.invariants.group.{GlobalConstraintCore, RouteLength}
 import oscar.cbls.business.routing.invariants.timeWindow.{TimeWindowConstraint, TimeWindowConstraintWithLogReduction}
 import oscar.cbls.core.computation.FullRange
 import oscar.cbls.core.objective.CascadingObjective
@@ -37,7 +37,7 @@ object VRPWithOnlyTimeWindow extends App {
                   case 3 => new VRPWithOnlyTimeWindow(twc, n, v, iteration = it).run3(best)
                   case 4 => new VRPWithOnlyTimeWindow(twc, n, v, iteration = it).run4(best)
                 }).
-                foldLeft(Array[Long](0,0,0,0,0,0,0,0,0,0))((acc,item) =>
+                foldLeft(Array[Long](0,0,0,0,0,0,0,0,0,0,0,0))((acc,item) =>
                   Array(acc(0) + item._1,acc(1) + item._2,
                     acc(2) + item._3,acc(3) + item._4,
                     acc(4) + item._5,acc(5) + item._6,
@@ -60,7 +60,7 @@ object VRPWithOnlyTimeWindow extends App {
   // Add true if you want to run with Best and/or false if you want to run with First
   val bests = List(false)
   // Add the procedures you want (see at the end of this files for more informations)
-  val procedures = List(1,2,3)
+  val procedures = List(1,2)
   // The variations of n values
   val ns_1 = List(100L, 200L, 300L, 400L, 500L, 600L, 700L, 800L, 900L, 1000L)
   val ns_2 = List(1000L)
@@ -69,7 +69,7 @@ object VRPWithOnlyTimeWindow extends App {
   val vs_2 = List(10L, 20L, 30L, 40L, 50L, 60L, 70L, 80L, 90L, 100L)
   //val vs_2 = List(10)
   // The number of iterations of each configuration
-  val iterations = 20
+  val iterations = 50
   runConfiguration(ns_1,vs_1,timeWindowConstraints,bests, procedures,iterations)
   println("\n\n\n\n\n\n\n#####################################################\n\n\n\n\n\n")
   runConfiguration(ns_2,vs_2,timeWindowConstraints,bests, procedures,iterations)
@@ -86,13 +86,11 @@ class VRPWithOnlyTimeWindow(version: Long, n: Long = 100, v: Long = 10, fullInfo
 
   val myVRP =  new VRP(m,n,v)
 
-  val gc = GlobalConstraintDefinition(myVRP.routes, v)
-
   var globalConstraintWithLogReduc: Option[TimeWindowConstraintWithLogReduction] = None
   var globalConstraint: Option[TimeWindowConstraint] = None
+  var cascadingObjective: CascadingObjective = null
   // Distance
-  val vehicleToRouteLength = Array.fill(v)(CBLSIntVar(m, 0, FullRange))
-  val routeLengthInvariant = new RouteLength(gc,n,v,vehicleToRouteLength,(from,to) => symmetricDistance(from)(to))
+
 
   // This class isn't meant to last but given the time left I don't want to modify it.
   // It uses an old representation of time windows with earliestArrivalTimes and latestLeavingTimes.
@@ -101,6 +99,7 @@ class VRPWithOnlyTimeWindow(version: Long, n: Long = 100, v: Long = 10, fullInfo
   // Defintion of the objective function using naive constraint or global contraint
   val obj: CascadingObjective =
     if(version == 0){
+      val totalRouteLength = routeLength(myVRP.routes,n,v,false,symmetricDistance,true,true,false)(0)
       // Naive constraint
       val oldTimeWindowInvariant = forwardCumulativeIntegerIntegerDimensionOnVehicle(
         myVRP.routes,n,v,
@@ -134,10 +133,14 @@ class VRPWithOnlyTimeWindow(version: Long, n: Long = 100, v: Long = 10, fullInfo
         }
       }
 
-      new CascadingObjective(constraints,
-        sum(vehicleToRouteLength) + (penaltyForUnrouted*(n - length(myVRP.routes))))
+      cascadingObjective = new CascadingObjective(constraints,
+        totalRouteLength + (penaltyForUnrouted*(n - length(myVRP.routes))))
+      cascadingObjective
     }
     else if(version == 1){
+      val gc = GlobalConstraintCore(myVRP.routes, v)
+      val vehicleToRouteLength = Array.fill(v)(CBLSIntVar(m, 0, FullRange))
+      val routeLengthInvariant = new RouteLength(gc,n,v,vehicleToRouteLength,(from,to) => symmetricDistance(from)(to))
       // Global constraint
       val violations = Array.fill(v)(new CBLSIntVar(m, 0, Domain.coupleToDomain((0,1))))
       val timeMatrix = Array.tabulate(n)(from => Array.tabulate(n)(to => travelDurationMatrix.getTravelDuration(from, 0, to)))
@@ -148,9 +151,13 @@ class VRPWithOnlyTimeWindow(version: Long, n: Long = 100, v: Long = 10, fullInfo
           timeWindowExtension.taskDurations,
           timeMatrix, violations)
       globalConstraint = Some(smartTimeWindowInvariant)
-      new CascadingObjective(sum(violations),
+      cascadingObjective = new CascadingObjective(sum(violations),
         sum(vehicleToRouteLength) + (penaltyForUnrouted*(n - length(myVRP.routes))))
+      cascadingObjective
     } else {
+      val gc = GlobalConstraintCore(myVRP.routes, v)
+      val vehicleToRouteLength = Array.fill(v)(CBLSIntVar(m, 0, FullRange))
+      val routeLengthInvariant = new RouteLength(gc,n,v,vehicleToRouteLength,(from,to) => symmetricDistance(from)(to))
       // Global constraint with log reduction
       val violations = Array.fill(v)(new CBLSIntVar(m, 0, Domain.coupleToDomain((0,1))))
       val timeMatrix = Array.tabulate(n)(from => Array.tabulate(n)(to => travelDurationMatrix.getTravelDuration(from, 0, to)))
@@ -161,8 +168,9 @@ class VRPWithOnlyTimeWindow(version: Long, n: Long = 100, v: Long = 10, fullInfo
           timeWindowExtension.taskDurations,
           timeMatrix, violations)
       globalConstraintWithLogReduc = Some(smartTimeWindowInvariant)
-      new CascadingObjective(sum(violations),
+      cascadingObjective = new CascadingObjective(sum(violations),
         sum(vehicleToRouteLength) + (penaltyForUnrouted*(n - length(myVRP.routes))))
+      cascadingObjective
     }
   m.close()
 
@@ -282,10 +290,10 @@ class VRPWithOnlyTimeWindow(version: Long, n: Long = 100, v: Long = 10, fullInfo
     val duration = ((end - start)/1000000).toInt
     if(globalConstraint.isDefined)
       (obj.value, duration,
-      globalConstraint.get.notifyTime/1000000, globalConstraint.get.notifyCount,
-      globalConstraint.get.preComputeTime/1000000, globalConstraint.get.preComputeCount,
-      globalConstraint.get.computeValueTime/1000000, globalConstraint.get.computeValueCount,
-      globalConstraint.get.assignTime/1000000, globalConstraint.get.assignCount
+        globalConstraint.get.notifyTime/1000000, globalConstraint.get.notifyCount,
+        globalConstraint.get.preComputeTime/1000000, globalConstraint.get.preComputeCount,
+        globalConstraint.get.computeValueTime/1000000, globalConstraint.get.computeValueCount,
+        globalConstraint.get.assignTime/1000000, globalConstraint.get.assignCount
       )
     else if(globalConstraintWithLogReduc.isDefined)
       (obj.value, duration,
