@@ -15,7 +15,7 @@ object TestReplace {
 
   def main(args: Array[String]): Unit = {
     val m = new Store()
-    val schedule = new Schedule(m, durations, precPairs, List(c, d, f), Array())
+    val schedule = new Schedule(m, durations, precPairs, Map(), List(c, d, f), Array())
     val objFunc = Objective(schedule.makeSpan)
     m.close()
     println("Model closed.")

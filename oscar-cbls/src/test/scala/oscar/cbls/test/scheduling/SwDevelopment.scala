@@ -14,7 +14,7 @@ object SwDevelopment {
 
   def main(args: Array[String]): Unit = {
     val m = new Store()
-    val schedule = new Schedule(m, durations, precPairs, 0 to 5, Array())
+    val schedule = new Schedule(m, durations, precPairs, Map(), 0 to 5, Array())
     val objFunc = Objective(schedule.makeSpan)
     m.close()
     println("Model closed.")

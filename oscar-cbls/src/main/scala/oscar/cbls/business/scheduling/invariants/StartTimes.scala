@@ -10,6 +10,7 @@ import oscar.cbls.core.{ChangingSeqValue, Invariant, SeqNotificationTarget}
 class StartTimes(actPriorityList: ChangingSeqValue,
                  actDurations: Array[Long],
                  actPrecedences: Precedences,
+                 actMinStartTimes: Map[Int, Long],
                  resourceConstraints: Array[ResourceConstraint],
                  makeSpan: CBLSIntVar,
                  startTimes: Array[CBLSIntVar])
@@ -66,7 +67,9 @@ class StartTimes(actPriorityList: ChangingSeqValue,
       val maxReleaseResources = actUsedResources(actIndI).foldLeft(0L) { (acc, resInd) =>
         acc max resourceStates(resInd).earliestStartTime(actIndI, 0L)
       }
-      val earliestStartTime = maxEndTimePrecs max maxReleaseResources
+      // Getting the minimum start time for this task
+      val minStartTime = actMinStartTimes.getOrElse(actIndI, 0L)
+      val earliestStartTime = maxEndTimePrecs max maxReleaseResources max minStartTime
       // Update resource states
       actUsedResources(actIndI).foreach { resInd =>
         resourceStates(resInd) = resourceStates(resInd).nextState(actIndI,
@@ -87,13 +90,15 @@ object StartTimes {
   def apply(actPriorityList: ChangingSeqValue,
             actDurations: Array[Long],
             actPrecedences: Precedences,
+            actMinStartTimes: Map[Int, Long] = Map(),
             resourceConstraints: Array[ResourceConstraint]): (CBLSIntVar, Array[CBLSIntVar]) = {
     val model = actPriorityList.model
     val makeSpan = CBLSIntVar(model, 0L, name="Schedule Makespan")
     val startTimes: Array[CBLSIntVar] = Array.tabulate(actDurations.length) { ind =>
       CBLSIntVar(model, 0L, name=s"Start Time of Activity($ind)")
     }
-    new StartTimes(actPriorityList, actDurations, actPrecedences, resourceConstraints, makeSpan, startTimes)
+    new StartTimes(actPriorityList, actDurations, actPrecedences, actMinStartTimes, resourceConstraints, makeSpan,
+      startTimes)
     (makeSpan, startTimes)
   }
 }

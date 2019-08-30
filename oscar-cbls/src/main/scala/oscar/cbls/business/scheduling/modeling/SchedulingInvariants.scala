@@ -9,7 +9,8 @@ trait SchedulingInvariants {
   def startTimes(actPriorityList: ChangingSeqValue,
                  actDurations: Array[Long],
                  actPrecedences: Precedences,
+                 actMinStartTimes: Map[Int, Long],
                  resourceConstraints: Array[ResourceConstraint]): (CBLSIntVar, Array[CBLSIntVar]) = {
-    StartTimes(actPriorityList, actDurations, actPrecedences, resourceConstraints)
+    StartTimes(actPriorityList, actDurations, actPrecedences, actMinStartTimes, resourceConstraints)
   }
 }

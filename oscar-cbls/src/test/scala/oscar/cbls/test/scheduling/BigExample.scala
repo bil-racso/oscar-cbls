@@ -9,14 +9,14 @@ import oscar.cbls.lib.search.combinators.{BestSlopeFirst, Profile}
 import scala.util.Random
 
 object BigExample {
-  val nbAct = 60
-  val nbRes = 60
+  val nbAct = 50
+  val nbRes = 50
   val minDuration = 1L
   val maxDuration = 25L
   val minCapacity = 1L
   val maxCapacity = 25L
   val minRMRes = 0
-  val maxRMRes = 60
+  val maxRMRes = 50
   val densityUsageRes = 25
   val minSetupTimeRM = 0L
   val maxSetupTimeRM = 25L
@@ -84,7 +84,7 @@ object BigExample {
         new CumulativeResourceWithSetupTimes(resCap, mapUsedCaps, setupTimes)
       }
     }
-    new Schedule(m, durations, precPairs, initialActs, resources)
+    new Schedule(m, durations, precPairs, Map(), initialActs, resources)
   }
 
   def main(args: Array[String]): Unit = {
@@ -112,12 +112,15 @@ object BigExample {
     val t1 = System.nanoTime()
     println(combinedNH.profilingStatistics)
     // And here, the results
+    val actPriorList = scProblem.activitiesPriorList.value.toList
     println(s"*************** RESULTS ***********************************")
     println(s"Elapsed time : ${t1-t0} ns")
     println(s"Schedule makespan = ${scProblem.makeSpan.value}")
     println(s"Scheduling sequence = ${scProblem.activitiesPriorList.value.toList}")
     println("Scheduling start times = [  ")
-    scProblem.startTimes.foreach(v => println(s"    $v"))
+    for {a <- actPriorList} {
+      println(s"    ${scProblem.startTimes(a.toInt)}")
+    }
     println("]")
   }
 

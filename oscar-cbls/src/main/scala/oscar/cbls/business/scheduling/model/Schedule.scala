@@ -7,6 +7,7 @@ import oscar.cbls.{CBLSSeqVar, Store}
 class Schedule(model: Store,
                actDurations: Array[Long],
                actPrecPairs: List[(Int, Int)],
+               actMinStartTimes: Map[Int, Long],
                initialActivities: Iterable[Int],
                resConstraints: Array[ResourceConstraint]) {
   val numActivities: Int = actDurations.length
@@ -19,7 +20,8 @@ class Schedule(model: Store,
                                            numActivities - 1,
                                            "Activities' Priority List")
   // CBLS invariant: start times
-  val (makeSpan, startTimes) = StartTimes(activitiesPriorList, actDurations, precedences, resConstraints)
+  val (makeSpan, startTimes) = StartTimes(activitiesPriorList, actDurations, precedences, actMinStartTimes,
+    resConstraints)
 
   /**
     * Given an activity index (indAct), obtain the sequence of indices that
