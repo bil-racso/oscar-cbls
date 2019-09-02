@@ -1,10 +1,13 @@
 package oscar.examples.cbls.routing
 
 import oscar.cbls._
-import oscar.cbls.business.routing._
-import oscar.cbls.business.routing.invariants.timeWindow.{TimeWindowConstraint, TimeWindowConstraintWithLogReduction}
+import oscar.cbls.business.routing.{routeLength, _}
+import oscar.cbls.business.routing.invariants.group.{GlobalConstraintCore, RouteLength}
+import oscar.cbls.business.routing.invariants.timeWindow.TimeWindowConstraint
 import oscar.cbls.core.search.Best
 import oscar.cbls.lib.constraint.EQ
+
+import scala.collection.immutable.HashMap
 
 /**
   * Created by fg on 12/05/17.
@@ -12,8 +15,8 @@ import oscar.cbls.lib.constraint.EQ
 
 object SimpleVRPWithTimeWindow extends App{
   val m = new Store(noCycle = false/*, checker = Some(new ErrorChecker)*/)
-  val v = 10
-  val n = 50
+  val v = 5
+  val n = 200
   val penaltyForUnrouted = 10000
   val symmetricDistance = RoutingMatrixGenerator.apply(n)._1
   val travelDurationMatrix = RoutingMatrixGenerator.generateLinearTravelTimeFunction(n,symmetricDistance)
@@ -21,9 +24,12 @@ object SimpleVRPWithTimeWindow extends App{
   val (earliestArrivalTimes, latestLeavingTimes, taskDurations, maxWaitingDurations) = RoutingMatrixGenerator.generateFeasibleTimeWindows(n,v,travelDurationMatrix,listOfChains)
 
   val myVRP =  new VRP(m,n,v)
+  val gc = GlobalConstraintCore(myVRP.routes,v)
 
   // Distance
-  val totalRouteLength = routeLength(myVRP.routes,n,v,false,symmetricDistance,true,true,false)(0)
+  val routeLengths = Array.fill(v)(CBLSIntVar(m,0))
+  val routeLength = new RouteLength(gc,n,v,routeLengths,(from: Long, to: Long) => symmetricDistance(from)(to))
+
 
   //Chains
   val precedenceRoute = myVRP.routes.createClone()
@@ -40,8 +46,10 @@ object SimpleVRPWithTimeWindow extends App{
   val timeWindowExtension = timeWindows(Some(earliestArrivalTimes), None, None, Some(latestLeavingTimes), taskDurations, None)
   val timeWindowViolations = Array.fill(v)(new CBLSIntVar(m, 0, Domain.coupleToDomain((0,1))))
   val timeMatrix = Array.tabulate(n)(from => Array.tabulate(n)(to => travelDurationMatrix.getTravelDuration(from, 0, to)))
+  //println("travel durations: \n" + timeMatrix.zipWithIndex.map(from => from._2 -> from._1.zipWithIndex.map(to => "" + to._2 + " : " + to._1).mkString(", ")).mkString("\n"))
+
   val smartTimeWindowInvariant =
-    TimeWindowConstraintWithLogReduction(myVRP.routes, n, v,
+    TimeWindowConstraint(gc, n, v,
       earliestArrivalTimes,
       latestLeavingTimes,
       taskDurations,
@@ -50,7 +58,7 @@ object SimpleVRPWithTimeWindow extends App{
   //Objective function
   val obj = new CascadingObjective(precedencesConstraints,
     new CascadingObjective(sum(timeWindowViolations),
-      totalRouteLength + (penaltyForUnrouted*(n - length(myVRP.routes)))))
+      sum(routeLengths) + (penaltyForUnrouted*(n - length(myVRP.routes)))))
 
   m.close()
 
@@ -188,7 +196,7 @@ object SimpleVRPWithTimeWindow extends App{
   //val search = (BestSlopeFirst(List(routeUnroutdPoint2, routeUnroutdPoint, vlsn1pt)))
 
 
-  search.verbose = 4
+  search.verbose = 2
   //search.verboseWithExtraInfo(2, ()=> "" + myVRP)
 
 
