@@ -101,8 +101,4 @@ abstract class GlobalConstraintDefinition(gc: GlobalConstraintCore, v: Int) {
       currentVehiclesValue(vehicle) + " " + routes + "\n")
   }
 
-  def notifyTime: Long = gc.notifyTime
-
-  def notifyCount: Long = gc.notifyCount
-
 }

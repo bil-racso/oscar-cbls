@@ -108,13 +108,6 @@ class TimeWindowConstraint (gc: GlobalConstraintCore,
 
   type U = Boolean
 
-  var preComputeTime = 0L
-  var preComputeCount = 0
-  var computeValueTime = 0L
-  var computeValueCount = 0
-  var assignTime = 0L
-  var assignCount = 0
-
   val preComputedValues: Array[Array[TransferFunction]] = Array.fill(n)(Array.fill(n)(EmptyTransferFunction))
 
   // Initialize the vehicles value, the precomputation value and link these invariant to the GlobalConstraintCore
@@ -245,7 +238,6 @@ class TimeWindowConstraint (gc: GlobalConstraintCore,
     */
   override def performPreCompute(vehicle: Long, routes: IntSequence): Unit = {
 
-    val start = System.nanoTime()
     def performPreComputeForNode(node: Long, prevNode: Long, route: QList[Long], lastTF: TransferFunction): Unit ={
       if(route != null) {
         val curNode = route.head.toInt
@@ -283,9 +275,6 @@ class TimeWindowConstraint (gc: GlobalConstraintCore,
     }
     performPreComputeOnRoute(route)
     performPreComputeOnRoute(route.reverse)
-
-    preComputeTime += System.nanoTime() - start
-    preComputeCount += 1
   }
 
   /**
@@ -298,7 +287,6 @@ class TimeWindowConstraint (gc: GlobalConstraintCore,
     * @return the value associated with the vehicle
     */
   override def computeVehicleValue(vehicle: Long, segments: QList[Segment], routes: IntSequence): Unit = {
-    val start = System.nanoTime()
     /**
       * @param segments The list of segment
       * @param prevLeavingTime The leave time at previous segment (0L if first one)
@@ -318,8 +306,6 @@ class TimeWindowConstraint (gc: GlobalConstraintCore,
       else leaveTimeAtSegment
     }
     val arrivalTimeAtDepot = arrivalAtDepot(segments)
-    computeValueTime += System.nanoTime() - start
-    computeValueCount += 1
     saveVehicleValue(vehicle, arrivalTimeAtDepot < 0L || arrivalTimeAtDepot > latestLeavingTime(vehicle))
   }
 
@@ -331,10 +317,7 @@ class TimeWindowConstraint (gc: GlobalConstraintCore,
     * @param vehicle the vehicle number
     */
   override def assignVehicleValue(vehicle: Long): Unit = {
-    val start = System.nanoTime()
     if(currentVehiclesValue(vehicle)) violations(vehicle) := 1L else violations(vehicle) := 0L
-    assignTime += System.nanoTime() - start
-    assignCount += 1
   }
 
   /**

@@ -10,9 +10,6 @@ import oscar.cbls.core._
 case class GlobalConstraintCore(routes: ChangingSeqValue, v: Long)
   extends Invariant with SeqNotificationTarget{
 
-  var notifyTime = 0L
-  var notifyCount = 0
-
   val n = routes.maxValue+1L
   val vehicles = 0L until v
 
@@ -22,7 +19,6 @@ case class GlobalConstraintCore(routes: ChangingSeqValue, v: Long)
   private var checkpointLevel: Int = -1
   private var checkpointAtLevel0: IntSequence = _
   private var changedVehiclesSinceCheckpoint0 = new IterableMagicBoolArray(v, false)
-  private var vehicleToRecomputeAfterRB = new IterableMagicBoolArray(v, false)
 
   // An array holding the ListSegment modifications as a QList
   // Int == checkpoint level, ListSegments the new ListSegment of the vehicle considering the modifications
@@ -78,7 +74,6 @@ case class GlobalConstraintCore(routes: ChangingSeqValue, v: Long)
   }
 
   override def notifySeqChanges(r: ChangingSeqValue, d: Int, changes: SeqUpdate): Unit = {
-    val start = System.nanoTime()
     if(!invariantAreInitiated) initializeVehicleValues()
 
     val newRoute = routes.newValue
@@ -92,8 +87,6 @@ case class GlobalConstraintCore(routes: ChangingSeqValue, v: Long)
     } else {
       computeAndAssignVehiclesValueFromScratch(newRoute)
     }
-    notifyTime += System.nanoTime() - start
-    notifyCount += 1
   }
 
   private def digestUpdates(changes:SeqUpdate): Boolean = {

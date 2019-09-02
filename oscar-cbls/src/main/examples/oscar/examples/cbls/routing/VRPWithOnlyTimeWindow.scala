@@ -88,6 +88,7 @@ class VRPWithOnlyTimeWindow(version: Long, n: Long = 100, v: Long = 10, fullInfo
 
   var globalConstraintWithLogReduc: Option[TimeWindowConstraintWithLogReduction] = None
   var globalConstraint: Option[TimeWindowConstraint] = None
+  var routeLengthInvariant: Option[RouteLength] = None
   var cascadingObjective: CascadingObjective = null
   // Distance
 
@@ -140,7 +141,7 @@ class VRPWithOnlyTimeWindow(version: Long, n: Long = 100, v: Long = 10, fullInfo
     else if(version == 1){
       val gc = GlobalConstraintCore(myVRP.routes, v)
       val vehicleToRouteLength = Array.fill(v)(CBLSIntVar(m, 0, FullRange))
-      val routeLengthInvariant = new RouteLength(gc,n,v,vehicleToRouteLength,(from,to) => symmetricDistance(from)(to))
+      routeLengthInvariant = Some(new RouteLength(gc,n,v,vehicleToRouteLength,(from,to) => symmetricDistance(from)(to)))
       // Global constraint
       val violations = Array.fill(v)(new CBLSIntVar(m, 0, Domain.coupleToDomain((0,1))))
       val timeMatrix = Array.tabulate(n)(from => Array.tabulate(n)(to => travelDurationMatrix.getTravelDuration(from, 0, to)))
@@ -157,7 +158,7 @@ class VRPWithOnlyTimeWindow(version: Long, n: Long = 100, v: Long = 10, fullInfo
     } else {
       val gc = GlobalConstraintCore(myVRP.routes, v)
       val vehicleToRouteLength = Array.fill(v)(CBLSIntVar(m, 0, FullRange))
-      val routeLengthInvariant = new RouteLength(gc,n,v,vehicleToRouteLength,(from,to) => symmetricDistance(from)(to))
+      routeLengthInvariant = Some(new RouteLength(gc,n,v,vehicleToRouteLength,(from,to) => symmetricDistance(from)(to)))
       // Global constraint with log reduction
       val violations = Array.fill(v)(new CBLSIntVar(m, 0, Domain.coupleToDomain((0,1))))
       val timeMatrix = Array.tabulate(n)(from => Array.tabulate(n)(to => travelDurationMatrix.getTravelDuration(from, 0, to)))
@@ -236,21 +237,21 @@ class VRPWithOnlyTimeWindow(version: Long, n: Long = 100, v: Long = 10, fullInfo
     search.doAllMoves(obj=obj)
     val end = System.nanoTime()
     val duration = ((end - start)/1000000).toInt
-    if(globalConstraint.isDefined)
+    /*if(globalConstraint.isDefined)
       (obj.value, duration,
         globalConstraint.get.notifyTime/1000000, globalConstraint.get.notifyCount,
-        globalConstraint.get.preComputeTime/1000000, globalConstraint.get.preComputeCount,
-        globalConstraint.get.computeValueTime/1000000, globalConstraint.get.computeValueCount,
-        globalConstraint.get.assignTime/1000000, globalConstraint.get.assignCount
+        (globalConstraint.get.preComputeTime + routeLengthInvariant.get.preComputeTime) /1000000, globalConstraint.get.preComputeCount + routeLengthInvariant.get.preComputeCount,
+        (globalConstraint.get.computeValueTime + routeLengthInvariant.get.computeValueTime)/1000000, globalConstraint.get.computeValueCount + routeLengthInvariant.get.computeValueCount,
+        (globalConstraint.get.assignTime + routeLengthInvariant.get.assignTime)/1000000, globalConstraint.get.assignCount + routeLengthInvariant.get.assignCount
       )
     else if(globalConstraintWithLogReduc.isDefined)
       (obj.value, duration,
         globalConstraintWithLogReduc.get.notifyTime/1000000, globalConstraintWithLogReduc.get.notifyCount,
-        globalConstraintWithLogReduc.get.preComputeTime/1000000, globalConstraintWithLogReduc.get.preComputeCount,
-        globalConstraintWithLogReduc.get.computeValueTime/1000000, globalConstraintWithLogReduc.get.computeValueCount,
-        globalConstraintWithLogReduc.get.assignTime/1000000, globalConstraintWithLogReduc.get.assignCount
+        (globalConstraint.get.preComputeTime + routeLengthInvariant.get.preComputeTime) /1000000, globalConstraint.get.preComputeCount + routeLengthInvariant.get.preComputeCount,
+        (globalConstraint.get.computeValueTime + routeLengthInvariant.get.computeValueTime)/1000000, globalConstraint.get.computeValueCount + routeLengthInvariant.get.computeValueCount,
+        (globalConstraint.get.assignTime + routeLengthInvariant.get.assignTime)/1000000, globalConstraint.get.assignCount + routeLengthInvariant.get.assignCount
       )
-    else
+    else*/
       (obj.value, duration,0,0,0,0,0,0,0,0)
   }
 
@@ -262,21 +263,21 @@ class VRPWithOnlyTimeWindow(version: Long, n: Long = 100, v: Long = 10, fullInfo
     search.doAllMoves(obj=obj)
     val end = System.nanoTime()
     val duration = ((end - start)/1000000).toInt
-    if(globalConstraint.isDefined)
+    /*if(globalConstraint.isDefined)
       (obj.value, duration,
         globalConstraint.get.notifyTime/1000000, globalConstraint.get.notifyCount,
-        globalConstraint.get.preComputeTime/1000000, globalConstraint.get.preComputeCount,
-        globalConstraint.get.computeValueTime/1000000, globalConstraint.get.computeValueCount,
-        globalConstraint.get.assignTime/1000000, globalConstraint.get.assignCount
+        (globalConstraint.get.preComputeTime + routeLengthInvariant.get.preComputeTime) /1000000, globalConstraint.get.preComputeCount + routeLengthInvariant.get.preComputeCount,
+        (globalConstraint.get.computeValueTime + routeLengthInvariant.get.computeValueTime)/1000000, globalConstraint.get.computeValueCount + routeLengthInvariant.get.computeValueCount,
+        (globalConstraint.get.assignTime + routeLengthInvariant.get.assignTime)/1000000, globalConstraint.get.assignCount + routeLengthInvariant.get.assignCount
       )
     else if(globalConstraintWithLogReduc.isDefined)
       (obj.value, duration,
         globalConstraintWithLogReduc.get.notifyTime/1000000, globalConstraintWithLogReduc.get.notifyCount,
-        globalConstraintWithLogReduc.get.preComputeTime/1000000, globalConstraintWithLogReduc.get.preComputeCount,
-        globalConstraintWithLogReduc.get.computeValueTime/1000000, globalConstraintWithLogReduc.get.computeValueCount,
-        globalConstraintWithLogReduc.get.assignTime/1000000, globalConstraintWithLogReduc.get.assignCount
+        (globalConstraint.get.preComputeTime + routeLengthInvariant.get.preComputeTime) /1000000, globalConstraint.get.preComputeCount + routeLengthInvariant.get.preComputeCount,
+        (globalConstraint.get.computeValueTime + routeLengthInvariant.get.computeValueTime)/1000000, globalConstraint.get.computeValueCount + routeLengthInvariant.get.computeValueCount,
+        (globalConstraint.get.assignTime + routeLengthInvariant.get.assignTime)/1000000, globalConstraint.get.assignCount + routeLengthInvariant.get.assignCount
       )
-    else
+    else*/
       (obj.value, duration,0,0,0,0,0,0,0,0)
   }
 
@@ -288,21 +289,21 @@ class VRPWithOnlyTimeWindow(version: Long, n: Long = 100, v: Long = 10, fullInfo
     search.doAllMoves(obj=obj)
     val end = System.nanoTime()
     val duration = ((end - start)/1000000).toInt
-    if(globalConstraint.isDefined)
+    /*/if(globalConstraint.isDefined)
       (obj.value, duration,
         globalConstraint.get.notifyTime/1000000, globalConstraint.get.notifyCount,
-        globalConstraint.get.preComputeTime/1000000, globalConstraint.get.preComputeCount,
-        globalConstraint.get.computeValueTime/1000000, globalConstraint.get.computeValueCount,
-        globalConstraint.get.assignTime/1000000, globalConstraint.get.assignCount
+        (globalConstraint.get.preComputeTime + routeLengthInvariant.get.preComputeTime) /1000000, globalConstraint.get.preComputeCount + routeLengthInvariant.get.preComputeCount,
+        (globalConstraint.get.computeValueTime + routeLengthInvariant.get.computeValueTime)/1000000, globalConstraint.get.computeValueCount + routeLengthInvariant.get.computeValueCount,
+        (globalConstraint.get.assignTime + routeLengthInvariant.get.assignTime)/1000000, globalConstraint.get.assignCount + routeLengthInvariant.get.assignCount
       )
     else if(globalConstraintWithLogReduc.isDefined)
       (obj.value, duration,
         globalConstraintWithLogReduc.get.notifyTime/1000000, globalConstraintWithLogReduc.get.notifyCount,
-        globalConstraintWithLogReduc.get.preComputeTime/1000000, globalConstraintWithLogReduc.get.preComputeCount,
-        globalConstraintWithLogReduc.get.computeValueTime/1000000, globalConstraintWithLogReduc.get.computeValueCount,
-        globalConstraintWithLogReduc.get.assignTime/1000000, globalConstraintWithLogReduc.get.assignCount
+        (globalConstraint.get.preComputeTime + routeLengthInvariant.get.preComputeTime) /1000000, globalConstraint.get.preComputeCount + routeLengthInvariant.get.preComputeCount,
+        (globalConstraint.get.computeValueTime + routeLengthInvariant.get.computeValueTime)/1000000, globalConstraint.get.computeValueCount + routeLengthInvariant.get.computeValueCount,
+        (globalConstraint.get.assignTime + routeLengthInvariant.get.assignTime)/1000000, globalConstraint.get.assignCount + routeLengthInvariant.get.assignCount
       )
-    else
+    else*/
       (obj.value, duration,0,0,0,0,0,0,0,0)
   }
 
@@ -313,21 +314,21 @@ class VRPWithOnlyTimeWindow(version: Long, n: Long = 100, v: Long = 10, fullInfo
     search.doAllMoves(obj=obj)
     val end = System.nanoTime()
     val duration = ((end - start)/1000000).toInt
-    if(globalConstraint.isDefined)
+    /*if(globalConstraint.isDefined)
       (obj.value, duration,
         globalConstraint.get.notifyTime/1000000, globalConstraint.get.notifyCount,
-        globalConstraint.get.preComputeTime/1000000, globalConstraint.get.preComputeCount,
-        globalConstraint.get.computeValueTime/1000000, globalConstraint.get.computeValueCount,
-        globalConstraint.get.assignTime/1000000, globalConstraint.get.assignCount
+        (globalConstraint.get.preComputeTime + routeLengthInvariant.get.preComputeTime) /1000000, globalConstraint.get.preComputeCount + routeLengthInvariant.get.preComputeCount,
+        (globalConstraint.get.computeValueTime + routeLengthInvariant.get.computeValueTime)/1000000, globalConstraint.get.computeValueCount + routeLengthInvariant.get.computeValueCount,
+        (globalConstraint.get.assignTime + routeLengthInvariant.get.assignTime)/1000000, globalConstraint.get.assignCount + routeLengthInvariant.get.assignCount
       )
     else if(globalConstraintWithLogReduc.isDefined)
       (obj.value, duration,
         globalConstraintWithLogReduc.get.notifyTime/1000000, globalConstraintWithLogReduc.get.notifyCount,
-        globalConstraintWithLogReduc.get.preComputeTime/1000000, globalConstraintWithLogReduc.get.preComputeCount,
-        globalConstraintWithLogReduc.get.computeValueTime/1000000, globalConstraintWithLogReduc.get.computeValueCount,
-        globalConstraintWithLogReduc.get.assignTime/1000000, globalConstraintWithLogReduc.get.assignCount
+        (globalConstraint.get.preComputeTime + routeLengthInvariant.get.preComputeTime) /1000000, globalConstraint.get.preComputeCount + routeLengthInvariant.get.preComputeCount,
+        (globalConstraint.get.computeValueTime + routeLengthInvariant.get.computeValueTime)/1000000, globalConstraint.get.computeValueCount + routeLengthInvariant.get.computeValueCount,
+        (globalConstraint.get.assignTime + routeLengthInvariant.get.assignTime)/1000000, globalConstraint.get.assignCount + routeLengthInvariant.get.assignCount
       )
-    else
+    else*/
       (obj.value, duration,0,0,0,0,0,0,0,0)
   }
 }
