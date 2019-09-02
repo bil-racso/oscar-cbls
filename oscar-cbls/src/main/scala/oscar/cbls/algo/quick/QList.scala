@@ -16,13 +16,21 @@ package oscar.cbls.algo.quick
 
 import scala.language.implicitConversions
 
+//TODO (to discuss first) : implement a custom iteration system for the QList. We lose too much time converting it into a iterator
+// And it's quite easy to do it :
+//    QList.next = head,
+//    QList.hasNext = this.tail != null
+//    QList.foreach => fun(...); if(tail != null) tail.foreach(fun(...))
+//    ...
+//    Probably more function to add. If we do this we must adapt the all the code using a QList
+
 class QList[@specialized T](val head:T, val tail:QList[T] = null){
-  def size:Int = {
+  def size:Long = {
     var curr = this.tail
-    var toReturn = 1
+    var toReturn = 1L
     while(curr != null){
       curr = curr.tail
-      toReturn += 1
+      toReturn += 1L
     }
     toReturn
   }
@@ -37,16 +45,57 @@ class QList[@specialized T](val head:T, val tail:QList[T] = null){
     toReturn
   }
 
+  def qFilter(fun:T => Boolean):QList[T] =
+    if(fun(head)) {
+      if (tail != null)
+        QList(head, tail.qFilter(fun))
+      else
+        QList(head)
+    }else{
+      if (tail != null)
+        tail.qFilter(fun)
+      else
+        null
+    }
+
+
   def qMap[X](fun:T => X):QList[X] = new QList(fun(head),if(tail == null) null else tail.qMap(fun))
 }
 
 object QList{
 
-  def apply[T](head:T,tail:QList[T] = null):QList[T] = new QList(head,tail)
+  def append[@specialized T](l:Iterable[T],q:QList[T]):QList[T] = {
+    val it = l.toIterator
 
-  implicit def toIterable[T](l:QList[T]):Iterable[T] = new IterableQList(l)
+    var toReturn = q
+    while(it.hasNext){
+      toReturn = QList(it.next,toReturn)
+    }
+    toReturn
+  }
 
-  def buildFromIterable[T](l:Iterable[T]):QList[T] = {
+  def nonReversedAppend[@specialized T](l:QList[T],q:QList[T]):QList[T] = {
+
+    def prependValues(it: QList[T], q:QList[T]): QList[T] ={
+      val (next, tail) = (it.head, it.tail)
+      QList(next,
+        if(tail != null) {
+          prependValues(tail,q)
+        } else {
+          q
+        })
+    }
+    if(l != null)
+      prependValues(l,q)
+    else q
+  }
+
+
+  def apply[@specialized T](head:T,tail:QList[T] = null):QList[T] = new QList(head,tail)
+
+  implicit def toIterable[@specialized T](l:QList[T]):Iterable[T] = new IterableQList(l)
+
+  def buildFromIterable[@specialized T](l:Iterable[T]):QList[T] = {
     var acc:QList[T] = null
     val it = l.toIterator
     while(it.hasNext){
@@ -55,9 +104,43 @@ object QList{
     acc
   }
 
-  def qMap[T,X](q:QList[T],fun:T => X):QList[X] = {
+  def nonReversedBuildFromIterable[@specialized T](l:Iterable[T]):QList[T] ={
+    val reversed = buildFromIterable(l)
+    if(reversed == null) null
+    else reversed.reverse
+  }
+
+  def qMap[@specialized T,@specialized X](q:QList[T],fun:T => X):QList[X] = {
     if(q == null) null
     else q.qMap(fun)
+  }
+
+  def qFold[T,@specialized(Long)X](q:QList[T],accF:(X,T) => X,initX:X):X = {
+    var l = q
+    var acc = initX
+    while(l != null){
+      acc = accF(acc,l.head)
+      l = l.tail
+    }
+    acc
+  }
+
+  def qForeach[@specialized T](qList: QList[T], fun:T => Unit): Unit ={
+    var tempList = qList
+    while(tempList != null){
+      fun(tempList.head)
+      tempList = tempList.tail
+    }
+  }
+
+  def qDrop[@specialized T](qList: QList[T], number: Int): QList[T] ={
+    var tempList = qList
+    var toDrop = number
+    while(toDrop > 0 && tempList != null) {
+      tempList = tempList.tail
+      toDrop -= 1
+    }
+    tempList
   }
 }
 

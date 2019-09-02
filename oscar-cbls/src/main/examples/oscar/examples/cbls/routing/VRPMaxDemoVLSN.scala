@@ -45,25 +45,25 @@ object VRPMaxDemoVLSN  extends App {
   new VRPMaxDemoVLSN(n,v,maxPivotPerValuePercent,verbose,displayDelay, mapSide)
 }
 
-class VRPMaxDemoVLSN (n:Int, v:Int, maxPivotPerValuePercent:Int, verbose:Int, displayDelay:Int, mapSide:Int) extends StopWatch{
+class VRPMaxDemoVLSN (n:Long, v:Long, maxPivotPerValuePercent:Int, verbose:Int, displayDelay:Int, mapSide:Int) extends StopWatch{
 
   val (symmetricDistanceMatrix1,nodesPositions) = RoutingMatrixGenerator.apply(n,1000)
 
   val symmetricDistanceMatrix = Array.tabulate(n)({a =>
-    Array.tabulate(n)({b =>
-      symmetricDistanceMatrix1(a min b)(a max b).toInt
+    Array.tabulate[Long](n)({b =>
+      symmetricDistanceMatrix1(a min b)(a max b)
     })})
 
   val maxWorkloadPerVehicle = 2500
   val serviceTimePerNode = 100
 
 
-  val vehicles = 0 until v
+  val vehicles = 0L until v
   startWatch()
   val model = new Store() //checker = Some(new ErrorChecker()))
 
   val myVRP = new VRP(model,n,v)
-  val routeLengthPerVehicle = constantRoutingDistance(myVRP.routes,n,v,perVehicle = true,symmetricDistanceMatrix,true,true,false)
+  val routeLengthPerVehicle = routeLength(myVRP.routes,n,v,perVehicle = true,symmetricDistanceMatrix,true,true,false)
   val totalRouteLength = sum(routeLengthPerVehicle)
   val nodesPerVehicle = nodesOfVehicle(myVRP.routes,v)
 
@@ -107,33 +107,32 @@ class VRPMaxDemoVLSN (n:Int, v:Int, maxPivotPerValuePercent:Int, verbose:Int, di
       vehicles.map(vehicle => "workload_vehicle_" + vehicle + ":" + vehicletoWorkload(vehicle).value).mkString("\n") + "\n" +
       "maxWorkloadPerVehicle:" + maxWorkloadPerVehicle + "\n" + "serviceTimePerNode:" + serviceTimePerNode + "\n" + obj
 
-  val relevantPredecessorsOfNodes = (node:Int) => myVRP.nodes
-  val closestRelevantNeighborsByDistance = Array.tabulate(n)(DistanceHelper.lazyClosestPredecessorsOfNode(symmetricDistanceMatrix,relevantPredecessorsOfNodes))
+  val relevantPredecessorsOfNodes = (node:Long) => myVRP.nodes
+  val closestRelevantNeighborsByDistance = Array.tabulate(n)((node:Int) => DistanceHelper.lazyClosestPredecessorsOfNode(symmetricDistanceMatrix,relevantPredecessorsOfNodes)(node))
 
-  val routedPostFilter = (node:Int) => (neighbor:Int) => myVRP.isRouted(neighbor)
-  val unRoutedPostFilter = (node:Int) => (neighbor:Int) => !myVRP.isRouted(neighbor)
+  val routedPostFilter = (node:Long) => (neighbor:Long) => myVRP.isRouted(neighbor)
+  val unRoutedPostFilter = (node:Long) => (neighbor:Long) => !myVRP.isRouted(neighbor)
 
   def vlsn(lm:Int = Int.MaxValue,li:Int = Int.MaxValue) = {
 
-    val liClosestNeighborsByDistance: Array[SortedSet[Int]] = Array.tabulate(n)(node =>
-      SortedSet.empty[Int] ++ myVRP.kFirst(li, closestRelevantNeighborsByDistance)(node))
-    val lmClosestNeighborsByDistance: Array[SortedSet[Int]] = Array.tabulate(n)(node =>
-      SortedSet.empty[Int] ++ myVRP.kFirst(lm, closestRelevantNeighborsByDistance)(node))
+    val liClosestNeighborsByDistance: Array[SortedSet[Long]] = Array.tabulate(n)(node =>
+      SortedSet.empty[Long] ++ myVRP.kFirst(li, (node:Long) => closestRelevantNeighborsByDistance(node))(node))
+    val lmClosestNeighborsByDistance: Array[SortedSet[Long]] = Array.tabulate(n)(node =>
+      SortedSet.empty[Long] ++ myVRP.kFirst(lm, closestRelevantNeighborsByDistance(_))(node))
 
     //VLSN neighborhood
-    val nodeToAllVehicles = SortedMap.empty[Int, Iterable[Int]] ++ (v until n).map(node => (node, vehicles))
+    val nodeToAllVehicles = SortedMap.empty[Long, Iterable[Long]] ++ (v until n).map(node => (node:Long, vehicles))
 
-    def routeUnroutedPointVLSN(targetVehicle: Int):(Int => Neighborhood) = {
+    def routeUnroutedPointVLSN(targetVehicle: Long):(Long => Neighborhood) = {
       if(vehicletoWorkload(targetVehicle).value + serviceTimePerNode > maxWorkloadPerVehicle){
         (_ => NoMoveNeighborhood)
       }else {
         val nodesOfTargetVehicle = myVRP.getRouteOfVehicle(targetVehicle)
 
-        unroutedNodeToInsert:Int => {
-          val lNearestNodesOfTargetVehicle =
+        unroutedNodeToInsert:Long => {
+          val lNearestNodesOfTargetVehicle = 
             if(li >= n) nodesOfTargetVehicle
             else nodesOfTargetVehicle.filter(x => liClosestNeighborsByDistance(unroutedNodeToInsert) contains x)
-
           insertPointUnroutedFirst(
             () => List(unroutedNodeToInsert),
             () => _ => lNearestNodesOfTargetVehicle,
@@ -147,13 +146,13 @@ class VRPMaxDemoVLSN (n:Int, v:Int, maxPivotPerValuePercent:Int, verbose:Int, di
     }
 
     //targetVehicleNodeToMoveNeighborhood:Int => Int => Neighborhood,
-    def movePointVLSN(targetVehicle: Int):(Int => Neighborhood) = {
+    def movePointVLSN(targetVehicle: Long):(Long => Neighborhood) = {
       if(vehicletoWorkload(targetVehicle).value + serviceTimePerNode > maxWorkloadPerVehicle){
         (_ => NoMoveNeighborhood)
       }else {
         val nodesOfTargetVehicle = myVRP.getRouteOfVehicle(targetVehicle)
 
-        nodeToMove:Int => {
+        nodeToMove:Long => {
           val lNearestNodesOfTargetVehicle =
             if(lm >= n) nodesOfTargetVehicle
             else nodesOfTargetVehicle.filter(x => lmClosestNeighborsByDistance(nodeToMove) contains x)
@@ -170,7 +169,7 @@ class VRPMaxDemoVLSN (n:Int, v:Int, maxPivotPerValuePercent:Int, verbose:Int, di
       }
     }
 
-    def removePointVLSN(node: Int) =
+    def removePointVLSN(node: Long) =
       removePoint(
         () => List(node),
         myVRP,
@@ -188,7 +187,7 @@ class VRPMaxDemoVLSN (n:Int, v:Int, maxPivotPerValuePercent:Int, verbose:Int, di
         breakSymmetry = false).afterMove(graphical.drawRoutes())
     }
 
-    def removeAndReInsertVLSN(pointToRemove: Int): (() => Unit) = {
+    def removeAndReInsertVLSN(pointToRemove: Long): (() => Unit) = {
       val checkpointBeforeRemove = myVRP.routes.defineCurrentValueAsCheckpoint(true)
       require(pointToRemove >= v, "cannot remove vehicle point: " + v)
 
@@ -208,10 +207,10 @@ class VRPMaxDemoVLSN (n:Int, v:Int, maxPivotPerValuePercent:Int, verbose:Int, di
 
     new VLSN(
       v,
-      () => SortedMap.empty[Int, SortedSet[Int]] ++
-        vehicles.map((vehicle: Int) =>
-          (vehicle, SortedSet.empty[Int] ++ myVRP.getRouteOfVehicle(vehicle).filter(_ >= v))),
-      () => SortedSet.empty[Int] ++ myVRP.unroutedNodes,
+      () => SortedMap.empty[Long, SortedSet[Long]] ++
+        vehicles.map((vehicle: Long) =>
+          (vehicle:Long, SortedSet.empty[Long] ++ myVRP.getRouteOfVehicle(vehicle).filter(_ >= v))),
+      () => SortedSet.empty[Long] ++ myVRP.unroutedNodes,
       nodeToRelevantVehicles = () => nodeToAllVehicles,
 
       targetVehicleToNodeToInsertNeighborhood = routeUnroutedPointVLSN,
@@ -234,7 +233,7 @@ class VRPMaxDemoVLSN (n:Int, v:Int, maxPivotPerValuePercent:Int, verbose:Int, di
   }
 
   val routeUnroutedPoint =  insertPointUnroutedFirst(myVRP.unrouted,
-    ()=>myVRP.kFirst(10,closestRelevantNeighborsByDistance,routedPostFilter),
+    ()=>myVRP.kFirst(10,closestRelevantNeighborsByDistance(_),routedPostFilter),
     myVRP,
     neighborhoodName = "InsertUF",
     hotRestart = false,
@@ -243,19 +242,19 @@ class VRPMaxDemoVLSN (n:Int, v:Int, maxPivotPerValuePercent:Int, verbose:Int, di
 
   def onePtMove(k:Int) = onePointMove(
     myVRP.routed,
-    () => myVRP.kFirst(k,closestRelevantNeighborsByDistance,routedPostFilter),
+    () => myVRP.kFirst(k,closestRelevantNeighborsByDistance(_),routedPostFilter),
     myVRP,
     selectDestinationBehavior = Best())
 
-  def customTwoOpt(k:Int=10) = twoOpt(myVRP.routed, ()=>myVRP.kFirst(k,closestRelevantNeighborsByDistance,routedPostFilter), myVRP)
+  def customTwoOpt(k:Int=10) = twoOpt(myVRP.routed, ()=>myVRP.kFirst(k,closestRelevantNeighborsByDistance(_),routedPostFilter), myVRP)
 
   def customThreeOpt(k:Int, breakSym:Boolean) =
-    threeOpt(myVRP.routed, ()=>myVRP.kFirst(k,closestRelevantNeighborsByDistance,routedPostFilter), myVRP,breakSymmetry = breakSym, neighborhoodName = "ThreeOpt(k=" + k + ")")
+    threeOpt(myVRP.routed, ()=>myVRP.kFirst(k,closestRelevantNeighborsByDistance(_),routedPostFilter), myVRP,breakSymmetry = breakSym, neighborhoodName = "ThreeOpt(k=" + k + ")")
 
-  def segExchange(k:Int) = segmentExchange(myVRP,()=>myVRP.kFirst(k,closestRelevantNeighborsByDistance,routedPostFilter), () => myVRP.vehicles)
+  def segExchange(k:Int) = segmentExchange(myVRP,()=>myVRP.kFirst(k,closestRelevantNeighborsByDistance(_),routedPostFilter), () => myVRP.vehicles)
 
   val graphical = display(myVRP,
-    nodesPositions.map(np => (np._1.toDouble,np._2.toDouble)).toList,
+    nodesPositions.map(np => (np._1.toDouble,np._2.toDouble)),
     sizeOfMap = Some(mapSide),
     refreshRate = displayDelay,
     title = "VRPMaxDemoVLSN(n=" + n + " v=" + v + ")")

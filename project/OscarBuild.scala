@@ -7,16 +7,15 @@ import xerial.sbt.Pack._
 import sbtunidoc.Plugin._
 import java.util.Date
 
-
 object OscarBuild extends Build {
 
-  lazy val PerfTest = config("perf") extend(Test)
+  lazy val PerfTest = config("perf") extend Test
 
   object BuildSettings {
     val buildOrganization = "oscar"
     val buildVersion = "4.0.0-SNAPSHOT"
-    val buildScalaVersion = "2.12.4"
-    val buildSbtVersion= "0.13.12"
+    val buildScalaVersion = "2.12.8"
+    val buildSbtVersion= "0.13.18"
 
 
     lazy val commonSettings = Defaults.defaultSettings ++  jacoco.settings ++ Seq(
@@ -79,6 +78,7 @@ object OscarBuild extends Build {
     val graphStreamUI = "org.graphstream" % "gs-ui" % "1.3"
     val scallop = "org.rogach" % "scallop_2.11" % "1.0.0"
     val jxmapviewer2 = "org.jxmapviewer" % "jxmapviewer2" % "2.2"
+    val jtscore = "org.locationtech.jts" % "jts-core" % "1.16.0"
 
     // Akka
     val akkaActor = "com.typesafe.akka" %% "akka-actor" % "2.5.6"
@@ -100,8 +100,7 @@ object OscarBuild extends Build {
   import Dependencies._
   import Resolvers._
   import UnidocKeys._
-
-
+  
   def ceticSpecificSettings = {
     if(Option(System.getProperty("cetic")).isDefined) Seq(
       publishTo := {
@@ -113,9 +112,9 @@ object OscarBuild extends Build {
       },
       packageOptions += Package.ManifestAttributes(
         ("REVISION_ID", System.getProperty("REVISION_ID")),
-        ("REVISION_URL", ("https://bitbucket.org/oscarlib/oscar/commits/"+System.getProperty("REVISION_ID")) ),
+        ("REVISION_URL", "https://bitbucket.org/oscarlib/oscar/commits/"+System.getProperty("REVISION_ID") ),
         ("JENKINS_BUILD_ID", System.getProperty("BUILD_ID")),
-        ("BUILD_DATE", new Date().toString())
+        ("BUILD_DATE", new Date().toString)
       )
     )
     else Seq()
@@ -158,7 +157,7 @@ object OscarBuild extends Build {
         packAutoSettings ++
         Seq(
           resolvers ++= Seq(mvnrepository),
-          libraryDependencies ++= testDeps :+ scalaSwing :+ jxmapviewer2,
+          libraryDependencies ++= testDeps :+ scalaSwing :+ jxmapviewer2 :+ jtscore,
           packGenerateWindowsBatFile := false
         ),
     dependencies = Seq(oscarVisual)

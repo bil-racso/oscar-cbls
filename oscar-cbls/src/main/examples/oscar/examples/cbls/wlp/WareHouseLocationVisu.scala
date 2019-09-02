@@ -25,7 +25,8 @@ import oscar.cbls.lib.invariant.numeric.Sum
 import oscar.cbls.lib.search.combinators.{BestSlopeFirst, Mu, Profile}
 import oscar.cbls.lib.search.neighborhoods._
 import oscar.cbls.util.StopWatch
-import oscar.cbls.visual.wlp.WareHouseLocationWindow
+import oscar.cbls.visual.SingleFrameWindow
+import oscar.cbls.visual.wlp.WareHouseLocationMap
 
 import scala.language.postfixOps
 
@@ -43,9 +44,10 @@ object WareHouseLocationVisu extends App with StopWatch{
   //the cost per delivery point if no location is open
   val defaultCostForNoOpenWarehouse = 10000
 
-  val (costForOpeningWarehouse1,distanceCost,warehousePositions,deliveryPositions,warehouseToWarehouseDistances) = WarehouseLocationGenerator.problemWithPositions(W,D,0,1000,3)
+  val (costForOpeningWarehouse1,distanceCost,warehousePositions,deliveryPositions,warehouseToWarehouseDistances) =
+    WarehouseLocationGenerator.problemWithPositions(W,D,0,1000,3)
 
-    val costForOpeningWarehouse =  Array.fill(W)(1000)
+    val costForOpeningWarehouse =  Array.fill[Long](W)(1000)
 
   val m = Store() //checker = Some(new ErrorChecker()))
 
@@ -58,12 +60,13 @@ object WareHouseLocationVisu extends App with StopWatch{
   val distanceToNearestOpenWarehouseLazy = Array.tabulate(D)(d =>
     new MinConstArrayValueWise(distanceCost(d), openWarehouses, defaultCostForNoOpenWarehouse,maxDiameter = 2))
 
-
   val obj = Objective(Sum(distanceToNearestOpenWarehouseLazy) + Sum(costForOpeningWarehouse, openWarehouses))
 
   m.close()
 
-  val visual = new WareHouseLocationWindow(deliveryPositions,warehousePositions,distanceCost,costForOpeningWarehouse)
+  val visual = new WareHouseLocationMap(deliveryPositions,warehousePositions,distanceCost,costForOpeningWarehouse)
+
+  SingleFrameWindow.show(visual,"Uncapacitated Warehouse Location Problem",width = 960,height = 960)
 
   var bestObj = Int.MaxValue
 
@@ -105,7 +108,7 @@ object WareHouseLocationVisu extends App with StopWatch{
   maxDepth = width,
   intermediaryStops = true)
 
-  def swapsK(k:Int,openWarehoueseTocConsider:()=>Iterable[Int] = openWarehouses) = SwapsNeighborhood(warehouseOpenArray,
+  def swapsK(k:Int,openWarehoueseTocConsider:()=>Iterable[Long] = openWarehouses) = SwapsNeighborhood(warehouseOpenArray,
     searchZone1 = openWarehoueseTocConsider,
     searchZone2 = () => (firstWareHouse,_) => kNearestClosedWarehouses(firstWareHouse,k),
     name = "Swap" + k + "Nearest",
@@ -122,14 +125,15 @@ object WareHouseLocationVisu extends App with StopWatch{
         Profile(swapsK(20) guard(() => openWarehouses.value.size >= 5)), //we set a minimal size because the KNearest is very expensive if the size is small
         Profile(SwapsNeighborhood(warehouseOpenArray, "SwapWarehouses") guard(() => openWarehouses.value.size >= 5))
       ),refresh = W/10)
-      onExhaustRestartAfter(RandomizeNeighborhood(warehouseOpenArray, () => openWarehouses.value.size/5), 2, obj)
+      onExhaustRestartAfter(RandomizeNeighborhood(warehouseOpenArray, () => openWarehouses.value.size/5,name="smallRandom"), 2, obj)
+      onExhaustRestartAfter(RandomizeNeighborhood(warehouseOpenArray, () => W/5,name="bigRandom"), 1, obj)
     ) exhaust (Profile(muLine(3,3,15)) exhaustAndContinueIfMovesFound Profile(muLine(4,3,15))) afterMove(
     if(obj.value < bestObj){
       bestObj = obj.value
       if(this.getWatch > lastDisplay + displayDelay) {
         visual.redraw(openWarehouses.value)
         lastDisplay = this.getWatch}
-    })
+    }) showObjectiveFunction(obj)
 
   neighborhood.verbose = 2
 
