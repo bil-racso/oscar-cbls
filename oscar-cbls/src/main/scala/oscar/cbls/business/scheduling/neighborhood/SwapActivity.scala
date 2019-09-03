@@ -43,13 +43,13 @@ class SwapActivity(schedule: Schedule,
         // Perform move on sequence
         performMove(currentIndex, swappingIndex)
         val newObj = obj.value
+        // Rollback to checkpoint
+        schedule.activitiesPriorList.rollbackToTopCheckpoint(seqValueCheckPoint)
         // Notification of finding indices
         if (evaluateCurrentMoveObjTrueIfSomethingFound(newObj)) {
           notifyIndexFound()
           notifySwappingFound()
         }
-        // Rollback to checkpoint
-        schedule.activitiesPriorList.rollbackToTopCheckpoint(seqValueCheckPoint)
       }
     }
     schedule.activitiesPriorList.releaseTopCheckpoint()

@@ -56,14 +56,14 @@ class ReplaceActivity(schedule: Schedule,
           // Perform move on sequence
           performMove(indActToRemove, actToAdd, indActToAdd)
           val newObj = obj.value
+          // Rollback to checkpoint
+          schedule.activitiesPriorList.rollbackToTopCheckpoint(seqValueCheckPoint)
           // Notification of finding indices
           if (evaluateCurrentMoveObjTrueIfSomethingFound(newObj)) {
             notifyIndexToRemoveFound()
             notifyActToAddFound()
             notifyRensertFound()
           }
-          // Rollback to checkpoint
-          schedule.activitiesPriorList.rollbackToTopCheckpoint(seqValueCheckPoint)
         }
       }
     }

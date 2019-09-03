@@ -1,14 +1,15 @@
 package oscar.cbls.test.scheduling
 
 
-import oscar.cbls.Store
+import oscar.cbls.{ErrorChecker, Store}
 import oscar.cbls.business.scheduling.model._
 import oscar.cbls.business.scheduling.neighborhood._
 import oscar.cbls.core.objective.Objective
 import oscar.cbls.lib.search.combinators.{BestSlopeFirst, Profile}
-import oscar.cbls.core.constraint.ConstraintSystem
+//import oscar.cbls.core.constraint.ConstraintSystem
 import oscar.cbls.core.objective.CascadingObjective
 import oscar.cbls.lib.invariant.numeric.Sum
+import oscar.cbls.lib.invariant.seq.SeqSum
 
 import scala.util.Random
 
@@ -16,7 +17,7 @@ object MinStartTimesExample extends App {
   // Random Generator
   val randomGen = new Random(10)
 
-  val s = Store(checker = None, noCycle=false)
+  val s = Store(checker = Some(new ErrorChecker()))
 
   //données
   val nAct = 10 //nbre d'activités
@@ -34,7 +35,7 @@ object MinStartTimesExample extends App {
   val precPairs = List((0, 3), (2, 1)) //(a,b) l'activité numéro 0 doit se dérouler avant l'activité numéro 3
 
   //3) Activités initiales ???
-  val initialActs = 0 until nAct //nAct on les met toutes ??
+  val initialActs = 0 until 5 //nAct on les met toutes ??
 
   //4) Temps de départ mimimum pour les tâches
   val minStarts = Map(0 -> 30L)
@@ -65,17 +66,20 @@ object MinStartTimesExample extends App {
   //constraintTimeActBegin.foreach(constraintSystem.post(_))
 
   //val objFunc = new CascadingObjective(constraintSystem,scheduling.makeSpan)
-  val objFunc = new CascadingObjective(scheduling.makeSpan, Sum(scheduling.startTimes))
+  //val func = Array.tabulate(nAct)(i => 2*(nAct-i))
+  val sumScheduled = SeqSum(scheduling.activitiesPriorList, i => { nAct - i }) //, i => func(i.toInt))
+  //val objFunc = new CascadingObjective(scheduling.makeSpan, sumScheduled)
 
   //la fonction objective
+  val objFunc = Objective(sumScheduled)
   //val objFunc = Objective(scheduling.makeSpan)
 
   //fermer le modèle
   s.close()
 
-  //les voisinnages d'exploration
+  //les voisinages d'exploration
   /*
-   * Liste des voisinnages
+   * Liste des voisinages
    * - AddActivity
    * - ReinsertActivity
    * - RemoveActivity
@@ -88,15 +92,17 @@ object MinStartTimesExample extends App {
   val reinsertNH = new ReinsertActivity(scheduling, "Reinsert")
   val addNH = new AddActivity(scheduling, "Add")
   val removeNH = new RemoveActivity(scheduling, "Remove")
-  val replaceNHcomb = removeNH andThen addNH
-  //val replaceNH = new ReplaceActivity(scheduling, "Replace")
-  val combinedNH = BestSlopeFirst(List(Profile(reinsertNH), Profile(swapNH), Profile(replaceNHcomb))) //, Profile(replaceNH)
+  val replaceNHcomb = removeNH dynAndThen (_ => addNH)
+  val replaceNH = new ReplaceActivity(scheduling, "Replace")
+  val combinedNH = Profile(replaceNHcomb)
+  //val combinedNH = Profile(replaceNH)
+
+    //BestSlopeFirst(List(Profile(reinsertNH), Profile(swapNH), Profile(replaceNHcomb))) //, Profile(replaceNH)
   //Profile c'est pour les stats : à enlever
 
   //lancement de la recherche
-  combinedNH.verbose = 1
+  combinedNH.verbose = 4
   combinedNH.doAllMoves(obj = objFunc)
-
 
   println(combinedNH.profilingStatistics)
   println(s"Activities = ${scheduling.activitiesPriorList.value.toList}")

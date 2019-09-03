@@ -164,7 +164,7 @@ class Schedule(model: Store,
     val hasPredecessors = predActIndices.exists(p => prioritySequence.contains(p))
     val succActIndices = precedences.succArray(actInd.toInt)
     val hasSuccessors = succActIndices.exists(s => prioritySequence.contains(s))
-    // Determine the bounds of the swappable zone in the priority sequence
+    // Determine the bounds of the insertable zone in the priority sequence
     var lastPrecSeqIndex = -1
     var firstSuccSeqIndex = prioritySequence.size
     var seqIndexIndAct = -1

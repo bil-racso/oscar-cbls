@@ -35,12 +35,12 @@ class RemoveActivity(schedule: Schedule,
       // perform move
       performMove(currentIndex)
       val newObj = obj.value
+      // Rollback to checkpoint
+      schedule.activitiesPriorList.rollbackToTopCheckpoint(seqValueCheckPoint)
       // Notification of finding indices
       if (evaluateCurrentMoveObjTrueIfSomethingFound(newObj)) {
         notifyIndexFound()
       }
-      // Rollback to checkpoint
-      schedule.activitiesPriorList.rollbackToTopCheckpoint(seqValueCheckPoint)
     }
     schedule.activitiesPriorList.releaseTopCheckpoint()
   }
@@ -51,7 +51,6 @@ class RemoveActivity(schedule: Schedule,
   def performMove(indAct: Int): Unit = {
     schedule.activitiesPriorList.remove(indAct)
   }
-
 }
 
 case class RemoveActivityMove(removeIndex: Int,

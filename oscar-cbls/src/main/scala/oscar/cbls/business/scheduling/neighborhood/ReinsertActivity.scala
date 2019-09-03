@@ -43,13 +43,13 @@ class ReinsertActivity(schedule: Schedule,
         // Perform move on sequence
         performMove(currentIndex, reinsertIndex)
         val newObj = obj.value
+        // Rollback to checkpoint
+        schedule.activitiesPriorList.rollbackToTopCheckpoint(seqValueCheckPoint)
         // Notification of finding indices
         if (evaluateCurrentMoveObjTrueIfSomethingFound(newObj)) {
           notifyIndexFound()
           notifyReinsertFound()
         }
-        // Rollback to checkpoint
-        schedule.activitiesPriorList.rollbackToTopCheckpoint(seqValueCheckPoint)
       }
     }
     schedule.activitiesPriorList.releaseTopCheckpoint()
