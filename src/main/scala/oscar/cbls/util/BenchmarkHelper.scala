@@ -1,0 +1,118 @@
+package oscar.cbls.util
+
+/*******************************************************************************
+  * OscaR is free software: you can redistribute it and/or modify
+  * it under the terms of the GNU Lesser General Public License as published by
+  * the Free Software Foundation, either version 2.1 of the License, or
+  * (at your option) any later version.
+  *
+  * OscaR is distributed in the hope that it will be useful,
+  * but WITHOUT ANY WARRANTY; without even the implied warranty of
+  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  * GNU Lesser General Public License  for more details.
+  *
+  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
+  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
+  ******************************************************************************/
+
+import oscar.cbls.core.objective.Objective
+import oscar.cbls.core.search.Neighborhood
+import oscar.cbls._
+import scala.util.control.Breaks._
+
+object Benchmark extends StopWatch{
+
+  case class RunValues(it:Long,duration:Long,quality:Long)
+  case class RunStatistics(it:Statistics,duration:Statistics,quality:Statistics){
+    override def toString: String = "(it:" + it + " dur:" + duration + " obj:" + quality+")"
+    def denseString:String = it.denseString + "|" + duration.denseString + "|" + quality.denseString
+    def csvString: String = it.csvString + ";" + duration.csvString + ";" + quality.csvString
+  }
+
+  val firstColumnForStatisticsString = 40L
+  def nSpace(n:Long):String = if(n <= 0L) "" else " " + nSpace(n-1L)
+  private def padToLength(s: String, l: Long) = (s + nSpace(l)).substring(0L, l)
+  def benchToStatistics(obj: Objective, nRuns: Long, strategies: Iterable[() => (String, Neighborhood)], warmupTimeInSeconds: Long, verbose: Long) =
+    benchToTrace(obj, nRuns, strategies, warmupTimeInSeconds, verbose).map {
+      case (s: String, t: IndexedSeq[RunValues]) => (s, aggregate(t.toList))
+    }
+
+  def benchToStringSimple(obj:Objective, nRuns:Long, strategies:Iterable[Neighborhood],verbose:Long = 0L):String = {
+    benchToStringFull(obj,nRuns,strategies.map(n => (() => {n.reset(); (n.toString,n)})),verbose)
+  }
+
+  def statsToString(stats: Iterable[(String, RunStatistics)]) = {
+    padToLength("nbRuns:" + stats.size,firstColumnForStatisticsString) + "|it                                  |dur[ms]                             |obj" + "\n" +
+      nSpace(firstColumnForStatisticsString) + "|" + Statistics.statisticsHeader + "|" + Statistics.statisticsHeader + "|" + Statistics.statisticsHeader + "\n" +
+      stats.map({ case (s: String, stats: RunStatistics) => padToLength(s, firstColumnForStatisticsString) + "|" + stats.denseString }).mkString("\n")
+  }
+
+  def benchToStringFull(obj: Objective, nRuns: Long, strategies: Iterable[() => (String, Neighborhood)], warmup: Long = 1L, verbose: Long = 0L): String = {
+    val stats = benchToStatistics(obj, nRuns, strategies, warmup, verbose)
+
+    statsToString(stats)
+  }
+
+  def benchToTrace(obj: Objective, nRuns: Long, strategies: Iterable[() => (String, Neighborhood)], warmupTimeInSeconds: Long, verbose: Long) = {
+    val m = obj.model
+    val initialSolution = m.solution()
+
+    // warm run
+    if (verbose > 1L) println("Warming up for " + warmupTimeInSeconds + " seconds...")
+    val warmupInMs = warmupTimeInSeconds * 1000L
+    this.startWatch()
+    breakable {
+      while (this.getWatch < warmupInMs) {
+        for (n <- strategies) {
+          m.restoreSolution(initialSolution)
+          val strategyInstance = n()
+          strategyInstance._2.verbose = 0
+          if (verbose > 1) println("Warm up run of " + strategyInstance._1)
+          strategyInstance._2.doAllMoves(_ => false, obj)
+          if (this.getWatch >= warmupInMs) break
+        }
+      }
+    }
+
+    for (n <- strategies) yield {
+      if (verbose > 1L) println("Benchmarking " + n()._1)
+      (n()._1,
+        for (trial <- 1L to nRuns) yield {
+          m.restoreSolution(initialSolution)
+          val strategyInstance = n()
+          strategyInstance._2.verbose = if (verbose > 0) verbose else 0
+          if (verbose > 1L) println("Benchmarking " + strategyInstance._1 + " run " + trial + " of " + nRuns)
+          this.startWatch()
+          val it = strategyInstance._2.doAllMoves(_ => false, obj)
+          val time = this.getWatch
+          val quality = obj.value
+          RunValues(it, time.toInt, quality)
+        })
+    }
+  }
+
+  def aggregate(l:List[RunValues]):RunStatistics = {
+    RunStatistics(it=Statistics(l.map(_.it)),
+      duration=Statistics(l.map(_.duration)),
+      quality=Statistics(l.map(_.quality)))
+  }
+}
+
+case class Statistics(min:Long, max:Long, avg:Long, med:Long){
+  override def toString: String = "(min:" + min + " max:" + max + " avg:" + avg + " med:" + med + ")"
+  def denseString:String = padToLength("" + min,8L) + " " + padToLength("" + max,8L) + " " + padToLength("" + avg,8L) + " " + padToLength("" + med,9L)
+  def csvString:String = min + ";" + max + ";" + avg + ";" + med
+  def nSpace(n:Long):String = if(n <= 0L) "" else " " + nSpace(n-1L)
+  private def padToLength(s: String, l: Long) = (s + nSpace(l)).substring(0L, l)
+}
+
+object Statistics {
+  def apply(l: List[Long]): Statistics = {
+    require(l.nonEmpty)
+    val sorted = l.sorted
+    val size = l.size
+    Statistics(min=sorted.head, max = sorted.last, avg=l.sum/size, med= if(size ==1L) sorted.head else sorted.apply( size/2L))
+  }
+
+  val statisticsHeader = "min      max      avg      med      "
+}
