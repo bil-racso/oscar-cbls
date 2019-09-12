@@ -15,6 +15,8 @@ lazy val oscarCBLS = (project in file(".")).
 scalacOptions ++= Seq(
   "-encoding", "UTF-8",
   "-unchecked",
+  "-deprecation",
+  "-feature",
   "-Xdisable-assertions",
   "-language:implicitConversions",
   "-language:postfixOps"
