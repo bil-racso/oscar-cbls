@@ -17,9 +17,8 @@ package oscar.cbls.test.routing
 
 import oscar.cbls._
 import oscar.cbls.business.routing._
+import oscar.cbls.business.routing.utils.RoutingMatrixGenerator
 import oscar.cbls.core.search.{Best, First}
-import oscar.examples.cbls.routing.RoutingMatrixGenerator
-
 
 class RoutingWithCapacityMax(n:Int,v:Int,symmetricDistance:Array[Array[Int]],m:Store, maxPivot:Int, deltaAtNode:Array[Int], maxCapa:Int)
   extends VRP(m,n,v,maxPivot){

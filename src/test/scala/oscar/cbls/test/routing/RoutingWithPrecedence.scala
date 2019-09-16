@@ -17,8 +17,8 @@ package oscar.cbls.test.routing
 
 import oscar.cbls._
 import oscar.cbls.business.routing._
+import oscar.cbls.business.routing.utils.RoutingMatrixGenerator
 import oscar.cbls.core.search.Best
-import oscar.examples.cbls.routing.RoutingMatrixGenerator
 
 import scala.collection.immutable.SortedSet
 

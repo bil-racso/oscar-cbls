@@ -17,7 +17,7 @@ package oscar.cbls.test.routing
 
 import oscar.cbls._
 import oscar.cbls.business.routing._
-import oscar.examples.cbls.routing.RoutingMatrixGenerator
+import oscar.cbls.business.routing.utils.RoutingMatrixGenerator
 
 class MySimpleRoutingWithUnroutedPointsAndNext(n:Int,v:Int,symmetricDistance:Array[Array[Int]],m:Store, maxPivot:Int, pointsList:Array[(Int,Int)] = null)
   extends VRP(m,n,v,maxPivot)

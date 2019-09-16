@@ -18,8 +18,7 @@ package oscar.cbls.test.routing
 import oscar.cbls._
 import oscar.cbls.core.search.Best
 import oscar.cbls.business.routing._
-import oscar.examples.cbls.routing.RoutingMatrixGenerator
-
+import oscar.cbls.business.routing.utils.RoutingMatrixGenerator
 
 class MySimpleRoutingWithCumulatives(n:Int,v:Int,symmetricDistance:Array[Array[Int]],m:Store, maxPivot:Int, deltaAtNode:Array[Int], maxCapa:Int)
   extends VRP(m,n,v,maxPivot){

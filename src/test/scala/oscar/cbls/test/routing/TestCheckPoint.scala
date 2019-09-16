@@ -18,7 +18,7 @@ package oscar.cbls.test.routing
 
 import oscar.cbls._
 import oscar.cbls.business.routing._
-import oscar.examples.cbls.routing.RoutingMatrixGenerator
+import oscar.cbls.business.routing.utils.RoutingMatrixGenerator
 
 /**
   * Created by f.germeau on 07/09/2016.
