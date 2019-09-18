@@ -3,14 +3,8 @@ package oscar.cbls.test.neighborhood
 import org.scalatest.{FunSuite, Matchers}
 import org.scalatest.prop.Checkers
 import oscar.cbls.algo.seq.IntSequence
-import oscar.cbls.{CBLSSeqVar, Objective, Store, bestSlopeFirst, length, sum}
-import oscar.cbls.business.routing.{DistanceHelper, VRP}
-import oscar.cbls.core.computation.{CBLSSetVar, Store}
-import oscar.cbls.core.search.{Best, EasyNeighborhoodMultiLevel, First, Neighborhood}
-import oscar.examples.cbls.routing.RoutingMatrixGenerator
 import oscar.cbls.business.routing._
 import oscar.cbls._
-import oscar.cbls.test.neighborhood.NeighborhoodTestBench.MockedVRP
 
 class RoutingNeighborhoodTestSuite extends FunSuite with Checkers with Matchers{
 
