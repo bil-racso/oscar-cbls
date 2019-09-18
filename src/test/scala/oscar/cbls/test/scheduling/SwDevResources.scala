@@ -10,7 +10,7 @@ object SwDevResources {
   // Model
   // Activities
   val (analysis, design, coding, testing, qc, pm) = (5, 4, 3, 2, 1, 0)
-  val durations = Array(60L, 50L, 25L, 15L, 10L, 10L)
+  val durations = Array(()=>60L, ()=>50L, ()=>25L, ()=>15L, ()=>10L, ()=>10L)
   val precPairs = List((analysis, design), (analysis, qc), (design, coding), (coding, testing))
   // Resources
   val (analyst_mode, qapm) = (0, 1)

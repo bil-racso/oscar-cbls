@@ -5,7 +5,7 @@ import oscar.cbls.business.scheduling.invariants.StartTimes
 import oscar.cbls.{CBLSSeqVar, Store}
 
 class Schedule(model: Store,
-               actDurations: Array[Long],
+               actDurations: Array[() => Long],
                actPrecPairs: List[(Int, Int)],
                actMinStartTimes: Map[Int, Long],
                initialActivities: Iterable[Int],

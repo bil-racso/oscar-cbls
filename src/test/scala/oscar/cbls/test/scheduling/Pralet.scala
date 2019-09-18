@@ -14,7 +14,7 @@ object Pralet {
   // Model
   // Activities
   val (a, b, c, d, e) = (0, 1, 2, 3, 4)
-  val durations = Array(4L, 1L, 3L, 4L, 2L)
+  val durations = Array(()=>4L, ()=>1L, ()=>3L, ()=>4L, ()=>2L)
   val precPairs = List((a, c), (c, e))
   // Resources
   val setupTimesR = SetupTimes(1, Map(a->1, b->1, c->1, d->1, e->0), Map((0,1)->1L, (1,0)->1L))

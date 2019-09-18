@@ -9,7 +9,7 @@ import oscar.cbls.lib.search.combinators.{BestSlopeFirst, Profile}
 object SwDevTardiness {
   // Model
   val (a1, a2, a3, a4, a5) = (0, 1, 2, 3, 4)
-  val durations = Array.tabulate(5)(_ => 10L)
+  val durations = Array.tabulate(5)(_ => ()=>10L)
   // Resource
   val analyst = new DisjunctiveResource(List(a1, a2, a3, a4, a5))
 

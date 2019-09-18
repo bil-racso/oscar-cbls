@@ -1,6 +1,6 @@
 package oscar.cbls.test.scheduling
 
-import oscar.cbls.Store
+import oscar.cbls.{ErrorChecker, Store}
 import oscar.cbls.business.scheduling.model._
 import oscar.cbls.business.scheduling.neighborhood._
 import oscar.cbls.core.objective.Objective
@@ -47,7 +47,10 @@ object BigExample {
     // Activities
     //val nAct = randomInterval(1, nbAct)
     val nAct = nbAct
-    val durations: Array[Long] = Array.tabulate(nAct)(_ => randomInterval(minDuration, maxDuration))
+    val durations: Array[() => Long] = Array.tabulate(nAct)(_ => {
+      val rdDur = randomInterval(minDuration, maxDuration)
+      () => rdDur
+    })
     // initial activities
     val initialActs = for {i <- 0 until nAct if randomBoolean(densityInitialActs)} yield i
     // Precedencies

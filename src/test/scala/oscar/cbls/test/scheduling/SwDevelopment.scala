@@ -9,7 +9,7 @@ import oscar.cbls.lib.search.combinators.{BestSlopeFirst, Profile}
 object SwDevelopment {
   // Model
   val (analysis, design, coding, testing, qc, pm) = (0, 1, 2, 3, 4, 5)
-  val durations = Array(10L, 10L, 15L, 25L, 50L, 60L)
+  val durations = Array(()=>10L, ()=>10L, ()=>15L, ()=>25L, ()=>50L, ()=>60L)
   val precPairs = List((analysis, design), (analysis, qc), (design, coding), (coding, testing))
 
   def main(args: Array[String]): Unit = {

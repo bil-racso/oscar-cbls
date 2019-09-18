@@ -10,7 +10,7 @@ object TestReplace {
   // Model
   // Activities
   val (a, b, c, d, e, f) = (0, 1, 2, 3, 4, 5)
-  val durations = Array(2L, 1L, 8L, 4L, 7L, 6L)
+  val durations = Array(()=>2L, ()=>1L, ()=>8L, ()=>4L, ()=>7L, ()=>6L)
   val precPairs = List((a,b), (c,d), (e,f))
 
   def main(args: Array[String]): Unit = {

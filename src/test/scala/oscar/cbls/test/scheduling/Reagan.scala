@@ -40,7 +40,7 @@ import oscar.cbls.lib.search.combinators.{BestSlopeFirst, Profile}
 object Reagan {
   // Reagan model
   val (eat, sleep, think, chew, speak, drink) = (0, 1, 2, 3, 4, 5)
-  val durations = Array(2L, 8L, 12L, 3L, 3L, 3L)
+  val durations = Array(()=>2L, ()=>8L, ()=>12L, ()=>3L, ()=>3L, ()=>3L)
   val precPairs = List((think, drink), (eat, sleep), (chew, speak))
   val reagan = new CumulativeResource(3L,
     Map(eat -> 2L, sleep -> 1L, think -> 1L, chew -> 3L, speak -> 3L, drink -> 3L))

@@ -1,6 +1,5 @@
 package oscar.cbls.test.scheduling
 
-
 import oscar.cbls.{ErrorChecker, Store}
 import oscar.cbls.business.scheduling.model._
 import oscar.cbls.business.scheduling.neighborhood._
@@ -27,7 +26,8 @@ object MinStartTimesExample extends App {
   //créations des variables pour le modèle
 
   //1) durations(i) = durée de l'activité i
-  val durations: Array[Long] = Array.tabulate(nAct)(_ => randomInterval(minDuration, maxDuration))
+  val durations: Array[() => Long] = Array.tabulate(nAct)(_ =>
+    () => randomInterval(minDuration, maxDuration))
 
   for { i <- durations.indices} { println(s"Duration ($i) = ${durations(i)}") }
 
@@ -94,8 +94,8 @@ object MinStartTimesExample extends App {
   val removeNH = new RemoveActivity(scheduling, "Remove")
   val replaceNHcomb = removeNH dynAndThen (_ => addNH)
   val replaceNH = new ReplaceActivity(scheduling, "Replace")
-  val combinedNH = Profile(replaceNHcomb)
-  //val combinedNH = Profile(replaceNH)
+  //val combinedNH = Profile(replaceNHcomb)
+  val combinedNH = Profile(replaceNH)
 
     //BestSlopeFirst(List(Profile(reinsertNH), Profile(swapNH), Profile(replaceNHcomb))) //, Profile(replaceNH)
   //Profile c'est pour les stats : à enlever

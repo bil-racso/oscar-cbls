@@ -8,7 +8,7 @@ import oscar.cbls.core.propagation.Checker
 import oscar.cbls.core.{ChangingSeqValue, Invariant, SeqNotificationTarget}
 
 class StartTimes(actPriorityList: ChangingSeqValue,
-                 actDurations: Array[Long],
+                 actDurations: Array[() => Long],
                  actPrecedences: Precedences,
                  actMinStartTimes: Map[Int, Long],
                  resourceConstraints: Array[ResourceConstraint],
@@ -56,12 +56,13 @@ class StartTimes(actPriorityList: ChangingSeqValue,
     var makeSpanValue = 0L
     for {actInd <- actPriorityList} {
       val actIndI = actInd.toInt
+      val durActI = actDurations(actIndI)()
       // Compute maximum ending time for preceding activities
       val maxEndTimePrecs = actPrecedences
         .precArray(actIndI)
         .filter(actPriorityList.contains(_))
         .foldLeft(0L) { (acc, precInd) =>
-          acc max (startTimes(precInd).value + actDurations(precInd))
+          acc max (startTimes(precInd).value + actDurations(precInd)())
         }
       // Compute maximum of earliest release time for all needed resources
       val maxReleaseResources = actUsedResources(actIndI).foldLeft(0L) { (acc, resInd) =>
@@ -73,10 +74,10 @@ class StartTimes(actPriorityList: ChangingSeqValue,
       // Update resource states
       actUsedResources(actIndI).foreach { resInd =>
         resourceStates(resInd) = resourceStates(resInd).nextState(actIndI,
-                                                                  actDurations(actIndI),
-                                                                  earliestStartTime)
+          durActI,
+          earliestStartTime)
       }
-      val actEndTime = earliestStartTime + actDurations(actIndI)
+      val actEndTime = earliestStartTime + durActI
       if (actEndTime > makeSpanValue) {
         makeSpanValue = actEndTime
       }
@@ -88,7 +89,7 @@ class StartTimes(actPriorityList: ChangingSeqValue,
 
 object StartTimes {
   def apply(actPriorityList: ChangingSeqValue,
-            actDurations: Array[Long],
+            actDurations: Array[() => Long],
             actPrecedences: Precedences,
             actMinStartTimes: Map[Int, Long] = Map(),
             resourceConstraints: Array[ResourceConstraint]): (CBLSIntVar, Array[CBLSIntVar]) = {
