@@ -5,8 +5,7 @@ import oscar.cbls.business.routing.{DistanceHelper, VRP, routeLength}
 import oscar.cbls.core.computation.Store
 import oscar.cbls.{CBLSSeqVar, Objective, length, sum}
 import oscar.cbls._
-import oscar.cbls.core.search.Neighborhood
-import oscar.examples.cbls.routing.RoutingMatrixGenerator
+import oscar.cbls.examples.routing.RoutingMatrixGenerator
 
 object NeighborhoodTestBench {
 

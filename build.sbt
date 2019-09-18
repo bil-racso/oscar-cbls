@@ -15,6 +15,8 @@ lazy val oscarCBLS = (project in file(".")).
 scalacOptions ++= Seq(
   "-encoding", "UTF-8",
   "-unchecked",
+  "-deprecation",
+  "-feature",
   "-Xdisable-assertions",
   "-language:implicitConversions",
   "-language:postfixOps"
@@ -22,5 +24,7 @@ scalacOptions ++= Seq(
 
 libraryDependencies ++= Seq(
   "org.scala-lang.modules" %% "scala-swing" % "2.1.1",
-  "org.locationtech.jts" % "jts-core" % "1.16.1"
+  "org.locationtech.jts" % "jts-core" % "1.16.1",
+  "org.scalatest" %% "scalatest" % "3.0.8" % Test,
+  "org.scalacheck" %% "scalacheck" % "1.14.0" % Test
 )
