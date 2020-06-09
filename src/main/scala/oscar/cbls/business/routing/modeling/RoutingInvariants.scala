@@ -1,8 +1,7 @@
 package oscar.cbls.business.routing.modeling
 
-import oscar.cbls._
-import oscar.cbls.core._
 import oscar.cbls.business.routing.invariants._
+import oscar.cbls.core.computation.{CBLSIntVar, CBLSSetVar, ChangingSeqValue}
 
 /**
  * Created by rdl on 11L-09L-1L7.
@@ -14,7 +13,7 @@ trait RoutingInvariants {
    *
    * This invariant relies on the vehicle model assumption:
    * there are v vehicles
-   * They are supposed to start from point of values 0L to v-1L
+   * They are supposed to start from point of values 0 to v-1L
    * These values must always be present in the sequence in increasing order
    * they cannot be included within a moved segment
    *
@@ -31,8 +30,8 @@ trait RoutingInvariants {
    *         if the distance is global, it is a array with a single variable that is equal to the sum of all drive distance
    */
   def routeLength(routes : ChangingSeqValue,
-                  n : Long,
-                  v : Long,
+                  n : Int,
+                  v : Int,
                   perVehicle : Boolean,
                   distanceMatrix : Array[Array[Long]],
                   distanceIsSymmetric : Boolean,
@@ -43,9 +42,7 @@ trait RoutingInvariants {
       v,
       perVehicle,
       distanceMatrix,
-      distanceIsSymmetric,
-      precomputeFW,
-      precomputeBW)
+      distanceIsSymmetric)
 
   /**
    * maintains the set of vehicle that have at least one point to visit (beyond their start point)
@@ -53,7 +50,7 @@ trait RoutingInvariants {
    * @param routes the routes
    * @param v the number of vehicle
    */
-  def movingVehicles(routes : ChangingSeqValue, v : Long) =
+  def movingVehicles(routes : ChangingSeqValue, v : Int) =
     MovingVehicles(routes, v)
 
   /**
@@ -69,7 +66,7 @@ trait RoutingInvariants {
    * @return an array telling the violation per vehicle
    * @note this is a preliminary naive version of the constraint. a faster one is to be developed!
    */
-  def nodeVehicleObligation(routes : ChangingSeqValue, v : Long, n : Long, nodeVehicleObligation : Map[Long, Set[Long]]) : Array[CBLSIntVar] =
+  def nodeVehicleObligation(routes : ChangingSeqValue, v : Int, n : Int, nodeVehicleObligation : Map[Int, Set[Int]]) : Array[CBLSIntVar] =
     NodeVehicleObligation(routes, v, n, nodeVehicleObligation)
 
   /**
@@ -82,7 +79,7 @@ trait RoutingInvariants {
    * @param nodeVehicleRestrictions the restrictions that we are monitoring
    * @return an array telling the violation per vehicle
    */
-  def nodeVehicleRestrictions(routes : ChangingSeqValue, v : Long, nodeVehicleRestrictions : Iterable[(Long, Long)]) =
+  def nodeVehicleRestrictions(routes : ChangingSeqValue, v : Int, nodeVehicleRestrictions : Iterable[(Int, Int)]) =
     NodeVehicleRestrictions(routes, v, nodeVehicleRestrictions)
 
 
@@ -97,12 +94,12 @@ trait RoutingInvariants {
    */
   def routeSuccessorAndPredecessors(routes:ChangingSeqValue,
                                     v:Int,
-                                    defaultWhenNotInSequence:Long)(
+                                    defaultWhenNotInSequence:Int)(
     successorValues:Array[CBLSIntVar] =
-    Array.tabulate(routes.maxValue + 1L)(node =>
+    Array.tabulate(routes.maxValue + 1)(node =>
       CBLSIntVar(routes.model,defaultWhenNotInSequence,name="successor of node" + node)),
     predecessorValues:Array[CBLSIntVar] =
-    Array.tabulate(routes.maxValue + 1L)(node =>
+    Array.tabulate(routes.maxValue + 1)(node =>
       CBLSIntVar(routes.model,defaultWhenNotInSequence,name="predecessor of node" + node))
   ) = {
     new RouteSuccessorAndPredecessors(routes,
@@ -117,10 +114,11 @@ trait RoutingInvariants {
    * this invariant ensures that nodesOfVehicle(p) is maintained to the nodes reached vy vehicle p according to the sequence routes.
    * @param routes a sequence value representing routes
    * @param v the number of vehicles
+   * @param includeVehicleNode flag that is true if the set has to contain the node of the vehicle
    * @return an array nodesOfVehicle maintained to the nodes reached y each vehicle
    */
-  def nodesOfVehicle(routes:ChangingSeqValue,v:Int):Array[CBLSSetVar] =
-    NodesOfVehicle(routes:ChangingSeqValue,v:Int):Array[CBLSSetVar]
+  def nodesOfVehicle(routes:ChangingSeqValue,v:Int, includeVehicleNode:Boolean = true):Array[CBLSSetVar] =
+    NodesOfVehicle(routes:ChangingSeqValue,v:Int, includeVehicleNode:Boolean):Array[CBLSSetVar]
 
 
 
@@ -133,6 +131,21 @@ trait RoutingInvariants {
    */
   def vehicleOfNodes(routes:ChangingSeqValue,v:Int):Array[CBLSIntVar] =
     VehicleOfNodes(routes:ChangingSeqValue,v:Int):Array[CBLSIntVar]
+
+  /**
+    * This class purpose is to test if the search procedure doesn't try unauthorized movement, meaning movement that doesn't respect the OscaR's routing convention.
+    * For instance it's not authorized to insert/move/remove vehicle, insert already inserted node ...
+    *
+    * By doing so we avoid to have to do this verification for every constraint based on routing.
+    *
+    * This class is automatically called by setting 'debug' parameter of class VRP at 'true'
+    *
+    * @param routes the route of the VRP problem
+    * @param n the total amount of node
+    * @param v the total amount of vehicle
+    */
+  def routingConventionConstraint(routes: ChangingSeqValue, n: Int, v: Int) =
+    RoutingConventionConstraint(routes, n, v)
 
 
 }

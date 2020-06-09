@@ -1,5 +1,8 @@
 package oscar.cbls.lib.invariant.seq
 
+import oscar.cbls.core.computation.{ChangingIntValue, ChangingSeqValue, Domain, IntInvariant, IntNotificationTarget, IntValue, SeqNotificationTarget, SeqUpdate, SeqValue}
+import oscar.cbls.core.propagation.Checker
+
 /*******************************************************************************
   * OscaR is free software: you can redistribute it and/or modify
   * it under the terms of the GNU Lesser General Public License as published by
@@ -15,16 +18,13 @@ package oscar.cbls.lib.invariant.seq
   * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
   ******************************************************************************/
 
-import oscar.cbls._
-import oscar.cbls.core._
-
 /**
  * the number of occurrences of value a in sequence v; default if not in the sequence
  * @param v is a SeqValue
  * @param a is the value that is to locate in the sequence
  */
 case class OccurrencesOf(v: SeqValue, a:IntValue)
-  extends IntInvariant(v.value.nbOccurrence(a.value), Domain(0L , Int.MaxValue))
+  extends IntInvariant(v.value.nbOccurrence(a.valueInt), Domain(0 , Int.MaxValue))
   with SeqNotificationTarget with IntNotificationTarget{
 
   setName("OccurrencesOf(" + a.name + " in " + v.name + ")")
@@ -43,11 +43,10 @@ case class OccurrencesOf(v: SeqValue, a:IntValue)
   }
 
   override def performInvariantPropagation() {
-    this := v.value.nbOccurrence(a.value)
+    this := v.value.nbOccurrence(a.valueInt)
   }
 
   override def checkInternals(c: Checker) {
-    require(this.value == v.value.positionsOfValue(a.value).size, "this.value:" + this.value + " v.value.positionsOfValue(a.value).size:" + v.value.positionsOfValue(a.value).size + " v.value.nbOccurrence(a.value):" + v.value.nbOccurrence(a.value))
+    require(this.value == v.value.positionsOfValue(a.valueInt).size, "this.value:" + this.value + " v.value.positionsOfValue(a.value).size:" + v.value.positionsOfValue(a.valueInt).size + " v.value.nbOccurrence(a.value):" + v.value.nbOccurrence(a.valueInt))
   }
 }
-

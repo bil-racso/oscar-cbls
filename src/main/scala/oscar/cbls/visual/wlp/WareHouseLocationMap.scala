@@ -1,10 +1,9 @@
 package oscar.cbls.visual.wlp
 
 import java.awt.geom.Rectangle2D
-import java.awt.{Dimension, BorderLayout, Color}
+import java.awt.Color
 import java.awt.geom.Line2D.Double
-import javax.swing.JFrame
-import oscar.cbls._
+
 import oscar.visual.VisualDrawing
 import oscar.visual.shapes.{VisualRectangle, VisualCircle, VisualLine, VisualShape}
 
@@ -26,11 +25,11 @@ class WareHouseLocationMap(deliveryCoordinates:Array[(Long,Long)],
     super.addShape(shape,false)
   }
 
-  var prevOpenWarehouse:SortedSet[Long] = SortedSet.empty
-  var prevNearestOpenWarehouse = Array.fill[Long](d)(-1)
+  var prevOpenWarehouse:SortedSet[Int] = SortedSet.empty
+  var prevNearestOpenWarehouse = Array.fill[Int](d)(-1)
 
-  def redraw(openWarehouses:SortedSet[Long],boldChanges:Boolean=true,hideClosedWarehouses:Boolean = false){
-    val closestWarehouses:Array[Long] = Array.tabulate(d)(nearestOpenWareHouse(openWarehouses,_))
+  def redraw(openWarehouses:SortedSet[Int],boldChanges:Boolean=true,hideClosedWarehouses:Boolean = false){
+    val closestWarehouses:Array[Int] = Array.tabulate(d)(nearestOpenWareHouse(openWarehouses,_))
     drawMap(closestWarehouses,openWarehouses,prevOpenWarehouse,prevNearestOpenWarehouse,boldChanges,hideClosedWarehouses)
     prevOpenWarehouse = openWarehouses
     prevNearestOpenWarehouse = closestWarehouses
@@ -40,7 +39,7 @@ class WareHouseLocationMap(deliveryCoordinates:Array[(Long,Long)],
    * @param d
    * @return -1L is no open warehouse
    */
-  private def nearestOpenWareHouse(openWarehouses:SortedSet[Long],d:Long):Long = {
+  private def nearestOpenWareHouse(openWarehouses:SortedSet[Int],d:Int):Int = {
     var closestW = -1
     var minDistance = Long.MaxValue
     for(w <- openWarehouses){
@@ -53,10 +52,10 @@ class WareHouseLocationMap(deliveryCoordinates:Array[(Long,Long)],
     closestW
   }
 
-  private def drawMap(closestWarehouses:Array[Long],
-                      openWarehouses:SortedSet[Long],
-                      prevOpenWarehouse:SortedSet[Long],
-                      prevClosestWarehouse:Array[Long],
+  private def drawMap(closestWarehouses:Array[Int],
+                      openWarehouses:SortedSet[Int],
+                      prevOpenWarehouse:SortedSet[Int],
+                      prevClosestWarehouse:Array[Int],
                       boldChanges:Boolean,
                       hideClosedWarehouses:Boolean) ={
 

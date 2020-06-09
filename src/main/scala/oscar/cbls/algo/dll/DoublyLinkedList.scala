@@ -75,7 +75,7 @@ class DoublyLinkedList[T] extends Iterable[T]{
     phantom.setNext(phantom)
   }
 
-  override def isEmpty = phantom.next == phantom
+  override def isEmpty: Boolean = phantom.next == phantom
 
   override def iterator = new DLLIterator[T](phantom, phantom)
 
@@ -94,8 +94,8 @@ class DoublyLinkedList[T] extends Iterable[T]{
  * @tparam T
  */
 class DLLStorageElement[T](val elem:T){
-  var next:DLLStorageElement[T] = null
-  var prev:DLLStorageElement[T] = null
+  var next:DLLStorageElement[T] = _
+  var prev:DLLStorageElement[T] = _
 
   def setNext(d:DLLStorageElement[T]){
     this.next = d

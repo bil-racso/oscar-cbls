@@ -19,15 +19,13 @@
 
 package oscar.cbls.lib.constraint
 
-import oscar.cbls.core.{ChangingIntValue, IntNotificationTarget, Invariant}
+import oscar.cbls.core.computation.{CBLSIntVar, ChangingIntValue, IntNotificationTarget, IntValue, Invariant, Value}
 import oscar.cbls.core.constraint.Constraint
 import oscar.cbls.core.propagation.Checker
 import oscar.cbls.lib.invariant.logic.{IntElement, IntElementNoVar}
 import oscar.cbls.lib.invariant.minmax.ArgMin
 import oscar.cbls.lib.invariant.numeric.{Dist, Step}
 import oscar.cbls.lib.invariant.set.TakeAny
-import oscar.cbls._
-
 
 /**
   * Implementation of the table constraint. For each row, the violation of the row is the
@@ -60,7 +58,7 @@ case class Table(variables: Array[IntValue], table:Array[Array[Long]])
 
   val minViolatingRows = ArgMin(rowViolation.asInstanceOf[Array[IntValue]])
 
-  val aMinViolatingRow = TakeAny(minViolatingRows,0L)
+  val aMinViolatingRow = TakeAny(minViolatingRows,0)
 
   val variableViolation:Array[IntValue] = Array.tabulate(variables.length)( i =>
     Step(Dist(variables(i), IntElementNoVar(aMinViolatingRow, table.map(_(i)))), 0L,1L,0L)
@@ -71,7 +69,7 @@ case class Table(variables: Array[IntValue], table:Array[Array[Long]])
     * because they can only be created before the model is closed.
     * */
   override def violation(v: Value): IntValue = {
-    val variablesIndex = variables.indexOf(v)
+    val variablesIndex = variables.indexOf(v.asInstanceOf[IntValue])
     if(variablesIndex >= 0L){
       variableViolation(variablesIndex)
     }else{
@@ -89,9 +87,9 @@ case class Table(variables: Array[IntValue], table:Array[Array[Long]])
 
   override def checkInternals(c: Checker) {
     c.check(minViolation.value == rowViolation.map(_.value).min, Some("Min violation is not min"))
-    c.check(rowViolation(aMinViolatingRow.value).value == minViolation.value,Some("Min row is wrong"))
+    c.check(rowViolation(aMinViolatingRow.valueInt).value == minViolation.value,Some("Min row is wrong"))
     for(i <- variables.indices){
-      c.check(variableViolation(i).value == ( if(variables(i).value == table(aMinViolatingRow.value)(i)) 0L else 1L), Some("Violation is not correct"))
+      c.check(variableViolation(i).value == ( if(variables(i).value == table(aMinViolatingRow.valueInt)(i)) 0L else 1L), Some("Violation is not correct"))
     }
   }
 

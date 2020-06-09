@@ -1,99 +1,98 @@
 package oscar.cbls.business.scheduling.model
 
-import oscar.cbls.algo.rb.RedBlackTreeMap
+import oscar.cbls.business.scheduling.{ActivityId, Mode}
+
+import scala.annotation.tailrec
 
 // Resource constraints
 // Model the resources
 
-abstract class ResourceConstraint {
-  def usingActivities: Iterable[Int]
+abstract class Resource {
+  def usingActivities: Iterable[ActivityId]
   def initialState: ResourceState
 }
 
-class DisjunctiveResource(val usingActivities: Iterable[Int]) extends ResourceConstraint {
-  override def initialState: ResourceState = new DisjunctiveResourceState(this, 0L)
+class DisjunctiveResource(val usingActivities: Iterable[ActivityId]) extends Resource {
+  override def initialState: ResourceState = new DisjunctiveResourceState(this, 0)
 }
 
-class DisjunctiveResourceWithSetupTimes(val usingActivities: Iterable[Int],
-                                        setupTimes: SetupTimes) extends ResourceConstraint {
+class DisjunctiveResourceWithSetupTimes(val usingActivities: Iterable[ActivityId],
+                                        setupTimes: SetupTimes) extends Resource {
   override def initialState: ResourceState =
-    new DisjunctiveResourceWithSetupTimesState(this, 0L, setupTimes, setupTimes.initialMode)
+    new DisjunctiveResourceWithSetupTimesState(this, 0, setupTimes, setupTimes.initialMode)
 }
 
 class CumulativeResource(capacity: Long,
-                         val activitiesConsumption: Map[Int, Long])
-  extends ResourceConstraint {
-  override def usingActivities: Iterable[Int] = activitiesConsumption.keys
+                         val activitiesConsumption: Map[ActivityId, Long])
+  extends Resource {
+  override def usingActivities: Iterable[ActivityId] = activitiesConsumption.keys
 
   override def initialState: ResourceState = {
-    val rbTreeMap: RedBlackTreeMap[Long] = RedBlackTreeMap.empty
-    new CumulativeResourceState(this, rbTreeMap.insert(0, capacity))
+    new CumulativeResourceState(this, Map(0 -> capacity))
   }
 }
 
 class CumulativeResourceWithSetupTimes(val capacity: Long,
-                                       val activitiesConsumption: Map[Int, Long],
+                                       val activitiesConsumption: Map[ActivityId, Long],
                                        setupTimes: SetupTimes)
-  extends ResourceConstraint {
-  override def usingActivities: Iterable[Int] = activitiesConsumption.keys
+  extends Resource {
+  override def usingActivities: Iterable[ActivityId] = activitiesConsumption.keys
 
   override def initialState: ResourceState = {
-    val rbTreeMap: RedBlackTreeMap[Long] = RedBlackTreeMap.empty
-    new CumulativeResourceWithSetupTimesState(this, rbTreeMap.insert(0L, capacity), setupTimes, setupTimes.initialMode)
+    new CumulativeResourceWithSetupTimesState(this, Map(0 -> capacity), setupTimes, setupTimes.initialMode)
   }
 }
 
-class CumulativeMultiResourceWithSetupTimes(val capacity: Long,
-                                            val activitiesConsumption: Map[Int, Long],
-                                            setupTimes: SetupTimes)
-  extends ResourceConstraint {
-  override def usingActivities: Iterable[Int] = activitiesConsumption.keys
+class CumulativeResourceWithSetupTimesMultiMode(val capacity: Long,
+                                                val activitiesConsumption: Map[ActivityId, Long],
+                                                setupTimes: SetupTimes)
+  extends Resource {
+  override def usingActivities: Iterable[ActivityId] = activitiesConsumption.keys
 
   override def initialState: ResourceState = {
-    val rbTreeMap: RedBlackTreeMap[(Int, Long)] = RedBlackTreeMap.empty
-    new CumulativeMultiResourceWithSetupTimesState(this,
-                                                   rbTreeMap.insert(0L, (setupTimes.initialMode, capacity)),
+    new CumulativeResourceWithSetupTimesMultiModeState(this,
+                                                   Map(0 -> (setupTimes.initialMode, capacity)),
                                                    setupTimes,
                                                    setupTimes.initialMode)
   }
 }
 
 class ConsumableResource(capacity: Long,
-                         val activitiesConsumption: Map[Int, Long]) extends ResourceConstraint {
-  override def usingActivities: Iterable[Int] = activitiesConsumption.keys
+                         val activitiesConsumption: Map[ActivityId, Long]) extends Resource {
+  override def usingActivities: Iterable[ActivityId] = activitiesConsumption.keys
 
   override def initialState: ResourceState =
-    new ConsumableResourceState(this, 0L, capacity)
+    new ConsumableResourceState(this, 0, capacity)
 }
 
 class ConsumableResourceWithSetupTimes(capacity: Long,
-                                       val activitiesConsumption: Map[Int, Long],
+                                       val activitiesConsumption: Map[ActivityId, Long],
                                        setupTimes: SetupTimes)
-  extends ResourceConstraint {
-  override def usingActivities: Iterable[Int] = activitiesConsumption.keys
+  extends Resource {
+  override def usingActivities: Iterable[ActivityId] = activitiesConsumption.keys
 
   override def initialState: ResourceState =
-    new ConsumableResourceWithSetupTimesState(this, 0L, capacity, setupTimes, setupTimes.initialMode)
+    new ConsumableResourceWithSetupTimesState(this, 0, capacity, setupTimes, setupTimes.initialMode)
 }
 
 // Resource States
 // These classes model the evolution of a resource through the schedule
 
 abstract class ResourceState {
-  def earliestStartTime(activity: Int, earliestStart: Long): Long
-  def nextState(activity: Int, taskDuration: Long, startTime: Long): ResourceState
+  def earliestStartTime(activity: ActivityId, earliestStart: Int): Int
+  def nextState(activity: ActivityId, taskDuration: Int, startTime: Int): ResourceState
 }
 
 class DisjunctiveResourceState(base: DisjunctiveResource,
-                               availableTime: Long)
+                               availableTime: Int)
   extends ResourceState {
-  override def earliestStartTime(activity: Int, earliestStart: Long): Long = {
+  override def earliestStartTime(activity: ActivityId, earliestStart: Int): Int = {
     assert(base.usingActivities.exists(_ == activity))
     //////////
     availableTime max earliestStart
   }
 
-  override def nextState(activity: Int, taskDuration: Long, startTime: Long): ResourceState = {
+  override def nextState(activity: ActivityId, taskDuration: Int, startTime: Int): ResourceState = {
     assert(base.usingActivities.exists(_ == activity))
     require(startTime >= availableTime)
     //////////
@@ -102,11 +101,11 @@ class DisjunctiveResourceState(base: DisjunctiveResource,
 }
 
 class DisjunctiveResourceWithSetupTimesState(base: DisjunctiveResourceWithSetupTimes,
-                                             availableTime: Long,
+                                             availableTime: Int,
                                              setupTimes: SetupTimes,
                                              currentMode: Int)
   extends ResourceState {
-  override def earliestStartTime(activity: Int, earliestStart: Long): Long = {
+  override def earliestStartTime(activity: ActivityId, earliestStart: Int): Int = {
     assert(base.usingActivities.exists(_ == activity))
     //////////
     // Check whether there is a mode change
@@ -114,12 +113,12 @@ class DisjunctiveResourceWithSetupTimesState(base: DisjunctiveResourceWithSetupT
     if (actMode == currentMode) {
       availableTime max earliestStart
     } else {
-      val setupTime = setupTimes.setupTimes.getOrElse((currentMode, actMode), 0L)
+      val setupTime = setupTimes.setupTimes.getOrElse((currentMode, actMode), 0)
       (availableTime + setupTime) max earliestStart
     }
   }
 
-  override def nextState(activity: Int, taskDuration: Long, startTime: Long): ResourceState = {
+  override def nextState(activity: ActivityId, taskDuration: Int, startTime: Int): ResourceState = {
     assert(base.usingActivities.exists(_ == activity))
     require(startTime >= availableTime)
     //////////
@@ -129,214 +128,232 @@ class DisjunctiveResourceWithSetupTimesState(base: DisjunctiveResourceWithSetupT
 }
 
 class CumulativeResourceState(base: CumulativeResource,
-                              releaseTimes: RedBlackTreeMap[Long])
+                              releaseTimes: Map[Int, Long])
   extends ResourceState {
-  override def earliestStartTime(activity: Int, earliestStart: Long): Long = {
-    val qtyResourceToConsume = base.activitiesConsumption(activity)
-    // Explore the RB Tree to obtain the release time of enough resources
-    var rbExplorerOpt = releaseTimes.smallestPosition
-    var releasedTime = 0L
-    var releasedQty = 0L
-    while (rbExplorerOpt.isDefined && releasedQty < qtyResourceToConsume) {
-      releasedTime = rbExplorerOpt.get.key
-      releasedQty += rbExplorerOpt.get.value
-      rbExplorerOpt = rbExplorerOpt.get.next
+  override def earliestStartTime(activity: ActivityId, earliestStart: Int): Int = {
+    @tailrec
+    def releaseTimeFrom(relTime: Int,
+                        qtyToConsume: Long,
+                        relTimes: List[Int]): Int = relTimes match {
+      case Nil => relTime
+      case t::ts =>
+        val releasedAtT = releaseTimes(t)
+        if (qtyToConsume > releasedAtT) releaseTimeFrom(t, qtyToConsume-releasedAtT, ts)
+        else t
     }
-    releasedTime max earliestStart
+    //////////
+    val qtyResourceToConsume = base.activitiesConsumption(activity)
+    // Explore the releaseTimes map for obtaining the release time for enough resources
+    val releaseTimesSorted = releaseTimes.keys.toList.sorted
+    val releaseTime = releaseTimeFrom(0, qtyResourceToConsume, releaseTimesSorted)
+    releaseTime max earliestStart
   }
 
-  override def nextState(activity: Int, taskDuration: Long, startTime: Long): ResourceState = {
+  override def nextState(activity: ActivityId, taskDuration: Int, startTime: Int): ResourceState = {
+    @tailrec
+    def relTimesMapFrom(qtyToConsume: Long,
+                        relTimes: List[Int],
+                        alreadyConsumed: Boolean,
+                        relTimesMapAcc: Map[Int, Long]): Map[Int, Long] = relTimes match {
+      case Nil => relTimesMapAcc
+      case t::ts =>
+        val releasedAtT = releaseTimes(t)
+        if (alreadyConsumed)
+          relTimesMapFrom(qtyToConsume, ts, alreadyConsumed, relTimesMapAcc + (t -> releasedAtT))
+        else {
+          if (qtyToConsume > releasedAtT)
+            relTimesMapFrom(qtyToConsume-releasedAtT, ts, alreadyConsumed, relTimesMapAcc)
+          else if (releasedAtT == qtyToConsume)
+            relTimesMapFrom(0L, ts, alreadyConsumed = true, relTimesMapAcc)
+          else
+            relTimesMapFrom(0L, ts, alreadyConsumed = true, relTimesMapAcc + (t -> (releasedAtT-qtyToConsume)))
+        }
+    }
+    //////////
     val qtyResourceConsumed = base.activitiesConsumption(activity)
-    // Explore the RB Tree to have the keys to delete
-    var rbExplorerOpt = releaseTimes.smallestPosition
-    var releasedTime = 0L
-    var releasedQty = 0L
-    var lastQty = 0L
-    var keysToDelete: List[Long] = Nil
-    while (rbExplorerOpt.isDefined && releasedQty < qtyResourceConsumed) {
-      releasedTime = rbExplorerOpt.get.key
-      releasedQty += rbExplorerOpt.get.value
-      lastQty = rbExplorerOpt.get.value
-      keysToDelete ::= releasedTime
-      rbExplorerOpt = rbExplorerOpt.get.next
-    }
-    // Delete the keys
-    var updatedReleaseTimes = releaseTimes
-    keysToDelete.foreach { key =>
-      updatedReleaseTimes = updatedReleaseTimes.remove(key)
-    }
-    // Add the key for last time if quantity was overloaded
-    if (releasedQty > qtyResourceConsumed) {
-      updatedReleaseTimes = updatedReleaseTimes.insert(releasedTime, releasedQty-qtyResourceConsumed)
-    }
-    // Add the key for the end time of the activity
-    updatedReleaseTimes = updatedReleaseTimes.insert(startTime + taskDuration, qtyResourceConsumed)
+    val releaseTimesSorted = releaseTimes.keys.toList.sorted
+    val updatedReleaseTimes = relTimesMapFrom(qtyResourceConsumed, releaseTimesSorted,
+      alreadyConsumed = false, Map((startTime + taskDuration) -> qtyResourceConsumed))
     // Return the new state
     new CumulativeResourceState(base, updatedReleaseTimes)
   }
 }
 
 class CumulativeResourceWithSetupTimesState(base: CumulativeResourceWithSetupTimes,
-                                            releaseTimes: RedBlackTreeMap[Long],
+                                            releaseTimes: Map[Int, Long],
                                             setupTimes: SetupTimes,
-                                            currentMode: Int)
+                                            currentMode: Mode)
   extends ResourceState {
-  override def earliestStartTime(activity: Int, earliestStart: Long): Long = {
-    val qtyResourceToConsume = base.activitiesConsumption(activity)
-    // Explore the RB Tree to obtain the release time of enough resources
-    var rbExplorerOpt = releaseTimes.smallestPosition
-    var releasedTime = 0L
-    var releasedQty = 0L
-    while (rbExplorerOpt.isDefined && releasedQty < qtyResourceToConsume) {
-      releasedTime = rbExplorerOpt.get.key
-      releasedQty += rbExplorerOpt.get.value
-      rbExplorerOpt = rbExplorerOpt.get.next
+  override def earliestStartTime(activity: ActivityId, earliestStart: Int): Int = {
+    @tailrec
+    def releaseTimeFrom(relTime: Int,
+                        qtyToConsume: Long,
+                        relTimes: List[Int]): Int = relTimes match {
+      case Nil => relTime
+      case t::ts =>
+        val releasedAtT = releaseTimes(t)
+        if (qtyToConsume > releasedAtT) releaseTimeFrom(t, qtyToConsume-releasedAtT, ts)
+        else t
     }
+    //////////
+    val qtyResourceToConsume = base.activitiesConsumption(activity)
+    // Explore the releaseTimes map for obtaining the release time for enough resources
+    val releaseTimesSorted = releaseTimes.keys.toList.sorted
+    val releaseTime = releaseTimeFrom(0, qtyResourceToConsume, releaseTimesSorted)
     // Check whether there is a mode change
     val actMode = setupTimes.activityModes.getOrElse(activity, currentMode)
     if (actMode == currentMode) {
-      releasedTime max earliestStart
+      releaseTime max earliestStart
     } else {
-      val setupTime = setupTimes.setupTimes.getOrElse((currentMode, actMode), 0L)
-      (releasedTime + setupTime) max earliestStart
+      val setupTime = setupTimes.setupTimes.getOrElse((currentMode, actMode), 0)
+      (releaseTime + setupTime) max earliestStart
     }
   }
 
-  override def nextState(activity: Int, taskDuration: Long, startTime: Long): ResourceState = {
+  override def nextState(activity: ActivityId, taskDuration: Int, startTime: Int): ResourceState = {
+    @tailrec
+    def relTimesMapFrom(qtyToConsume: Long,
+                        relTimes: List[Int],
+                        alreadyConsumed: Boolean,
+                        relTimesMapAcc: Map[Int, Long]): Map[Int, Long] = relTimes match {
+      case Nil => relTimesMapAcc
+      case t::ts =>
+        val releasedAtT = releaseTimes(t)
+        if (alreadyConsumed)
+          relTimesMapFrom(qtyToConsume, ts, alreadyConsumed, relTimesMapAcc + (t -> releasedAtT))
+        else {
+          if (qtyToConsume > releasedAtT)
+            relTimesMapFrom(qtyToConsume-releasedAtT, ts, alreadyConsumed, relTimesMapAcc)
+          else if (releasedAtT == qtyToConsume)
+            relTimesMapFrom(0L, ts, alreadyConsumed = true, relTimesMapAcc)
+          else
+            relTimesMapFrom(0L, ts, alreadyConsumed = true, relTimesMapAcc + (t -> (releasedAtT-qtyToConsume)))
+        }
+    }
+    //////////
     val qtyResourceConsumed = base.activitiesConsumption(activity)
     // Check whether there is a mode change
     val actMode = setupTimes.activityModes.getOrElse(activity, currentMode)
     if (actMode == currentMode) {
-      // No mode change: explore the RB Tree to have the keys to delete
-      var rbExplorerOpt = releaseTimes.smallestPosition
-      var releasedTime = 0L
-      var releasedQty = 0L
-      var lastQty = 0L
-      var keysToDelete: List[Long] = Nil
-      while (rbExplorerOpt.isDefined && releasedQty < qtyResourceConsumed) {
-        releasedTime = rbExplorerOpt.get.key
-        releasedQty += rbExplorerOpt.get.value
-        lastQty = rbExplorerOpt.get.value
-        keysToDelete ::= releasedTime
-        rbExplorerOpt = rbExplorerOpt.get.next
-      }
-      // Delete the keys
-      var updatedReleaseTimes = releaseTimes
-      keysToDelete.foreach { key =>
-        updatedReleaseTimes = updatedReleaseTimes.remove(key)
-      }
-      // Add the key for last time if quantity was overloaded
-      if (releasedQty > qtyResourceConsumed) {
-        updatedReleaseTimes = updatedReleaseTimes.insert(releasedTime, releasedQty-qtyResourceConsumed)
-      }
-      // Add the key for the end time of the activity
-      updatedReleaseTimes = updatedReleaseTimes.insert(startTime + taskDuration, qtyResourceConsumed)
+      // No mode change, behaves as cumulative resource without state
+      val releaseTimesSorted = releaseTimes.keys.toList.sorted
+      val updatedReleaseTimes = relTimesMapFrom(qtyResourceConsumed, releaseTimesSorted,
+        alreadyConsumed = false, Map((startTime + taskDuration) -> qtyResourceConsumed))
       // Return the new state
       new CumulativeResourceWithSetupTimesState(base, updatedReleaseTimes, setupTimes, actMode)
     } else {
-      // Mode has changed:
-      val emptyReleaseTimes: RedBlackTreeMap[Long] = RedBlackTreeMap.empty
+      // Mode has changed
+      val availableQtyAfterModeChanged = base.capacity - qtyResourceConsumed
+      val newReleaseTimes = Map(
+        startTime -> availableQtyAfterModeChanged,
+        (startTime+taskDuration) -> qtyResourceConsumed
+      )
       // Return the new state
-      new CumulativeResourceWithSetupTimesState(base, emptyReleaseTimes.insert(startTime + taskDuration, base.capacity), setupTimes, actMode)
+      new CumulativeResourceWithSetupTimesState(base, newReleaseTimes, setupTimes, actMode)
     }
   }
 }
 
-class CumulativeMultiResourceWithSetupTimesState(base: CumulativeMultiResourceWithSetupTimes,
-                                                 releaseTimes: RedBlackTreeMap[(Int, Long)],
-                                                 setupTimes: SetupTimes,
-                                                 currentMode: Int)
+class CumulativeResourceWithSetupTimesMultiModeState(base: CumulativeResourceWithSetupTimesMultiMode,
+                                                     releaseTimes: Map[Int, (Mode, Long)],
+                                                     setupTimes: SetupTimes,
+                                                     currentMode: Mode)
   extends ResourceState {
-  override def earliestStartTime(activity: Int, earliestStart: Long): Long = {
+  override def earliestStartTime(activity: ActivityId, earliestStart: Int): Int = {
+    @tailrec
+    def releaseTimeFrom(relTime: Int,
+                        qtyToConsume: Long,
+                        releaseTimesWithST: Map[Int, Long],
+                        relTimes: List[Int]): Int = relTimes match {
+      case Nil => relTime
+      case t::ts =>
+        val releasedAtT = releaseTimesWithST(t)
+        if (qtyToConsume > releasedAtT)
+          releaseTimeFrom(t, qtyToConsume-releasedAtT, releaseTimesWithST, ts)
+        else t
+    }
+    //////////
     val qtyResourceToConsume = base.activitiesConsumption(activity)
     val actMode = setupTimes.activityModes.getOrElse(activity, currentMode)
-    val releaseTimesAfterChanging = releaseTimesAfterChangingMode(actMode)
-    // The exploration is on the new mapping where keys take account of setup times
-    var rbExplorerOpt = releaseTimesAfterChanging.smallestPosition
-    var releasedTime = 0L
-    var releasedQty = 0L
-    while (rbExplorerOpt.isDefined && releasedQty < qtyResourceToConsume) {
-      releasedTime = rbExplorerOpt.get.key
-      releasedQty += rbExplorerOpt.get.value._2
-      rbExplorerOpt = rbExplorerOpt.get.next
+    val releaseTimesWithST = releaseTimes.map { tup =>
+      val t = tup._1
+      val m = tup._2._1
+      val qty = tup._2._2
+      val st = setupTimes.setupTimes.getOrElse((m, actMode), 0)
+      (t+st, qty)
     }
-    // Result
-    releasedTime max earliestStart
+    val releaseTimesSorted = releaseTimesWithST.keys.toList.sorted
+    val releaseTime = releaseTimeFrom(0, qtyResourceToConsume, releaseTimesWithST, releaseTimesSorted)
+    releaseTime max earliestStart
   }
 
-  override def nextState(activity: Int, taskDuration: Long, startTime: Long): ResourceState = {
+  override def nextState(activity: ActivityId, taskDuration: Int, startTime: Int): ResourceState = {
+    @tailrec
+    def relTimesMapFrom(qtyToConsume: Long,
+                        relTimes: List[Int],
+                        alreadyConsumed: Boolean,
+                        releaseTimesWithST: Map[Int, (Int, Mode, Long)],
+                        relTimesMapAcc: Map[Int, (Mode, Long)]): Map[Int, (Mode, Long)] = relTimes match {
+      case Nil => relTimesMapAcc
+      case t::ts =>
+        val relTimeST = releaseTimesWithST(t)
+        val originalT = relTimeST._1
+        val modeAtT = relTimeST._2
+        val releasedAtT = relTimeST._3
+        if (alreadyConsumed)
+          relTimesMapFrom(qtyToConsume, ts, alreadyConsumed, releaseTimesWithST,
+            relTimesMapAcc + (originalT -> (modeAtT,releasedAtT)))
+        else {
+          if (qtyToConsume > releasedAtT)
+            relTimesMapFrom(qtyToConsume-releasedAtT, ts, alreadyConsumed, releaseTimesWithST, relTimesMapAcc)
+          else if (releasedAtT == qtyToConsume)
+            relTimesMapFrom(0L, ts, alreadyConsumed = true, releaseTimesWithST, relTimesMapAcc)
+          else
+            relTimesMapFrom(0L, ts, alreadyConsumed = true, releaseTimesWithST,
+              relTimesMapAcc + (originalT -> (modeAtT,releasedAtT-qtyToConsume)))
+        }
+    }
+    //////////
     val qtyResourceConsumed = base.activitiesConsumption(activity)
     val actMode = setupTimes.activityModes.getOrElse(activity, currentMode)
-    val releaseTimesAfterChanging = releaseTimesAfterChangingMode(actMode)
-    // The exploration is on the new mapping where keys take account of setup times
-    var rbExplorerOpt = releaseTimesAfterChanging.smallestPosition
-    var releasedTime = 0L
-    var releasedQty = 0L
-    var lastMode = -1
-    var lastSetupTime = 0L
-    var lastQty = 0L
-    var keysToDelete: List[Long] = Nil
-    while (rbExplorerOpt.isDefined && releasedQty < qtyResourceConsumed) {
-      lastMode = rbExplorerOpt.get.value._1
-      lastSetupTime = setupTimes.setupTimes.getOrElse((lastMode, actMode), 0L)
-      releasedTime = rbExplorerOpt.get.key - lastSetupTime
-      releasedQty += rbExplorerOpt.get.value._2
-      lastQty = rbExplorerOpt.get.value._2
-      keysToDelete ::= releasedTime
-      rbExplorerOpt = rbExplorerOpt.get.next
+    val releaseTimesWithST = releaseTimes.map{ tup =>
+      val t = tup._1
+      val m = tup._2._1
+      val qty = tup._2._2
+      val st = setupTimes.setupTimes.getOrElse((m, actMode), 0)
+      (t+st, (t,m,qty))
     }
-    // Delete the keys
-    var updatedReleaseTimes = releaseTimes
-    keysToDelete.foreach { key =>
-      updatedReleaseTimes = updatedReleaseTimes.remove(key)
-    }
-    // Add the key for last time if quantity was overloaded
-    if (releasedQty > qtyResourceConsumed) {
-      updatedReleaseTimes = updatedReleaseTimes.insert(releasedTime, (lastMode, releasedQty - qtyResourceConsumed))
-    }
-    // Add the key for the end time of the activity
-    updatedReleaseTimes = updatedReleaseTimes.insert(startTime + taskDuration, (actMode, qtyResourceConsumed))
+    val releaseTimesSorted = releaseTimesWithST.keys.toList.sorted
+    val updatedReleaseTimes = relTimesMapFrom(qtyResourceConsumed, releaseTimesSorted, alreadyConsumed = false,
+      releaseTimesWithST, Map((startTime + taskDuration) -> (actMode,qtyResourceConsumed)))
     // Return the new state
-    new CumulativeMultiResourceWithSetupTimesState(base, updatedReleaseTimes, setupTimes, actMode)
-  }
-
-  private def releaseTimesAfterChangingMode(newMode: Int): RedBlackTreeMap[(Int, Long)] = {
-    var newRBMap: RedBlackTreeMap[(Int, Long)] = RedBlackTreeMap.empty
-    // Loop on releaseTimes map to change the key (release time) with the key + setupTime
-    for {releasedTime <- releaseTimes.keys} {
-      val releasedTuple = releaseTimes.get(releasedTime).get
-      val releasedMode = releasedTuple._1
-      val releasedQty = releasedTuple._2
-      val changeModeTime = setupTimes.setupTimes.getOrElse((releasedMode, newMode), 0L)
-      newRBMap = newRBMap.insert(releasedTime + changeModeTime, (releasedMode, releasedQty))
-    }
-    newRBMap
+    new CumulativeResourceWithSetupTimesMultiModeState(base, updatedReleaseTimes, setupTimes, actMode)
   }
 }
 
 class ConsumableResourceState(base: ConsumableResource,
-                              availableTime: Long,
+                              availableTime: Int,
                               availableCapacity: Long) extends ResourceState {
 
-  override def earliestStartTime(activity: Int, earliestStart: Long): Long = {
+  override def earliestStartTime(activity: ActivityId, earliestStart: Int): Int = {
     assert(base.usingActivities.exists(_ == activity))
     //////////
     val qtyResourceToConsume = base.activitiesConsumption(activity)
     if (qtyResourceToConsume > availableCapacity) {
       // Not available resource, activity will never start
-      Long.MaxValue
+      Int.MaxValue
     } else {
       availableTime max earliestStart
     }
   }
 
-  override def nextState(activity: Int, taskDuration: Long, startTime: Long): ResourceState = {
+  override def nextState(activity: ActivityId, taskDuration: Int, startTime: Int): ResourceState = {
     assert(base.usingActivities.exists(_ == activity))
     require(startTime >= availableTime)
     //////////
     val qtyResourceToConsume = base.activitiesConsumption(activity)
     if (qtyResourceToConsume > availableCapacity)
-      new ErrorResourceState(base)
+      ErrorResourceState
     else {
       new ConsumableResourceState(base, startTime + taskDuration, availableCapacity - qtyResourceToConsume)
     }
@@ -344,37 +361,37 @@ class ConsumableResourceState(base: ConsumableResource,
 }
 
 class ConsumableResourceWithSetupTimesState(base: ConsumableResourceWithSetupTimes,
-                                            availableTime: Long,
+                                            availableTime: Int,
                                             availableCapacity: Long,
                                             setupTimes: SetupTimes,
-                                            currentMode: Int) extends ResourceState {
+                                            currentMode: Mode) extends ResourceState {
 
-  override def earliestStartTime(activity: Int, earliestStart: Long): Long = {
+  override def earliestStartTime(activity: ActivityId, earliestStart: Int): Int = {
     assert(base.usingActivities.exists(_ == activity))
     //////////
     val qtyResourceToConsume = base.activitiesConsumption(activity)
     if (qtyResourceToConsume > availableCapacity) {
       // Not available resource, activity will never start
-      Long.MaxValue
+      Int.MaxValue
     } else {
       // Check whether there is a mode change
       val actMode = setupTimes.activityModes.getOrElse(activity, currentMode)
       if (actMode == currentMode) {
         availableTime max earliestStart
       } else {
-        val setupTime = setupTimes.setupTimes.getOrElse((currentMode, actMode), 0L)
+        val setupTime = setupTimes.setupTimes.getOrElse((currentMode, actMode), 0)
         (availableTime + setupTime) max earliestStart
       }
     }
   }
 
-  override def nextState(activity: Int, taskDuration: Long, startTime: Long): ResourceState = {
+  override def nextState(activity: ActivityId, taskDuration: Int, startTime: Int): ResourceState = {
     assert(base.usingActivities.exists(_ == activity))
     require(startTime >= availableTime)
     //////////
     val qtyResourceToConsume = base.activitiesConsumption(activity)
     if (qtyResourceToConsume > availableCapacity)
-      new ErrorResourceState(base)
+      ErrorResourceState
     else {
       // Check whether there is a mode change
       val actMode = setupTimes.activityModes.getOrElse(activity, currentMode)
@@ -387,11 +404,13 @@ class ConsumableResourceWithSetupTimesState(base: ConsumableResourceWithSetupTim
   }
 }
 
-class ErrorResourceState(base: ResourceConstraint) extends ResourceState {
-  override def earliestStartTime(activity: Int, earliestStart: Long): Long = Long.MaxValue
+object ErrorResourceState extends ResourceState {
+  override def earliestStartTime(activity: ActivityId, earliestStart: Int): Int = Int.MaxValue
 
-  override def nextState(activity: Int, taskDuration: Long, startTime: Long): ResourceState = this
+  override def nextState(activity: ActivityId, taskDuration: Int, startTime: Int): ResourceState = this
 }
 
 // Case class that models Setup Times
-case class SetupTimes(initialMode: Int, activityModes: Map[Int, Int], setupTimes: Map[(Int, Int), Long])
+case class SetupTimes(initialMode: Mode,
+                      activityModes: Map[ActivityId, Mode],
+                      setupTimes: Map[(Mode, Mode), Int])

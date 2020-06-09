@@ -19,11 +19,10 @@
   */
 package oscar.cbls.lib.constraint
 
-import oscar.cbls.core.{ChangingIntValue, IntNotificationTarget, Invariant}
+import oscar.cbls.core.computation.{CBLSIntVar, ChangingIntValue, Domain, IntNotificationTarget, IntValue, Invariant, Store, Value}
 import oscar.cbls.core.constraint.Constraint
 import oscar.cbls.core.propagation.Checker
 import oscar.cbls.lib.invariant.numeric.{MinusOffsetPos, Prod2, Sum}
-import oscar.cbls._
 
 /**
   * Constrains the a resource usage to be lower than some limit.
@@ -37,9 +36,6 @@ import oscar.cbls._
   * @author gustav.bjordal@it.uu.se
   */
 case class CumulativePrototype(start: Array[IntValue], duration: Array[IntValue], amount:Array[IntValue], limit:IntValue) extends Invariant with Constraint with IntNotificationTarget{
-
-
-
   for (v <- start.indices) registerStaticAndDynamicDependency(start(v), v)
   for (v <- duration.indices) registerStaticAndDynamicDependency(duration(v), v)
   for (v <- amount.indices) registerStaticAndDynamicDependency(amount(v), v)
@@ -78,7 +74,7 @@ case class CumulativePrototype(start: Array[IntValue], duration: Array[IntValue]
     }
   }
 
-  def updateVarViolation(s:Long, d:Long) = {
+  def updateVarViolation(s:Long, d:Long): Unit = {
     //Verify that these bounds are correct
     for(i <- start.indices
         if(start(i).value >= s && start(i).value < s+d) ||
@@ -134,11 +130,11 @@ case class CumulativePrototype(start: Array[IntValue], duration: Array[IntValue]
   override def checkInternals(c: Checker) {c.check(false, Some("TODO: Implement checkinternal for CumulativeSparse"))}
 }
 
-class CumulativeProfile(m:Store, val nTasks:Long, val horizon:Long, val maxHeight:Long, var limit:IntValue){
-  val blocks:Array[ProfileBlock] = Array.tabulate(2L*nTasks+4L)( i => new ProfileBlock(0L,0L,CBLSIntVar(m,0L,Domain(0L ,maxHeight)),limit,horizon))
+class CumulativeProfile(m:Store, val nTasks:Int, val horizon:Long, val maxHeight:Long, var limit:IntValue){
+  val blocks:Array[ProfileBlock] = Array.tabulate(2*nTasks+4)( i => new ProfileBlock(0L,0L,CBLSIntVar(m,0L,Domain(0L ,maxHeight)),limit,horizon))
 
-  val freeBlocks = blocks(0L)
-  for( i <- 1L until blocks.length)
+  val freeBlocks = blocks(0)
+  for( i <- 1 until blocks.length)
     freeBlocks.insertBlock(blocks(i))
 
   val endBlock = new ProfileBlock(-1L,-2L,CBLSIntVar(m,-1L,Domain(-2L,-1L),"DummyBlock"),limit,horizon)
@@ -154,7 +150,7 @@ class CumulativeProfile(m:Store, val nTasks:Long, val horizon:Long, val maxHeigh
     var current = profile
     while(current != endBlock){
       for(i <- current.start to current.end) {
-        val p = Array.tabulate(current.height.newValue)(n => "#")
+        val p = Array.tabulate(current.height.newValueInt)(n => "#")
         println(idx+"|"+i + " " +current.start+" to "+ current.end +" \t |" +/*p.mkString +*/ current.height.newValue)
       }
       if(current.start > current.end){

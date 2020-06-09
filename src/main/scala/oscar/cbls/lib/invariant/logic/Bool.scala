@@ -17,12 +17,8 @@
 
 package oscar.cbls.lib.invariant.logic
 
-import oscar.cbls.Domain
 import oscar.cbls.core.computation._
 import oscar.cbls.core.propagation.Checker
-import oscar.cbls.lib.invariant.minmax.{Miax, MiaxArray}
-
-import scala.collection.immutable.SortedSet
 
 /**
   * And(vars)

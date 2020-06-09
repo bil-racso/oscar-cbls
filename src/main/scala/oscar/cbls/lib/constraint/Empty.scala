@@ -17,7 +17,8 @@ package oscar.cbls.lib.constraint
  * ****************************************************************************
  */
 
-import oscar.cbls._
+import oscar.cbls.core.computation.{IntValue, SetValue, Value}
+import oscar.cbls.core.constraint.Constraint
 import oscar.cbls.lib.invariant.set.Cardinality
 
 /**

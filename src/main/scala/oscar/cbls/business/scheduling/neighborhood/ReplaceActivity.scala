@@ -2,6 +2,7 @@ package oscar.cbls.business.scheduling.neighborhood
 
 import oscar.cbls.LoopBehavior
 import oscar.cbls.algo.search.HotRestart
+import oscar.cbls.business.scheduling.ActivityId
 import oscar.cbls.business.scheduling.model.Schedule
 import oscar.cbls.core.search.{Best, EasyNeighborhoodMultiLevel, First}
 
@@ -10,11 +11,11 @@ class ReplaceActivity(schedule: Schedule,
                       selectRemoveBehavior:LoopBehavior = First(),
                       selectActToAddBehavior:LoopBehavior = First(),
                       selectReinsertBehavior:LoopBehavior = Best(),
-                      searchIndices: Option[() => Iterable[Long]] = None)
+                      searchValues: Option[() => Iterable[Int]] = None)
   extends EasyNeighborhoodMultiLevel[ReplaceActivityMove](neighborhoodName) {
 
-  var indActToRemove: Int  = -1
-  var actToAdd: Long = -1L
+  var indActToRemove: Int = -1
+  var actToAdd: ActivityId = -1
   var indActToAdd: Int = -1
 
   /**
@@ -25,26 +26,32 @@ class ReplaceActivity(schedule: Schedule,
   override def exploreNeighborhood(initialObj: Long): Unit = {
     // Iteration zone on activities indices to remove
     // Checking the Hot Restart
-    val iterationZone1: () => Iterable[Long] = searchIndices.getOrElse(() => 0L until schedule.activitiesPriorList.value.size.toLong)
+    val iterationZone1: () => Iterable[Int] = searchValues.getOrElse(() =>
+      0 until schedule.activityPriorityList.value.size
+    )
     val hotRestart = true
-    val iterationZone: Iterable[Long] =
-      if (hotRestart) HotRestart(iterationZone1(), indActToRemove.toLong)
+    val iterationZone: Iterable[Int] =
+      if (hotRestart) HotRestart(iterationZone1(), indActToRemove)
       else iterationZone1()
     // iterating over the values in the activity list
-    val (indexIterator, notifyIndexToRemoveFound) = selectRemoveBehavior.toIterator(iterationZone)
+    val (indicesIterator, notifyIndexToRemoveFound) = selectRemoveBehavior.toIterator(iterationZone)
     // Define checkpoint on sequence (activities list)
-    val seqValueCheckPoint = schedule.activitiesPriorList.defineCurrentValueAsCheckpoint(true)
-    while (indexIterator.hasNext) {
-      indActToRemove = indexIterator.next().toInt
-      // iterating over the possible activities to add
-      val iterationZone2: () => Iterable[Long] = () => (0L until schedule.numActivities).filterNot(schedule.activitiesPriorList.value.contains(_))
-      val iterationZoneAdding: Iterable[Long] =
+    val seqValueCheckPoint = schedule.activityPriorityList.defineCurrentValueAsCheckpoint(true)
+    while (indicesIterator.hasNext) {
+      indActToRemove = indicesIterator.next().toInt
+      // iterating over the possible activities to add after
+      val iterationZone2: () => Iterable[Int] = () => {
+        schedule
+          .activities
+          .filterNot(schedule.activityPriorityList.value.contains(_))
+      }
+      val iterationZoneAdding: Iterable[Int] =
         if (hotRestart) HotRestart(iterationZone2(), actToAdd)
         else iterationZone2()
       // iterating over the activities to add
       val (actToAddIterator, notifyActToAddFound) = selectActToAddBehavior.toIterator(iterationZoneAdding)
       while (actToAddIterator.hasNext) {
-        actToAdd = actToAddIterator.next()
+        actToAdd = actToAddIterator.next().toInt
         // Iteration over the reinsertable zone
         val reinsertableZone = schedule.insertableIndices(actToAdd).map { ind =>
           if (ind > indActToRemove) ind-1
@@ -57,7 +64,7 @@ class ReplaceActivity(schedule: Schedule,
           performMove(indActToRemove, actToAdd, indActToAdd)
           val newObj = obj.value
           // Rollback to checkpoint
-          schedule.activitiesPriorList.rollbackToTopCheckpoint(seqValueCheckPoint)
+          schedule.activityPriorityList.rollbackToTopCheckpoint(seqValueCheckPoint)
           // Notification of finding indices
           if (evaluateCurrentMoveObjTrueIfSomethingFound(newObj)) {
             notifyIndexToRemoveFound()
@@ -67,20 +74,20 @@ class ReplaceActivity(schedule: Schedule,
         }
       }
     }
-    schedule.activitiesPriorList.releaseTopCheckpoint()
+    schedule.activityPriorityList.releaseTopCheckpoint()
   }
 
   override def instantiateCurrentMove(newObj: Long): ReplaceActivityMove =
     ReplaceActivityMove(indActToRemove, actToAdd, indActToAdd, this, neighborhoodNameToString, newObj)
 
-  def performMove(indActToRemove: Int, actToAdd: Long, indActToAdd: Int): Unit = {
-    schedule.activitiesPriorList.remove(indActToRemove)
-    schedule.activitiesPriorList.insertAtPosition(actToAdd, indActToAdd)
+  def performMove(indActToRm: Int, actToAd: Int, indActToAd: Int): Unit = {
+    schedule.activityPriorityList.remove(indActToRm)
+    schedule.activityPriorityList.insertAtPosition(actToAd, indActToAd)
   }
 }
 
 case class ReplaceActivityMove(removeIndex: Int,
-                               actToAdd: Long,
+                               actToAdd: Int,
                                addIndex: Int,
                                override val neighborhood: ReplaceActivity,
                                override val neighborhoodName: String = "ReplaceActivityMove",

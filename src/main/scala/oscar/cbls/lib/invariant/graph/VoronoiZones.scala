@@ -15,14 +15,13 @@
 
 package oscar.cbls.lib.invariant.graph
 
-import oscar.cbls
 import oscar.cbls.algo.graph._
 import oscar.cbls.algo.quick.QList
-import oscar.cbls.core.Checker
 import oscar.cbls.core.computation._
-import oscar.cbls.lib.invariant.logic.Filter
+import oscar.cbls.core.propagation.Checker
+import oscar.cbls.lib.invariant.logic.{Cluster, Filter}
 import oscar.cbls.lib.invariant.set.SetMap
-import oscar.cbls.{CBLSIntVar, Domain, SetValue}
+import oscar.cbls.{CBLSIntVar, Domain, IntValue, SetValue}
 
 import scala.collection.immutable.{SortedMap, SortedSet}
 
@@ -32,14 +31,15 @@ object VoronoiZones{
             graphDiameterOverApprox:Long,
             openConditions:SetValue,
             centroids:SetValue,
-            trackedNodes:Iterable[Long],
+            trackedNodes:Iterable[Int],
             m:Store,
-            defaultDistanceForUnreachableNodes:Long):VoronoiZones = {
+            defaultDistanceForUnreachableNodes:Long,
+            defaultCentroidForOrphanNodes:Long = -1):VoronoiZones = {
 
-    val trackedNodeToDistanceAndCentroid = SortedMap.empty[Long,(CBLSIntVar,CBLSIntVar)] ++ trackedNodes.map(nodeID =>
+    val trackedNodeToDistanceAndCentroid = SortedMap.empty[Int,(CBLSIntVar,CBLSIntVar)] ++ trackedNodes.map(nodeID =>
       nodeID -> (
         CBLSIntVar(m, 0, Domain(0L,(defaultDistanceForUnreachableNodes max graphDiameterOverApprox)), "distanceToClosestCentroid_Node" + nodeID),
-        CBLSIntVar(m, 0, Domain(-1L , centroids.max), "closestCentroidToNode" + nodeID))
+        CBLSIntVar(m, 0, Domain(centroids.min , centroids.max) union defaultCentroidForOrphanNodes, "closestCentroidToNode" + nodeID))
     )
 
     new VoronoiZones(graph,
@@ -51,14 +51,26 @@ object VoronoiZones{
 
   def orphanNodes(v:VoronoiZones):ChangingSetValue = {
     //TODO: embed this into the VoronoiVone invariant to have better runtime?
-    val idToNodeAndCentroid:Array[(Int,IntValue)] = v.trackedNodeToDistanceAndCentroidMap.toList.map({case (id,(_,centroid)) => (cbls.longToInt(id),centroid)}).toArray
+    val idToNodeAndCentroid:Array[(Int,IntValue)] = v.trackedNodeToDistanceAndCentroidMap.toList.map({case (id,(_,centroid)) => (id,centroid)}).toArray
 
     SetMap(
       Filter(
         idToNodeAndCentroid.map(_._2),
-        _!= -1),
-      (nodeID:Long) => idToNodeAndCentroid(cbls.longToInt(nodeID))._1,
-      Domain.setToDomain(idToNodeAndCentroid.map(_._1:Long).toSet))
+        _!= v.defaultCentroidForUnreachableNodes),
+      (nodeID:Int) => idToNodeAndCentroid(nodeID)._1,
+      Domain(idToNodeAndCentroid.map(_._1:Long)))
+  }
+
+  def centroidToTrackedNodeSet(v:VoronoiZones, centroids:Iterable[Int]):SortedMap[Int,SetValue] = {
+    val trackedNodesArray:Array[(Int,(_,CBLSIntVar))] = v.trackedNodeToDistanceAndCentroidMap.toArray
+    val localIDtoNodeID:Array[Int] = trackedNodesArray.map(_._1)
+    val localIDtoToClusterID:Array[IntValue] = trackedNodesArray.map(_._2._2)
+    val (minTrackedNodeID,maxTrackedNodeID) = InvariantHelper.getMinMaxBoundsShortInt(localIDtoNodeID)
+    val domainsOfTrackedNodeIDs = Domain(minTrackedNodeID,maxTrackedNodeID)
+    val centroidsToTmpNodes:SortedMap[Int,CBLSSetVar] = Cluster.makeSparse(localIDtoToClusterID, centroids).clusters
+
+    //SortedMap is actuall ya lazy stuff, so aboid at all cost here!
+    SortedMap.empty[Int,SetValue] ++ centroidsToTmpNodes.toList.map({case (a,setOfTmpNodes) => (a,SetMap(setOfTmpNodes,(l:Int) => localIDtoNodeID(l.toInt),domainsOfTrackedNodeIDs))})
   }
 }
 
@@ -72,20 +84,22 @@ object VoronoiZones{
   *                                            for the nodes that require it,
   *                                            the distance to the closest centroid
   *                                            and the centroid
+  *                                            nodes that are not reacheable by any centroid get the centroid -1
   *
   */
 class VoronoiZones(graph:ConditionalGraph,
                    openConditions:SetValue,
-                   centroids:SetValue,
-                   val trackedNodeToDistanceAndCentroidMap:SortedMap[Long,(CBLSIntVar,CBLSIntVar)],
-                   defaultDistanceForUnreachableNodes:Long,
-                   maxDistanceToCentroid:Long = Long.MaxValue)
+                   val centroids:SetValue,
+                   val trackedNodeToDistanceAndCentroidMap:SortedMap[Int,(CBLSIntVar,CBLSIntVar)],
+                   val defaultDistanceForUnreachableNodes:Long,
+                   maxDistanceToCentroid:Long = Long.MaxValue,
+                   val defaultCentroidForUnreachableNodes:Int = -1)
   extends Invariant with SetNotificationTarget {
 
-  require(openConditions != centroids, "something absurd in the voronoi zone declaration")
+  require(openConditions != centroids, "something absurd in the Voronoï zone declaration")
 
   //this condition is needed because we use the distance to unmark the voronoi zones whe na conditional edge is closed
-  require(graph.conditionToConditionalEdges.forall(_.length >0),"all conditional edges should have length >0")
+  require(graph.conditionToConditionalEdges.forall(_.length >= 0),"all conditional edges should have length >= 0")
 
   require(maxDistanceToCentroid > 0)
 
@@ -113,24 +127,24 @@ class VoronoiZones(graph:ConditionalGraph,
         case Unreachable =>
           setUnreachable()
 
-        case VoronoiZone(centroid,distance) =>
+        case VoronoiZone(centroid,distance,_) =>
           this.centroid := centroid.id
           this.distance := distance
       }
     }
 
-    def setUnreachable(): Unit ={
-      this.centroid := -1
+    def setUnreachable(): Unit = {
+      this.centroid := defaultCentroidForUnreachableNodes
       this.distance := defaultDistanceForUnreachableNodes
     }
 
-    def checkEqual(l:ClosestCentroidLabeling): Unit ={
+    def checkEqual(l:ClosestCentroidLabeling): Unit = {
       l match{
         case Unreachable =>
-          require(this.centroid.value == -1)
+          require(this.centroid.value == defaultCentroidForUnreachableNodes)
           require(this.distance.value == defaultDistanceForUnreachableNodes)
 
-        case VoronoiZone(centroid,distance) =>
+        case VoronoiZone(centroid,distance,_) =>
           require(this.centroid.value == centroid.id)
           require(this.distance.value == distance)
       }
@@ -141,7 +155,7 @@ class VoronoiZones(graph:ConditionalGraph,
   private val isConditionalEdgeOpen: Array[Boolean] = Array.fill(graph.nbConditions)(false)
 
   for(c <- openConditions.value){
-    isConditionalEdgeOpen(cbls.longToInt(c)) = true
+    isConditionalEdgeOpen(c) = true
   }
 
   private def isEdgeOpen(edge: Edge): Boolean =
@@ -165,13 +179,15 @@ class VoronoiZones(graph:ConditionalGraph,
 
     var toDevelop = nodes
     while(toDevelop!=null){
-      val p = pathToCentroid(toDevelop.head)
+      val target = toDevelop.head
+      val p = pathToCentroid(target)
       toDevelop = toDevelop.tail
 
       p match{
-        case None => ;
-        case Some(l) =>
-          var toEnqueue = l
+        case None =>
+        case Some(list) =>
+          //println(s"Found a path for ${target.id} -> ${list.toList.mkString(",")}")
+          var toEnqueue = list
           while(toEnqueue != null) {
             acc = QList(toEnqueue.head, acc)
             toEnqueue = toEnqueue.tail
@@ -182,23 +198,24 @@ class VoronoiZones(graph:ConditionalGraph,
   }
 
   def pathToCentroid(node:Node):Option[QList[Edge]] = {
-    require(!isScheduled,"cannot invoke path to centroid when Voronoi is not up to date!")
-    def pathToExistingCentroid(node:Node,zone:VoronoiZone):QList[Edge] = {
-      if(node == zone.centroid){
-        null
-      }else{
-        for (edge <- node.incidentEdges if isEdgeOpen(edge)) {
-          val otherNode = edge.otherNode(node)
-          nodeLabeling(otherNode.id) match {
-            case z@VoronoiZone(centroid: Node, distance: Long) =>
-              if (centroid == zone.centroid && distance + edge.length == zone.distance) {
-                //step backward
-                return QList(edge,pathToExistingCentroid(otherNode, z))
-              }
-            case _ => ;
+    require(!isScheduled,"cannot invoke path to centroid when Voronoï is not up to date!")
+    def pathToExistingCentroid(node:Node, targetCentroid:Node):QList[Edge] = {
+      nodeLabeling(node.id) match {
+        case VoronoiZone(centroid: Node, distance: Long, edge) =>
+          //note that we cannot specify the type on edge because it make the match fail when edge == null
+          require(centroid == targetCentroid)
+          if (edge == null) {
+            //z is its own centroïd
+            require(distance == 0)
+            require(node == targetCentroid)
+            null
+          } else {
+            val otherNode = edge.otherNode(node)
+            require(isEdgeOpen(edge))
+            QList(edge, pathToExistingCentroid(otherNode, targetCentroid))
           }
-        }
-        throw new Error("should not happen")
+        case Unreachable =>
+          throw new Error("should not happen:" + nodeLabeling(node.id))
       }
     }
 
@@ -206,47 +223,44 @@ class VoronoiZones(graph:ConditionalGraph,
       case Unreachable =>
         None
       case z:VoronoiZone =>
-        Some(pathToExistingCentroid(node,z))
+        Some(pathToExistingCentroid(node,z.centroid))
     }
   }
 
   override def notifySetChanges(v: ChangingSetValue,
                                 d: Int,
-                                addedValues: Iterable[Long],
-                                removedValues: Iterable[Long],
-                                oldValue: SortedSet[Long],
-                                newValue: SortedSet[Long]): Unit = {
+                                addedValues: Iterable[Int],
+                                removedValues: Iterable[Int],
+                                oldValue: SortedSet[Int],
+                                newValue: SortedSet[Int]): Unit = {
 
     if (v == centroids) {
       //println("change on centroids(addedValues:" + addedValues + " removedValues:" + removedValues)
       //We ned to do the remove before the insert because
       for (removed <- removedValues) {
-        loadExternalBoundaryIntoHeapMarkInnerZone(graph.nodes(cbls.longToInt(removed)))
+        loadExternalBoundaryIntoHeapMarkInnerZone(graph.nodes(removed))
       }
 
       for (added <- addedValues) {
-        val addedInt = cbls.longToInt(added)
-        labelNode(addedInt,VoronoiZone(graph.nodes(addedInt),0))
-        loadOrCorrectNodeIDIntoHeap(addedInt,true) //centroids are force inserted
+        labelNode(added,VoronoiZone(graph.nodes(added),0,null))
+        loadOrCorrectNodeIDIntoHeap(added,true) //centroids are force inserted
       }
 
     } else if (v == openConditions) {
       //opening or closing edges
       //println("changed open conditions(addedValues:" + addedValues + " removedValues:" + removedValues + " oldValue:" + oldValue + " newValue:" + newValue)
       for (added <- addedValues) {
-        val addedInt = cbls.longToInt(added)
-        assert(isConditionalEdgeOpen(addedInt))
+        assert(!isConditionalEdgeOpen(added))
         //if the edge is not reachable, no need to load it.
-        isConditionalEdgeOpen(addedInt) = true
-        assert(graph.conditionToConditionalEdges(addedInt).conditionID contains  addedInt)
-        loadEdgeExtremitiesIntoHeapIfReachable(graph.conditionToConditionalEdges(addedInt))
+        isConditionalEdgeOpen(added) = true
+        assert(graph.conditionToConditionalEdges(added).conditionID contains  added)
+        loadEdgeExtremitiesIntoHeapIfReachable(graph.conditionToConditionalEdges(added))
       }
       for (removed <- removedValues) {
-        val removedInt = cbls.longToInt(removed)
-        assert(isConditionalEdgeOpen(removedInt))
-        isConditionalEdgeOpen(removedInt) = false
-        assert(graph.conditionToConditionalEdges(removedInt).conditionID contains removedInt)
-        loadExternalBoundaryIntoHeapMarkImpactedZone(graph.conditionToConditionalEdges(removedInt))
+        assert(isConditionalEdgeOpen(removed))
+        isConditionalEdgeOpen(removed) = false
+        assert(graph.conditionToConditionalEdges(removed).conditionID contains removed)
+        loadExternalBoundaryIntoHeapMarkImpactedZone(graph.conditionToConditionalEdges(removed))
       }
     } else {
       require(false, "got notification for not centroid and not openConditions")
@@ -264,7 +278,7 @@ class VoronoiZones(graph:ConditionalGraph,
   // to be checked on the source node, actually
   //We can have a competition between two voronoi zones, tie breaks are on smaller voronoi zone indice; the break takes place later.
   private val nodeIDHeap = new oscar.cbls.algo.heap.BinomialHeapWithMoveLong(
-    nodeID => nodeLabeling(cbls.longToInt(nodeID)).asInstanceOf[VoronoiZone].distance, graph.nbNodes, graph.nbNodes)
+    nodeID => nodeLabeling(nodeID).asInstanceOf[VoronoiZone].distance, graph.nbNodes, graph.nbNodes)
 
   private def performLabelingFromCurrentHeap() {
     while (!nodeIDHeap.isEmpty) {
@@ -274,14 +288,11 @@ class VoronoiZones(graph:ConditionalGraph,
 
       require(currentNodeLabeling.distance <= maxDistanceToCentroid)
 
-      var l = currentNode.incidentEdges
-      while(l != null){
-        val edge = l.head
-        l = l.tail
+      for(edge <- currentNode.incidentEdges){
         if (isEdgeOpen(edge)){
           val otherNode = edge.otherNode(currentNode)
           val otherNodeID = otherNode.id
-          val newLabelingForOtherNode = currentNodeLabeling + edge.length
+          val newLabelingForOtherNode = currentNodeLabeling + edge
 
           if (newLabelingForOtherNode.distance <= maxDistanceToCentroid
             && newLabelingForOtherNode < nodeLabeling(otherNodeID)) { //this performs a tie break on centroid ID
@@ -309,12 +320,11 @@ class VoronoiZones(graph:ConditionalGraph,
     nodeIDHeap.deleteIfPresent(nodeID)
   }
 
-  private def loadCentroidsIntoHeap(centroids: Iterable[Long]): Unit = {
+  private def loadCentroidsIntoHeap(centroids: Iterable[Int]): Unit = {
     //we also mark them as centroids, actually
     for (centroid <- centroids) {
-      val centroidInt = cbls.longToInt(centroid)
-      labelNode(centroidInt,VoronoiZone(graph.nodes(centroidInt),0))
-      loadOrCorrectNodeIDIntoHeap(centroidInt,true) //Centroids are force inserted
+      labelNode(centroid,VoronoiZone(graph.nodes(centroid),0,null))
+      loadOrCorrectNodeIDIntoHeap(centroid,true) //Centroids are force inserted
     }
   }
 
@@ -351,7 +361,6 @@ class VoronoiZones(graph:ConditionalGraph,
     * @param closedEdge
     */
   private def loadExternalBoundaryIntoHeapMarkImpactedZone(closedEdge:Edge): Unit ={
-    require(closedEdge.length > 0)
 
     val nodeA = closedEdge.nodeA
     val markingA = nodeLabeling(nodeA.id)
@@ -359,12 +368,14 @@ class VoronoiZones(graph:ConditionalGraph,
     val markingB = nodeLabeling(nodeB.id)
 
     val orphanNodeOpt = (markingA,markingB) match{
-      case (VoronoiZone(centroidA,dA),VoronoiZone(centroidB,dB)) if centroidA == centroidB =>
-        if (dA + closedEdge.length == dB){
+      case (VoronoiZone(centroidA,dA,edgeA),VoronoiZone(centroidB,dB,edgeB)) if centroidA == centroidB =>
+        if (edgeB == closedEdge){
           //nodeB is orphan
+          require(edgeA != closedEdge)
           Some(nodeB)
-        } else if (dB + closedEdge.length == dA){
+        } else if (edgeA == closedEdge){
           //nodeA is orphan
+          require(edgeB != closedEdge)
           Some(nodeA)
         }else{
           None
@@ -397,7 +408,8 @@ class VoronoiZones(graph:ConditionalGraph,
             val otherNodeID = otherNode.id
 
             nodeLabeling(otherNodeID) match {
-              case VoronoiZone(centroid: Node, distance: Long) =>
+              case VoronoiZone(centroid: Node, distance: Long, incomingEdge) =>
+                //TODO: this might be improved, we are unmarking too many nodes
                 if (centroid == centroidThrough && distance >= minDistance) {
                   //still marking
                   markNodeUnreachableAndRemoveFromHeapIfPresent(otherNode)
@@ -435,7 +447,8 @@ class VoronoiZones(graph:ConditionalGraph,
         val otherNodeID = otherNode.id
 
         nodeLabeling(otherNodeID) match{
-          case VoronoiZone(centroid:Node,distance:Long) =>
+          case VoronoiZone(centroid:Node,distance:Long, incomingEdge) =>
+            //TODO: we are unmarking too many nodes; could prune on incoming edge
             if (centroid == removedCentroid) {
 
               markNodeUnreachableAndRemoveFromHeapIfPresent(otherNode)
@@ -470,7 +483,7 @@ class VoronoiZones(graph:ConditionalGraph,
   override def checkInternals(c: Checker){
     require(nodeIDHeap.isEmpty)
 
-    val centroids:Iterable[Node] = this.centroids.value.toList.map(nodeID => graph.nodes(cbls.longToInt(nodeID)))
+    val centroids:Iterable[Node] = this.centroids.value.toList.map(nodeID => graph.nodes(nodeID))
     val isConditionalEdgeOpen = (conditionID:Int) => this.openConditions.value contains conditionID
 
     //checking for each node the centroid (this is very costly: nbNodes*Dijkstra)
@@ -500,6 +513,25 @@ class VoronoiZones(graph:ConditionalGraph,
           trackedNodeToDistanceAndCentroid(node.id).checkEqual(nodeLabeling(node.id))
       }
     }
+  }
+
+  def exportGraphToNetworkxInstructions(graph :ConditionalGraphWithIntegerNodeCoordinates, openConditions :List[Long],spanningTree :List[Edge] = List()): String ={
+
+    var toReturn = s"nbNodes = ${graph.nbNodes}\n"
+
+    val nonConditionalEdges = graph.edges.filter(e => e.conditionID.isEmpty).map(e => s"(${e.nodeIDA},${e.nodeIDB})").mkString(",")
+    val openEdges =  graph.edges.filter(e => e.conditionID.isDefined && (openConditions(e.conditionID.get) == 1)).map(e => s"(${e.nodeIDA},${e.nodeIDB})").mkString(",")
+    val closeEdges = graph.edges.filter(e => e.conditionID.isDefined && (openConditions(e.conditionID.get) == 0)).map(e => s"(${e.nodeIDA},${e.nodeIDB})").mkString(",")
+    val nodesPositions = graph.coordinates.zipWithIndex.map({case (e,i) => s"$i : (${e._1},${e._2})"}).mkString(",")
+    val spanningTreeString = spanningTree.map(e => s"(${e.nodeIDB},${e.nodeIDA})").mkString(",")
+
+    toReturn = toReturn.concat(s"openEdges = [$openEdges]\n")
+    toReturn = toReturn.concat(s"closedEdges = [$closeEdges]\n")
+    toReturn = toReturn.concat(s"nonConditionalEdges = [$nonConditionalEdges]\n")
+    toReturn = toReturn.concat(s"pos = {$nodesPositions}\n")
+    toReturn = toReturn.concat(s"span = [$spanningTreeString]")
+
+    toReturn
   }
 }
 

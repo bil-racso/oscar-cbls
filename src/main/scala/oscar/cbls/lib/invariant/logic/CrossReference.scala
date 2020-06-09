@@ -18,12 +18,10 @@
  *         by Renaud De Landtsheer
  ******************************************************************************/
 
-
 package oscar.cbls.lib.invariant.logic
 
-import oscar.cbls._
-import oscar.cbls.core._
-import oscar.cbls.core.computation.{CBLSSetVar, SetValue}
+import oscar.cbls.core.computation.{CBLSSetVar, ChangingSetValue, Invariant, InvariantHelper, SetNotificationTarget, SetValue, Store}
+import oscar.cbls.core.propagation.Checker
 
 import scala.collection.immutable.SortedSet
 
@@ -46,7 +44,7 @@ case class DenseRef(references:Array[SetValue], referencing:Array[CBLSSetVar])
     }
   }
 
-  override def notifySetChanges(v: ChangingSetValue, id: Int, addedValues: Iterable[Long], removedValues: Iterable[Long], oldValue: SortedSet[Long], newValue: SortedSet[Long]): Unit = {
+  override def notifySetChanges(v: ChangingSetValue, id: Int, addedValues: Iterable[Int], removedValues: Iterable[Int], oldValue: SortedSet[Int], newValue: SortedSet[Int]): Unit = {
     for (added <- addedValues) referencing(added).insertValue(id)
     for (deleted <- removedValues)  referencing(deleted).deleteValue(id)
   }
@@ -72,7 +70,7 @@ object DenseRef{
     val (minMin,maxMax) = InvariantHelper.getMinMaxBoundsSet(references)
     val m:Store = InvariantHelper.findModel(references)
     assert(minMin == 0L)
-    val referencing = Array.tabulate(maxMax + 1L)(i => new CBLSSetVar(m,SortedSet.empty, references.indices, "referencing_" + i))
+    val referencing = Array.tabulate(maxMax + 1)(i => new CBLSSetVar(m,SortedSet.empty, references.indices, "referencing_" + i))
     new DenseRef(references,referencing)
   }
 }

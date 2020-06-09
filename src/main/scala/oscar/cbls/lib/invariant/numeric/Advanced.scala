@@ -20,12 +20,10 @@
 
 package oscar.cbls.lib.invariant.numeric
 
-import oscar.cbls._
-import oscar.cbls.core._
-import oscar.cbls.core.computation.DomainRange
+import oscar.cbls.core.computation.{Bulked, CBLSIntVar, ChangingIntValue, ChangingSetValue, Domain, DomainHelper, DomainRange, IntInvariant, IntNotificationTarget, IntValue, SetNotificationTarget, SetValue, Store, VaryingDependencies}
+import oscar.cbls.core.propagation.{Checker, ErrorChecker, KeyForElementRemoval}
 
 import scala.collection.immutable.SortedSet
-
 
 /** sum(i in cond) vars(i)
   * @param vars is an array of IntVars
@@ -39,7 +37,7 @@ case class SumConstants(vars: Array[Long], cond: SetValue)
   registerStaticAndDynamicDependency(cond)
   finishInitialization()
 
-  override def notifySetChanges(v: ChangingSetValue, id: Int, addedValues: Iterable[Long], removedValues: Iterable[Long], oldValue: SortedSet[Long], newValue: SortedSet[Long]): Unit = {
+  override def notifySetChanges(v: ChangingSetValue, id: Int, addedValues: Iterable[Int], removedValues: Iterable[Int], oldValue: SortedSet[Int], newValue: SortedSet[Int]): Unit = {
     for (added <- addedValues)  this :+= vars(added)
     for (deleted <- removedValues) this :-= vars(deleted)
   }
@@ -60,13 +58,15 @@ case class SumConstants(vars: Array[Long], cond: SetValue)
   * @author renaud.delandtsheer@cetic.be
   * */
 case class SumElements(vars: Array[IntValue], cond: SetValue)
-  extends IntInvariant(initialValue=cond.value.foldLeft(0L)((acc, i) => acc + vars(i).value))
+  extends IntInvariant(initialValue=cond.value.foldLeft(0L)((acc, i) => acc + vars(i).value),
+    initialDomain = Domain(vars.foldLeft(0L)((acc, v) => DomainHelper.safeAdd(acc,v.min min 0)), vars.foldLeft(0L)((acc, v) => DomainHelper.safeAdd(acc,v.max)))
+  )
   with Bulked[IntValue, Unit]
   with VaryingDependencies
   with IntNotificationTarget
   with SetNotificationTarget{
 
-  assert(vars.size > 0L, "Invariant SumElements declared with zero vars to max")
+  assert(vars.length > 0L, "Invariant SumElements declared with zero vars to max")
   assert(cond != null, "cond cannot be null for SumElements")
 
   val keyForRemoval: Array[KeyForElementRemoval] =  Array.fill(vars.length) {null}
@@ -89,13 +89,13 @@ case class SumElements(vars: Array[IntValue], cond: SetValue)
     this :+= (NewVal - OldVal)
   }
 
-  override def notifySetChanges(v: ChangingSetValue, id: Int, addedValues: Iterable[Long], removedValues: Iterable[Long], oldValue: SortedSet[Long], newValue: SortedSet[Long]): Unit = {
+  override def notifySetChanges(v: ChangingSetValue, id: Int, addedValues: Iterable[Int], removedValues: Iterable[Int], oldValue: SortedSet[Int], newValue: SortedSet[Int]): Unit = {
     for (added <- addedValues) notifyInsertOn(v: ChangingSetValue, added)
     for(deleted <- removedValues) notifyDeleteOn(v: ChangingSetValue, deleted)
   }
 
   @inline
-  def notifyInsertOn(v: ChangingSetValue, value: Long) {
+  def notifyInsertOn(v: ChangingSetValue, value: Int) {
     assert(v == cond)
     assert(keyForRemoval(value) == null)
     keyForRemoval(value) = registerDynamicDependency(vars(value),value)
@@ -104,7 +104,7 @@ case class SumElements(vars: Array[IntValue], cond: SetValue)
   }
 
   @inline
-  def notifyDeleteOn(v: ChangingSetValue, value: Long) {
+  def notifyDeleteOn(v: ChangingSetValue, value: Int) {
     assert(v == cond)
     assert(keyForRemoval(value) != null)
     keyForRemoval(value).performRemove()
@@ -145,17 +145,17 @@ case class ProdConstants(vars: Array[Long], cond: SetValue)
     }
   }
 
-  override def notifySetChanges(v: ChangingSetValue, id: Int, addedValues: Iterable[Long], removedValues: Iterable[Long], oldValue: SortedSet[Long], newValue: SortedSet[Long]): Unit = {
+  override def notifySetChanges(v: ChangingSetValue, id: Int, addedValues: Iterable[Int], removedValues: Iterable[Int], oldValue: SortedSet[Int], newValue: SortedSet[Int]): Unit = {
     for (added <- addedValues) notifyInsertOn(v: ChangingSetValue, added)
     for(deleted <- removedValues) notifyDeleteOn(v: ChangingSetValue, deleted)
   }
 
   @inline
-  def notifyInsertOn(v: ChangingSetValue, value: Long) {
+  def notifyInsertOn(v: ChangingSetValue, value: Int) {
     assert(v == cond)
 
     if(vars(value) == 0L){
-      NullVarCount += 1L
+      NullVarCount += 1
     }else{
       NonNullProd *= vars(value)
     }
@@ -163,10 +163,10 @@ case class ProdConstants(vars: Array[Long], cond: SetValue)
   }
 
   @inline
-  def notifyDeleteOn(v: ChangingSetValue, value: Long) {
+  def notifyDeleteOn(v: ChangingSetValue, value: Int) {
 
     if(vars(value) == 0L){
-      NullVarCount -= 1L
+      NullVarCount -= 1
     }else{
       NonNullProd = NonNullProd / vars(value)
     }
@@ -228,10 +228,10 @@ case class ProdElements(vars: Array[IntValue], cond: SetValue)
     assert(vars(index) == v)
     assert(keyForRemoval(index)!=null)
     if (OldVal == 0L && NewVal != 0L){
-      NullVarCount -=1L
+      NullVarCount -=1
       NonNullProd *=NewVal
     }else if(OldVal != 0L && NewVal == 0L){
-      NullVarCount +=1L
+      NullVarCount +=1
       NonNullProd =NonNullProd/OldVal
     }else{
       NonNullProd = NonNullProd/OldVal
@@ -240,19 +240,19 @@ case class ProdElements(vars: Array[IntValue], cond: SetValue)
     affectOutput()
   }
 
-  override def notifySetChanges(v: ChangingSetValue, id: Int, addedValues: Iterable[Long], removedValues: Iterable[Long], oldValue: SortedSet[Long], newValue: SortedSet[Long]): Unit = {
+  override def notifySetChanges(v: ChangingSetValue, id: Int, addedValues: Iterable[Int], removedValues: Iterable[Int], oldValue: SortedSet[Int], newValue: SortedSet[Int]): Unit = {
     for (added <- addedValues) notifyInsertOn(v: ChangingSetValue, added)
     for(deleted <- removedValues) notifyDeleteOn(v: ChangingSetValue, deleted)
   }
 
   @inline
-  def notifyInsertOn(v: ChangingSetValue, value: Long) {
+  def notifyInsertOn(v: ChangingSetValue, value: Int) {
     assert(v == cond)
     assert(keyForRemoval(value) == null)
     keyForRemoval(value) = registerDynamicDependency(vars(value),value)
 
     if(vars(value).value == 0L){
-      NullVarCount += 1L
+      NullVarCount += 1
     }else{
       NonNullProd *= vars(value).value
     }
@@ -260,7 +260,7 @@ case class ProdElements(vars: Array[IntValue], cond: SetValue)
   }
 
   @inline
-  def notifyDeleteOn(v: ChangingSetValue, value: Long) {
+  def notifyDeleteOn(v: ChangingSetValue, value: Int) {
     assert(v == cond)
     assert(keyForRemoval(value) != null)
 
@@ -268,7 +268,7 @@ case class ProdElements(vars: Array[IntValue], cond: SetValue)
     keyForRemoval(value) = null
 
     if(vars(value).value == 0L){
-      NullVarCount -= 1L
+      NullVarCount -= 1
     }else{
       NonNullProd = NonNullProd / vars(value).value
     }
@@ -288,7 +288,7 @@ case class ProdElements(vars: Array[IntValue], cond: SetValue)
   * @param vars
   * @param costs
   * @param capacity1
-  * @param capacity2
+
   */
 
 case class CostOfPackInTwoBins(vars : Array[IntValue],costs : Array[(Long,Long)],capacity1 : Long) extends IntInvariant
@@ -451,7 +451,7 @@ case class ElementToProcess(costBin1 : Long,
 
 
 object testCostOfBinPacking extends App{
-  val m = new Store(checker = Some(new ErrorChecker()))
+  val m = Store(checker = Some(ErrorChecker()))
   //val m = new Store()
 
 

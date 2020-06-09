@@ -18,16 +18,15 @@
   *         by Renaud De Landtsheer
   ******************************************************************************/
 
-
 package oscar.cbls.lib.invariant.logic
 
-import oscar.cbls._
-import oscar.cbls.core._
-
+import oscar.cbls.core.computation.{CBLSIntVar, ChangingIntValue, Domain, IntInvariant, IntNotificationTarget, IntValue, Invariant, InvariantHelper}
+import oscar.cbls.core.propagation.Checker
 
 /** This is a helper to define an invariant from an Long -> Long function.
   * Ths invariant is not incremental, so it should only be used for very simple functions.
   * it maintains output = fun(a)
+ *
   * @param a the parameter of the function
   * @param fun the function to maintain, it is supposed not to listen to any variable in the model
   * @param domain the expected domain of the output
@@ -85,6 +84,8 @@ class IntInt2Int(a:IntValue, b:IntValue, fun:((Long, Long) => Long), domain:Doma
   registerStaticAndDynamicDependenciesNoID(a,b)
   finishInitialization()
 
+  this := fun(a.value,b.value)
+
   @inline
   override def notifyIntChanged(v: ChangingIntValue, id: Int, OldVal: Long, NewVal: Long) {
     this := fun(a.value,b.value)
@@ -122,5 +123,39 @@ class LazyIntInt2Int(a:IntValue, b:IntValue, fun:((Long, Long) => Long), domain:
 
   override def checkInternals(c: Checker){
     c.check(this.value == fun(a.value,b.value), Some("checking output of LazyIntVarIntVar2IntVarFun"))
+  }
+}
+
+object IntInt2IntInt{
+  def apply(aIn:IntValue,bIn:IntValue,f:(Long,Long) => (Long,Long)):(IntValue,IntValue) = {
+    val store = InvariantHelper.findModel(aIn,bIn)
+    val aOut = CBLSIntVar(store,0,aIn.domain,"aOut")
+    val bOut = CBLSIntVar(store,0,bIn.domain,"bOut")
+
+    new IntInt2IntInt(aIn,bIn,aOut,bOut,f)
+
+    (aOut,bOut)
+  }
+}
+
+class IntInt2IntInt(aIn:IntValue,bIn:IntValue,aOut:CBLSIntVar,bOut:CBLSIntVar,f:(Long,Long) => (Long,Long))
+  extends Invariant with IntNotificationTarget{
+
+  registerStaticAndDynamicDependency(aIn)
+  registerStaticAndDynamicDependency(bIn)
+  finishInitialization()
+  aOut.setDefiningInvariant(this)
+  bOut.setDefiningInvariant(this)
+
+  scheduleForPropagation()
+
+  override def notifyIntChanged(v: ChangingIntValue, id: Int, oldVal: Long, newVal: Long): Unit = {
+    scheduleForPropagation()
+  }
+
+  override def performInvariantPropagation(): Unit = {
+    val (ao,bo) = f(aIn.value,bIn.value)
+    aOut := ao
+    bOut := bo
   }
 }

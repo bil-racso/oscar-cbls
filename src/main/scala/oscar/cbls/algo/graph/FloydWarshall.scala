@@ -1,5 +1,7 @@
 package oscar.cbls.algo.graph
 
+//import scala.collection.parallel.CollectionConverters._
+
 /**
   * this is a FloydWarshall algorithm for the [[ConditionalGraph]] data structure.
   * this data structure is non-directed graph, the FloydWarshall is tehrefore tuned accordignly
@@ -7,26 +9,23 @@ package oscar.cbls.algo.graph
 object FloydWarshall{
   def buildDistanceMatrix(g:ConditionalGraph,
                           isConditionalEdgeOpen:Int => Boolean):Array[Array[Long]] = {
-    val m = buildAdjacencyMatrix(g:ConditionalGraph,
-      isConditionalEdgeOpen:Int => Boolean)
+    val m = buildAdjacencyHalfMatrix(g, isConditionalEdgeOpen)
     saturateAdjacencyMatrixToDistanceMatrix(m,g)
     m
   }
 
   def buildDistanceMatrixAllConditionalEdgesSame(g:ConditionalGraph,allConditionsState:Boolean):Array[Array[Long]] = {
-    buildDistanceMatrix(g:ConditionalGraph,
-                            isConditionalEdgeOpen = _ => allConditionsState)
-
+    buildDistanceMatrix(g, isConditionalEdgeOpen = _ => allConditionsState)
   }
 
   def anyConditionalEdgeOnShortestPath(g:ConditionalGraph,
                                        distanceMatrixAllConditionalEdgesOpen:Array[Array[Long]]):Array[Array[Boolean]] = {
     val n = g.nbNodes
-    val matrixAllClosed = buildDistanceMatrixAllConditionalEdgesSame(g,false)
+    val matrixAllClosed = buildDistanceMatrixAllConditionalEdgesSame(g,allConditionsState = false)
     Array.tabulate(n)(i => Array.tabulate(n)(j => distanceMatrixAllConditionalEdgesOpen(i)(j) != matrixAllClosed(i)(j)))
   }
 
-
+  @deprecated("Use halfMatrix instead","")
   def buildAdjacencyMatrix(g:ConditionalGraph,
                            isConditionalEdgeOpen:Int => Boolean):Array[Array[Long]] = {
 
@@ -85,9 +84,9 @@ object FloydWarshall{
   def saturateAdjacencyMatrixToDistanceMatrix(w:Array[Array[Long]], graph:ConditionalGraph){
     val n = w.length
 
-    for (k <- 0 to n-1) {
-      for (i <- (0 to n-1).par) {
-        for (j <- i+1 to n-1) {
+    for (k <- 0 until n) {
+      for (i <- (0 until n).par) {
+        for (j <- i + 1 until n) {
 
           if(w(i)(k) != Long.MaxValue && w(k)(j)!= Long.MaxValue &&graph.nodes(k).transitAllowed) {
             val newDistance = w(i)(k) + w(k)(j)

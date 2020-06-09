@@ -17,13 +17,12 @@
 
 package oscar.cbls.core.search
 
-import oscar.cbls._
 import oscar.cbls.core.computation.Store
 import oscar.cbls.core.objective.{LoggingObjective, Objective}
 import oscar.cbls.lib.search.combinators._
+import oscar.cbls.util.Properties
 
 import scala.collection.immutable.SortedMap
-import scala.language.{implicitConversions, postfixOps}
 
 abstract sealed class SearchResult
 case object NoMoveFound extends SearchResult
@@ -38,7 +37,7 @@ object SearchResult {
   implicit def moveToSearchResult(m: Move): MoveFound = MoveFound(m)
 }
 
-abstract class JumpNeighborhood extends Neighborhood {
+abstract class JumpNeighborhood(name:String) extends Neighborhood(name) {
 
   /**
    * the method that actually performs the move
@@ -58,10 +57,8 @@ abstract class JumpNeighborhood extends Neighborhood {
    */
   def canDoIt: Boolean = true
 
-  def shortDescription(): String
-
   override def getMove(obj: Objective, initialObj:Long, acceptanceCriterion: (Long, Long) => Boolean = (oldObj, newObj) => oldObj > newObj): SearchResult = {
-    if (canDoIt) CallBackMove(() => doIt(), valueAfter, this.getClass.getSimpleName, shortDescription _)
+    if (canDoIt) CallBackMove(() => doIt(), valueAfter, name)
     else NoMoveFound
   }
 
@@ -75,7 +72,7 @@ abstract class JumpNeighborhood extends Neighborhood {
   def valueAfter = Long.MaxValue
 }
 
-abstract class JumpNeighborhoodParam[T] extends Neighborhood {
+abstract class JumpNeighborhoodParam[T](name:String) extends Neighborhood(name) {
 
   final def doIt() {
     doIt(getParam)
@@ -90,7 +87,7 @@ abstract class JumpNeighborhoodParam[T] extends Neighborhood {
   override def getMove(obj: Objective, initialObj:Long, acceptanceCriterion: (Long, Long) => Boolean): SearchResult = {
     val param: T = getParam
     if (param == null) NoMoveFound
-    else CallBackMove((param: T) => doIt(param), Long.MaxValue, this.getClass.getSimpleName, () => getShortDescription(param), param)
+    else CallBackMove((param: T) => doIt(param), Long.MaxValue, name, param)
   }
 }
 
@@ -105,8 +102,8 @@ abstract class Neighborhood(name:String = null) {
    *
    * @return
    */
-  final def profilingStatistics:String = Profile.statisticsHeader + "\n" + collectProfilingStatistics.mkString("\n")
-  def collectProfilingStatistics:List[String] = List.empty
+  final def profilingStatistics:String = Properties.justifyRightArray(Profile.statisticsHeader :: collectProfilingStatistics/*.map(a => ("" :: a.toList).toArray)*/).mkString("\n")
+  def collectProfilingStatistics:List[Array[String]] = List.empty
 
   /**
    * the method that returns a move from the neighborhood.
@@ -127,15 +124,25 @@ abstract class Neighborhood(name:String = null) {
 
   override def toString: String = (if(name == null) this.getClass.getSimpleName else name)
 
-  //TODO: ajouter un niveau qui montre les exhausted
-  /**
-   * verbosity: 0L: none
-   * 1L: moves
-   * 2L: moves + failed searches
-   * 3L: moves + explored neighbors
-   */
   var _verbose: Int = 0
+
+  /**
+   * possible verbosity levels:
+   * 0: no verbosities
+   * 1: every 10th of a second, summarise all performed moves, by neighbourhoods
+   * 2: print every move
+   * 3: print every search
+   * 4: print every explored neighbour
+   * */
   def verbose: Int = _verbose
+  /**
+   * possible verbosity levels:
+   * 0: no verbosities
+   * 1: every 10th of a second, summarise all performed moves, by neighbourhoods
+   * 2: print every move
+   * 3: print every search
+   * 4: print every explored neighbour
+   * */
   def verbose_=(i: Int) {
     _verbose = i
     additionalStringGenerator = null
@@ -144,7 +151,7 @@ abstract class Neighborhood(name:String = null) {
   var additionalStringGenerator: () => String = null
 
   /**
-   * sets the verbosity level with an additiojnal string generator that ins called eieher on eahc move (level = 1L)
+   * sets the verbosity level with an additional string generator that ins called eieher on eahc move (level = 1L)
    *   or for each explored neighbor (level = 2L)
    */
   def verboseWithExtraInfo(verbosity: Int, additionalString: () => String) {
@@ -214,8 +221,15 @@ abstract class Neighborhood(name:String = null) {
             moveSynthesis = SortedMap.empty[String,Int]
             nanoTimeAtNextSynthesis = System.nanoTime() + (1000*1000*100) //100ms
           }
-          if (printTakenMoves || printMoveSythesis) println("no more move found after " + toReturn + " it, " + ((System.nanoTime() - startSearchNanotime)/1000000).toInt + " ms ")
+          if (printTakenMoves || printMoveSythesis) {
 
+            val runDurationMs:Long = ((System.nanoTime() - startSearchNanotime) / 1000000).ceil.toLong
+            val hours = (runDurationMs / (1000.0 * 60 * 60)).floor.toInt
+            val minutes = (runDurationMs / (1000.0 * 60)).floor.toInt % 60
+            val seconds: Double = ((runDurationMs / 1000.0) % 60)
+
+            println("no more move found after " + toReturn + " it, duration:" +  hours + ":" + minutes + ":" + f"$seconds%1.3f" )
+          }
 
           return toReturn;
         case m: MoveFound =>
@@ -278,8 +292,9 @@ abstract class Neighborhood(name:String = null) {
 
             m.commit()
             //TODO: additionalString should be handled with synthesis!
-            if (printSynthesis && additionalStringGenerator != null) println("after move is committed: " + additionalStringGenerator())
-            if (obj.value == Long.MaxValue) println("Warning : objective == MaxInt, maybe you have some strong constraint violated?")
+            if (printSynthesis && additionalStringGenerator != null) println(additionalStringGenerator())
+            if (obj.value == Long.MaxValue) println("Warning : objective == MaxLong, maybe you have some strong constraint violated?")
+
             require(m.objAfter == Long.MaxValue || obj.value == m.objAfter, "neighborhood was lying!:" + m + " got " + obj)
 
           }else if (printTakenMoves) {
@@ -304,14 +319,16 @@ abstract class Neighborhood(name:String = null) {
             }
 
             m.commit()
-            if (additionalStringGenerator != null) println("after move is committed: " + additionalStringGenerator())
-            if (obj.value == Long.MaxValue) println("Warning : objective == MaxInt, maybe you have some strong constraint violated?")
+            if (additionalStringGenerator != null) println(additionalStringGenerator())
+            if (obj.value == Long.MaxValue) println("Warning : objective == MaxLong, maybe you have some strong constraint violated?")
+
             require(m.objAfter == Long.MaxValue || obj.value == m.objAfter, "neighborhood was lying!:" + m + " got " + obj)
 
           }else{
             m.commit()
-            if (additionalStringGenerator != null) println("after move is committed: " + additionalStringGenerator())
-            if (obj.value == Long.MaxValue) println("Warning : objective == MaxInt, maybe you have some strong constraint violated?")
+            if (additionalStringGenerator != null) println(additionalStringGenerator())
+            if (obj.value == Long.MaxValue) println("Warning : objective == MaxLong, maybe you have some strong constraint violated?")
+
             require(m.objAfter == Long.MaxValue || obj.value == m.objAfter, "neighborhood was lying!:" + m + " got " + obj)
           }
       }
@@ -396,6 +413,13 @@ trait SupportForAndThenChaining[MoveType<:Move] extends Neighborhood{
    * @author renaud.delandtsheer@cetic.be
    */
   def andThen(b: Neighborhood) = new AndThen(this, b)
+
+  /**
+   * This combinator supports a filter on moves, you can post any function to forbid some moves from being explored
+   * beware: it is more efficient to filter upfront by appropriately tuning the parameters of the neighborhood a, so this is really some sort of DIY solution.
+   * @param filter the filter function through which you can accept/reject moves from a
+   */
+  def filter(filter:MoveType => Boolean):Neighborhood = new Filter[MoveType](this, filter)
 }
 
 
@@ -540,7 +564,7 @@ abstract class EasyNeighborhoodMultiLevel[M<:Move](neighborhoodName:String=null)
     oldObj = initialObj
     this.acceptanceCriterion = acceptanceCriterion
     toReturnMove = null
-    bestNewObj = Long.MaxValue //initialObj //because we do not want "no move" to be considered as an actual move.
+    bestNewObj = initialObj //Long.MaxValue // //because we do not want "no move" to be considered as an actual move.
     this.obj = if (printExploredNeighbors) new LoggingObjective(obj) else obj
     if (printExploredNeighborhoods)
       println(neighborhoodNameToString + ": start exploration")
@@ -604,7 +628,7 @@ abstract class EasyNeighborhoodMultiLevel[M<:Move](neighborhoodName:String=null)
 
 class ObjWithStringGenerator(obj: Objective, additionalStringGenerator: () => String) extends Objective {
   override def detailedString(short: Boolean, indent: Long): String = {
-    obj.detailedString(short,indent)+ "\n" + nSpace(indent) + additionalStringGenerator().split("\\R",-1L).mkString("\n" + nSpace(indent)) + "\n"
+    obj.detailedString(short,indent)+ "\n" + nSpace(indent) + additionalStringGenerator().split("\\R",-1).mkString("\n" + nSpace(indent)) + "\n"
   }
 
   override def model: Store = obj.model

@@ -25,9 +25,10 @@
 package oscar.cbls.lib.invariant.minmax
 /**This package proposes a set of logic invariants, which are used to define the structure of the problem*/
 
-import oscar.cbls.algo.heap._
 import oscar.cbls._
-import oscar.cbls.core._
+import oscar.cbls.algo.heap._
+import oscar.cbls.core.computation.{ChangingIntValue, Domain, IntInvariant, IntNotificationTarget, IntValue, SetValue}
+import oscar.cbls.core.propagation.Checker
 import oscar.cbls.lib.invariant.logic.IntInt2Int
 
 import scala.collection.immutable.SortedSet

@@ -1,30 +1,28 @@
-package oscar.cbls.invariants.lib.logic
+package oscar.cbls.lib.invariant.logic
 
-import oscar.cbls.core.{ChangingIntValue, IntNotificationTarget, Invariant }
 import oscar.cbls.core.propagation.Checker
-import oscar.cbls._
-import oscar.cbls.core.computation.InvariantHelper
+import oscar.cbls.core.computation.{CBLSIntVar, ChangingIntValue, Domain, IntValue, Invariant, InvariantHelper, ShortIntNotificationTarget}
 
 /**
   * Created by gustavbjordal on 27L/05L/1L6.
   */
-case class BinPackingLoad(items: Array[IntValue], itemsizes: Array[Long]) extends Invariant with IntNotificationTarget{
+case class BinPackingLoad(items: Array[IntValue], itemsizes: Array[Long]) extends Invariant with ShortIntNotificationTarget{
   for (v <- items.indices)
     registerStaticAndDynamicDependency(items(v),v)
 
   finishInitialization()
 
-  private val (minVal,maxVal) = InvariantHelper.getMinMaxBounds(items)
+  private val (minVal,maxVal) = InvariantHelper.getMinMaxBoundsShort(items)
   assert(minVal==0L)
   private val maxLoad = itemsizes.foldLeft(0L)((acc,l) => acc+ l)
 
-  val binLoad = Array.tabulate(maxVal+1L)(i => CBLSIntVar(this.model,0L, Domain(0L , maxLoad), "bin_"+i))
+  val binLoad = Array.tabulate(maxVal+1)(i => CBLSIntVar(this.model,0L, Domain(0L , maxLoad), "bin_"+i))
   for( b <- binLoad){
     b.setDefiningInvariant(this)
   }
 
   for(i <- items.indices)
-    binLoad(items(i).value) :+= itemsizes(i)
+    binLoad(items(i).valueInt) :+= itemsizes(i)
 
   println(binLoad.mkString(", "))
 
@@ -35,7 +33,7 @@ case class BinPackingLoad(items: Array[IntValue], itemsizes: Array[Long]) extend
   }
 
   @inline
-  override def notifyIntChanged(v: ChangingIntValue, id: Int, OldVal: Long, NewVal: Long): Unit = {
+  override def notifyIntChanged(v: ChangingIntValue, id: Int, OldVal: Int, NewVal: Int): Unit = {
     binLoad(OldVal) :-= itemsizes(id)
     binLoad(NewVal) :+= itemsizes(id)
   }
@@ -47,6 +45,4 @@ case class BinPackingLoad(items: Array[IntValue], itemsizes: Array[Long]) extend
   override def checkInternals(c: Checker) {
     c.check(true,Some("nothing to check, invariant is discharged"))
   }
-
-
 }

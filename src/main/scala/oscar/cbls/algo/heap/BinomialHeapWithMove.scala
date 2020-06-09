@@ -32,7 +32,7 @@ import scala.collection.immutable.SortedMap
  * @tparam T the type of elements included in the heap
  * @author renaud.delandtsheer@cetic.be
  */
-class BinomialHeap[@specialized T](initialGetKey:T => Long,val maxsize:Int)(implicit val X:Manifest[T]) extends AbstractHeap[T] {
+class BinomialHeap[T](initialGetKey:T => Long,val maxsize:Int)(implicit val X:Manifest[T]) extends AbstractHeap[T] {
   val heapArray:Array[T] = new Array[T](maxsize)
   private var msize:Int=0
 
@@ -53,7 +53,7 @@ class BinomialHeap[@specialized T](initialGetKey:T => Long,val maxsize:Int)(impl
     }
   }
 
-  def keyGetter:(T => Long) = GetKey
+  def keyGetter:T => Long = GetKey
 
   override def size: Int = msize
   override def isEmpty:Boolean = msize == 0L
@@ -83,8 +83,8 @@ class BinomialHeap[@specialized T](initialGetKey:T => Long,val maxsize:Int)(impl
   }
 
   //returns the last position of the moved item
-  private def pushDown(startposition:Int):Long = {
-    var position = startposition
+  private def pushDown():Long = {
+    var position = 0
     while(true)
       if(leftChild(position) < msize && GetKey(heapArray(position)) > GetKey(heapArray(leftChild(position)))){
         //examiner aussi left child
@@ -151,7 +151,7 @@ class BinomialHeap[@specialized T](initialGetKey:T => Long,val maxsize:Int)(impl
       swapPositions(0,msize-1)
       msize -=1
       heapArray(msize)=null.asInstanceOf[T]
-      pushDown(0)
+      pushDown()
     }
     toreturn
   }
@@ -339,17 +339,7 @@ class BinomialHeapWithMove[T](getKey:T => Long,val maxsize:Int)(implicit val A:O
     position.get(elem) match{
       case None => false
       case Some(startposition) =>
-        if (startposition == size-1){
-          size -=1
-          position -= elem
-          heapArray(size)=null.asInstanceOf[T]
-        }else{
-          swapPositions(startposition,size-1)
-          size -=1
-          position -= elem
-          heapArray(size)=null.asInstanceOf[T]
-          pushDown(pushUp(startposition))
-        }
+        delete(elem)
         true
     }
   }
@@ -661,7 +651,7 @@ class BinomialHeapWithMoveInt(getKey:Int => Int,val maxsize:Int, val maxKey:Int)
     else ExploreFirsts(getKey(heapArray(0)),0,List.empty)
   }
 
-  def getFirst:Long=heapArray(0)
+  def getFirst:Int=heapArray(0)
 
   /**
     *
@@ -745,6 +735,8 @@ class BinomialHeapWithMoveLong(getKey:Int => Long,val maxsize:Int, val maxKey:In
     heapArray.toList.toString()
   }
 
+
+  // TODO Should add warning in case of duplicated value. This heap **cannot** contain duplicated values.
   def insert(elem:Int){
     //insert en derniere position, puis bubble up
     heapArray(size)=elem
@@ -848,6 +840,7 @@ class BinomialHeapWithMoveLong(getKey:Int => Long,val maxsize:Int, val maxKey:In
   }
 
   def delete(elem:Int){
+    require(size > 0, "Attempt to delete on empty heap")
     val startposition:Int = position(elem)
     if (startposition == size-1){
       size -=1

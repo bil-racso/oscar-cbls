@@ -1,27 +1,35 @@
 package oscar.cbls.business.scheduling.model
 
 import oscar.cbls.algo.seq.IntSequence
+import oscar.cbls.business.scheduling.ActivityId
 import oscar.cbls.business.scheduling.invariants.StartTimes
 import oscar.cbls.{CBLSSeqVar, Store}
 
+import scala.collection.BitSet
+
 class Schedule(model: Store,
-               actDurations: Array[Long],
-               actPrecPairs: List[(Int, Int)],
-               actMinStartTimes: Map[Int, Long],
-               initialActivities: Iterable[Int],
-               resConstraints: Array[ResourceConstraint]) {
-  val numActivities: Int = actDurations.length
+               val activities: List[ActivityId],
+               val initialActivities: List[ActivityId],
+               durations: Map[ActivityId, Int],
+               minStartTimes: Map[ActivityId, Int],
+               precedencePairs: List[(ActivityId, ActivityId)],
+               resources: List[Resource]) {
+
   // Precedences
-  val precedences = new Precedences(numActivities, actPrecPairs)
+  val precedencesData = new Precedences(precedencePairs)
+  // Initial priority list
+  val initialPriorityList: List[Int] = precedencesData.getPriorityList(initialActivities)
+
+  println(s"Initial Activities: $initialActivities")
+  println(s"Initial Priority List: $initialPriorityList")
 
   // CBLS variable: the priority list of activities to be scheduled
-  val activitiesPriorList = new CBLSSeqVar(model,
-                                           IntSequence(precedences.getPriorityList(initialActivities)),
-                                           numActivities - 1,
-                                           "Activities' Priority List")
+  val activityPriorityList = new CBLSSeqVar(model,
+                                           IntSequence(initialPriorityList),
+                                           n = "Activities' Priority List")
   // CBLS invariant: start times
-  val (makeSpan, startTimes) = StartTimes(activitiesPriorList, actDurations, precedences, actMinStartTimes,
-    resConstraints)
+  val (makeSpan, startTimes) = StartTimes(activityPriorityList, durations,
+    precedencesData, minStartTimes, resources)
 
   /**
     * Given an activity index (indAct), obtain the sequence of indices that
@@ -31,77 +39,68 @@ class Schedule(model: Store,
     * @return a sequence of activity indices
     */
   def swappableIndices(indAct: Int): Iterable[Int] = {
-    val prioritySequence = activitiesPriorList.value
-    val currentActivity = prioritySequence.valueAtPosition(indAct).get.toInt
-    val predActIndices = precedences.precArray(currentActivity)
-    val hasPredecessors = predActIndices.exists(p => prioritySequence.contains(p))
-    val succActIndices = precedences.succArray(currentActivity)
-    val hasSuccessors = succActIndices.exists(s => prioritySequence.contains(s))
+    val prioritySequence = activityPriorityList.value
+    val currentActivity = prioritySequence.valueAtPosition(indAct).get
+    val predActIndices = precedencesData.predMap.getOrElse(currentActivity, BitSet.empty)
+    val succActIndices = precedencesData.succMap.getOrElse(currentActivity, BitSet.empty)
+    var swappableIndices: List[Int] = List()
     // Determine the bounds of the swappable zone in the priority sequence
-    var lastPrecSeqIndex = -1
-    var firstSuccSeqIndex = prioritySequence.size
-    var seqIndexIndAct = -1
+    // First loop: backward exploration to find last predecessor
+    var optExplorer = prioritySequence.explorerAtPosition(indAct)
     var inLoop = true
-    var optExplorer = prioritySequence.explorerAtPosition(0)
-    while (inLoop && optExplorer.isDefined) {
-      val actExplorer = optExplorer.get
-      val i = actExplorer.position
-      val activityAtI = actExplorer.value
-      // is i the index for the activity indAct ?
-      if (i == indAct) {
-        seqIndexIndAct = i
-        inLoop = hasSuccessors
-      } else if (seqIndexIndAct == -1 && hasPredecessors) {
-        // we check if this index is a predecessor
-        if (predActIndices.contains(activityAtI)) {
-          lastPrecSeqIndex = i
-        }
-      } else if (seqIndexIndAct != -1) {
-        // notice that this implies hasSuccessors == true, otherwise the loop should
-        // have stopped
-        if (succActIndices.contains(activityAtI)) {
-          firstSuccSeqIndex = i
-          // we can stop loop because we found the first successor
+    var exploredActs: List[Int] = List()
+    do {
+      optExplorer = optExplorer.get.prev
+      if (optExplorer.isDefined) {
+        val actExplorer = optExplorer.get
+        val pos = actExplorer.position
+        val activityAtPos = actExplorer.value
+        exploredActs ::= activityAtPos
+        if (predActIndices.contains(activityAtPos)) {
           inLoop = false
+        } else {
+          // Check whether the already explored activities
+          // are not successors of the current explored activity
+          val successorsOfActAtPos = precedencesData
+            .succMap
+            .getOrElse(activityAtPos, BitSet.empty)
+          if (!exploredActs.exists(successorsOfActAtPos.contains)) {
+            swappableIndices ::= pos
+          }
         }
+      } else {
+        inLoop = false
       }
-      optExplorer = actExplorer.next
-    }
+    } while (inLoop)
+    // Second loop : forward exploration to find first successor
+    optExplorer = prioritySequence.explorerAtPosition(indAct)
+    inLoop = true
+    exploredActs = List()
+    do {
+      optExplorer = optExplorer.get.next
+      if (optExplorer.isDefined) {
+        val actExplorer = optExplorer.get
+        val pos = actExplorer.position
+        val activityAtPos = actExplorer.value.toInt
+        exploredActs ::= activityAtPos
+        if (succActIndices.contains(activityAtPos)) {
+          inLoop = false
+        } else {
+          // Check whether the already explored activities
+          // are not predecessors of the current explored activity
+          val predecessorsOfActAtPos = precedencesData
+            .predMap
+            .getOrElse(activityAtPos, BitSet.empty)
+          if (!exploredActs.exists(predecessorsOfActAtPos.contains)) {
+            swappableIndices ::= pos
+          }
+        }
+      } else {
+        inLoop = false
+      }
+    } while (inLoop)
     // The swappable indices are those between the bounds (excluded the bounds and
     // the index of the activity)
-    var swappableIndices: List[Int] = List()
-    for { i <- lastPrecSeqIndex+1 until firstSuccSeqIndex if i != seqIndexIndAct } {
-      optExplorer = prioritySequence.explorerAtPosition(i)
-      val activityAtI = optExplorer.get.value.toInt
-      if (i > seqIndexIndAct) {
-        // if index i is after indAct, check that there is no predecessor of i
-        // between indAct and i, in that case i, indAct are not swappable
-        val predecessorsOfI = precedences.precArray(activityAtI).filter(p => prioritySequence.contains(p))
-        var noPrecBetweenIndAct_I = true
-        for { j <- indAct+1 until i if noPrecBetweenIndAct_I} {
-          optExplorer = prioritySequence.explorerAtPosition(j)
-          val activityAtJ = optExplorer.get.value
-          noPrecBetweenIndAct_I = !predecessorsOfI.contains(activityAtJ)
-        }
-        if (noPrecBetweenIndAct_I) {
-          swappableIndices :+= i
-        }
-      }
-      else {
-        // if index i is before indAct, check that there is no successor of i
-        // between i and indAct, in that case i, indAct are not swappable
-        val successorsOfI = precedences.succArray(activityAtI).filter(s => prioritySequence.contains(s))
-        var noSuccBetweenI_IndAct = true
-        for { j <- i+1 until seqIndexIndAct if noSuccBetweenI_IndAct} {
-          optExplorer = prioritySequence.explorerAtPosition(j)
-          val activityAtJ = optExplorer.get.value.toInt
-          noSuccBetweenI_IndAct = !successorsOfI.contains(activityAtJ)
-        }
-        if (noSuccBetweenI_IndAct) {
-          swappableIndices :+= i
-        }
-      }
-    }
     swappableIndices
   }
 
@@ -113,93 +112,91 @@ class Schedule(model: Store,
     * @return a sequence of activity indices
     */
   def reinsertableIndices(indAct: Int): Iterable[Int] = {
-    val prioritySequence = activitiesPriorList.value
+    val prioritySequence = activityPriorityList.value
     val currentActivity = prioritySequence.valueAtPosition(indAct).get.toInt
-    val predActIndices = precedences.precArray(currentActivity)
-    val hasPredecessors = predActIndices.exists(p => prioritySequence.contains(p))
-    val succActIndices = precedences.succArray(currentActivity)
-    val hasSuccessors = succActIndices.exists(s => prioritySequence.contains(s))
-    // Determine the bounds of the swappable zone in the priority sequence
-    var lastPrecSeqIndex = -1
-    var firstSuccSeqIndex = prioritySequence.size
-    var seqIndexIndAct = -1
+    val predActIndices = precedencesData.predMap.getOrElse(currentActivity, BitSet.empty)
+    val succActIndices = precedencesData.succMap.getOrElse(currentActivity, BitSet.empty)
+    var reinsertableIndices: List[Int] = List()
+    // Determine the bounds of the reinsertable zone in the priority sequence
+    // First loop: backward exploration to find last predecessor
+    var optExplorer = prioritySequence.explorerAtPosition(indAct)
     var inLoop = true
-    var optExplorer = prioritySequence.explorerAtPosition(0)
-    while (inLoop && optExplorer.isDefined) {
-      val actExplorer = optExplorer.get
-      val i = actExplorer.position
-      val activityAtI = actExplorer.value
-      // is i the index for the activity indAct ?
-      if (i == indAct) {
-        seqIndexIndAct = i
-        inLoop = hasSuccessors
-      } else if (seqIndexIndAct == -1 && hasPredecessors) {
-        // we check if this index is a predecessor
-        if (predActIndices.contains(activityAtI)) {
-          lastPrecSeqIndex = i
-        }
-      } else if (seqIndexIndAct != -1) {
-        // notice that this implies hasSuccessors == true, otherwise the loop should
-        // have stopped
-        if (succActIndices.contains(activityAtI)) {
-          firstSuccSeqIndex = i
-          // we can stop loop because we found the first successor
+    do {
+      optExplorer = optExplorer.get.prev
+      if (optExplorer.isDefined) {
+        val actExplorer = optExplorer.get
+        val pos = actExplorer.position
+        val activityAtPos = actExplorer.value.toInt
+        if (predActIndices.contains(activityAtPos)) {
           inLoop = false
+        } else {
+          reinsertableIndices ::= pos
         }
+      } else {
+        inLoop = false
       }
-      optExplorer = actExplorer.next
-    }
+    } while (inLoop)
+    // Second loop : forward exploration to find first successor
+    optExplorer = prioritySequence.explorerAtPosition(indAct)
+    inLoop = true
+    do {
+      optExplorer = optExplorer.get.next
+      if (optExplorer.isDefined) {
+        val actExplorer = optExplorer.get
+        val pos = actExplorer.position
+        val activityAtPos = actExplorer.value.toInt
+        if (succActIndices.contains(activityAtPos)) {
+          inLoop = false
+        } else {
+          reinsertableIndices ::= pos
+        }
+      } else {
+        inLoop = false
+      }
+    } while (inLoop)
     // The reinsertable indices are those between the bounds (excluded the bounds and
     // the index of the activity)
-    var reinsertableIndices: List[Int] = List()
-    for { i <- lastPrecSeqIndex+1 until firstSuccSeqIndex if i != seqIndexIndAct } {
-      reinsertableIndices :+= i
-    }
     reinsertableIndices
   }
 
-  def insertableIndices(actInd: Long): Iterable[Int] = {
-    val prioritySequence = activitiesPriorList.value
-    val predActIndices = precedences.precArray(actInd.toInt)
-    val hasPredecessors = predActIndices.exists(p => prioritySequence.contains(p))
-    val succActIndices = precedences.succArray(actInd.toInt)
-    val hasSuccessors = succActIndices.exists(s => prioritySequence.contains(s))
-    // Determine the bounds of the insertable zone in the priority sequence
-    var lastPrecSeqIndex = -1
-    var firstSuccSeqIndex = prioritySequence.size
-    var seqIndexIndAct = -1
-    var inLoop = true
-    var optExplorer = prioritySequence.explorerAtPosition(0)
-    while (inLoop && optExplorer.isDefined) {
-      val actExplorer = optExplorer.get
-      val i = actExplorer.position
-      val activityAtI = actExplorer.value
-      // is i the index for the activity actInd ?
-      if (activityAtI == actInd) {
-        seqIndexIndAct = i
-        inLoop = hasSuccessors
-      } else if (seqIndexIndAct == -1 && hasPredecessors) {
-        // we check if this index is a predecessor
-        if (predActIndices.contains(activityAtI)) {
-          lastPrecSeqIndex = i
-        }
-      } else if (seqIndexIndAct != -1) {
-        // notice that this implies hasSuccessors == true, otherwise the loop should
-        // have stopped
-        if (succActIndices.contains(activityAtI)) {
-          firstSuccSeqIndex = i
-          // we can stop loop because we found the first successor
+  def insertableIndices(actValue: Long): Iterable[Int] = {
+    val prioritySequence = activityPriorityList.value
+    if (prioritySequence.isEmpty) {
+      // The sequence is empty: the only insertable index is 0
+      List(0)
+    } else {
+      val predActIndices = precedencesData.predMap.getOrElse(actValue.toInt, BitSet.empty)
+      val succActIndices = precedencesData.succMap.getOrElse(actValue.toInt, BitSet.empty)
+      // First loop: backward exploration to find last predecessor
+      var lastPred = -1
+      var firstSucc = prioritySequence.size
+      var optExplorer = prioritySequence.explorerAtPosition(firstSucc - 1)
+      var inLoop = true
+      while (inLoop && optExplorer.isDefined) {
+        val actExplorer = optExplorer.get
+        val pos = actExplorer.position
+        val activityAtPos = actExplorer.value.toInt
+        if (predActIndices.contains(activityAtPos)) {
           inLoop = false
+          lastPred = pos
         }
+        optExplorer = actExplorer.prev
       }
-      optExplorer = actExplorer.next
+      // Second loop: forward exploration to find first successor
+      optExplorer = prioritySequence.explorerAtPosition(0)
+      inLoop = true
+      while (inLoop && optExplorer.isDefined) {
+        val actExplorer = optExplorer.get
+        val pos = actExplorer.position
+        val activityAtPos = actExplorer.value.toInt
+        if (succActIndices.contains(activityAtPos)) {
+          inLoop = false
+          firstSucc = pos
+        }
+        optExplorer = actExplorer.next
+      }
+      // The insertable indices are between the bounds
+      (lastPred+1) until firstSucc
     }
-    // The insertable indices are those between the bounds (excluded the bounds and
-    // the index of the activity)
-    var insertableIndices: List[Int] = List()
-    for { i <- lastPrecSeqIndex+1 until firstSuccSeqIndex if i != seqIndexIndAct } {
-      insertableIndices :+= i
-    }
-    insertableIndices
   }
 }

@@ -1,7 +1,7 @@
 package oscar.cbls.lib.search.combinators
 
-import oscar.cbls._
-import oscar.cbls.core.search._
+import oscar.cbls.core.objective.Objective
+import oscar.cbls.core.search.{InstrumentedMove, Move, MoveFound, Neighborhood, NeighborhoodCombinator, NoMoveFound, SearchResult}
 
 
 /**
@@ -12,14 +12,17 @@ import oscar.cbls.core.search._
  *
  * @author renaud.delandtsheer@cetic.be
  */
-class Best(a: Neighborhood, b: Neighborhood) extends NeighborhoodCombinator(a, b) {
+class BestMove(n:Neighborhood*) extends NeighborhoodCombinator(n:_*) {
 
   override def getMove(obj: Objective, initialObj:Long, acceptanceCriteria: (Long, Long) => Boolean): SearchResult = {
-    (a.getMove(obj, initialObj:Long, acceptanceCriteria), b.getMove(obj, initialObj:Long, acceptanceCriteria)) match {
-      case (NoMoveFound, x) => x
-      case (x, NoMoveFound) => x
-      case (x: MoveFound, y: MoveFound) => if (x.objAfter < y.objAfter) x else y
-    }
+
+    val moves = n.flatMap(_.getMove(obj, initialObj:Long, acceptanceCriteria) match {
+      case NoMoveFound => None
+      case m: MoveFound => Some(m)
+    })
+
+    if (moves.isEmpty) NoMoveFound
+    else moves.minBy(_.objAfter)
   }
 }
 
@@ -62,7 +65,7 @@ class MaxMoves(a: Neighborhood, val maxMove: Long, cond: Option[Move => Boolean]
       }
     } else {
       if (verbose >= 1L)
-        println("MaxMoves: reached " + (if (maxMove == 1L) "1L move " else maxMove + " moves"))
+        println("MaxMoves: reached " + (if (maxMove == 1L) "1 move " else maxMove + " moves"))
       NoMoveFound
     }
   }

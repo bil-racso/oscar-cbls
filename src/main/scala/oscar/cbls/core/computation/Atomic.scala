@@ -22,8 +22,6 @@ package oscar.cbls.core.computation
 
 import oscar.cbls.core.propagation.{Checker, PropagationElement}
 
-import scala.language.implicitConversions
-
 /** this is something that has an integer value.
   * this value can be queried, and invariants can be posted on it,
   * and it can be used on the righ hand of <== operator
@@ -37,7 +35,7 @@ sealed trait AtomicValue[T] extends Value{
 
 /**An AtomicVar is a variable managed by the [[oscar.cbls.core.computation.Store]] whose type is integer.
   *
-  * @param initialDomain is the domain value of the variable. Some invariants exploit this value to declare fixed size arrays
+  * initialDomain is the domain value of the variable. Some invariants exploit this value to declare fixed size arrays
   * @param initialValue is the value of the variable
   */
 abstract class ChangingAtomicValue[T](initialValue:T)
@@ -97,7 +95,7 @@ abstract class ChangingAtomicValue[T](initialValue:T)
     }
   }
 
-  def performNotificationToListeningInv(inv:PropagationElement,id:Long,oldVal:T,newVal:T)
+  def performNotificationToListeningInv(inv:PropagationElement,id:Int,oldVal:T,newVal:T)
 
   override def checkInternals(c:Checker){
     c.check(mOldValue == mNewValue)
@@ -121,7 +119,7 @@ class ChangingAtomicValueSnapShot[T](val variable:ChangingAtomicValue[T],val sav
 /**An IntVar is a variable managed by the [[oscar.cbls.core.computation.Store]] whose type is integer.
   *
   * @param givenModel is the model in s-which the variable is declared, can be null if the variable is actually a constant, see [[oscar.cbls.core.computation.CBLSIntConst]]
-  * @param initialDomain is the domain value of the variable. Some invariants exploit this value to declare fixed size arrays
+  * initialDomain is the domain value of the variable. Some invariants exploit this value to declare fixed size arrays
   * @param initialValue is the initial value of the variable
   * @param n is the name of the variable, used for pretty printing only. if not set, a default will be used, based on the variable number
   */

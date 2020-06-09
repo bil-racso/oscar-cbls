@@ -23,8 +23,8 @@ package oscar.cbls.algo.dag
 import oscar.cbls.algo.heap.BinomialHeap
 import oscar.cbls.algo.quick.QList
 
+import scala.annotation.tailrec
 import scala.collection.immutable.SortedSet
-
 
 /** a DAG node with some abstract methods
   * @author renaud.delandtsheer@cetic.be
@@ -334,6 +334,7 @@ trait DAG {
     }
   }
 
+  @tailrec
   private def realloc(OrderedNodeForReinsertion: QList[DAGNode], FreePositionsToDistribute: QList[Int]):QList[Int] = {
     if (OrderedNodeForReinsertion != null) {
       OrderedNodeForReinsertion.head.visited = false

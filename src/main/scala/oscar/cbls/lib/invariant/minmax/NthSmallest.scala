@@ -15,10 +15,9 @@
 
 package oscar.cbls.lib.invariant.minmax
 
-import oscar.cbls.IntValue
 import oscar.cbls.algo.search.LazyQuicksort
-import oscar.cbls.core._
-import oscar.cbls.core.computation.Domain
+import oscar.cbls.core.computation.{ChangingIntValue, Domain, IntInvariant, IntNotificationTarget, IntValue}
+import oscar.cbls.core.propagation.Checker
 
 object  NthSmallest {
   /**
@@ -93,7 +92,7 @@ class NthSmallest(vars: Array[IntValue], nTh: Int, smallest:Boolean = true)
     changeTrackSinceLastPropagation = 0
 
     //we use a lazy quicksort here, and hope nTh is small
-    val lq = new LazyQuicksort(vars.map(_.value), if (smallest) (a => a) else (a => -a))
+    val lq = new LazyQuicksort(vars.map(_.valueInt), if (smallest) (a => a) else (a => -a))
 
     this := lq(nTh)
   }

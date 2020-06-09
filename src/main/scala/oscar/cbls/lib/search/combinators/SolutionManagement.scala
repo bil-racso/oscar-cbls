@@ -1,6 +1,7 @@
 package oscar.cbls.lib.search.combinators
 
-import oscar.cbls._
+import oscar.cbls.core.computation.{IntValue, SetValue, Solution}
+import oscar.cbls.core.objective.Objective
 import oscar.cbls.core.search._
 
 //there is no API here because the relevant api are all available infix.
@@ -12,7 +13,7 @@ import oscar.cbls.core.search._
   * @param a a neighborhood
   * @param o the objective function
   */
-class BasicSaveBest(a: Neighborhood, o: Objective, alsoSaveOnExhaust:Boolean = false) extends NeighborhoodCombinator(a) {
+class BasicSaveBest(a: Neighborhood, o: Objective, alsoSaveOnExhaust:Boolean = true) extends NeighborhoodCombinator(a) {
 
   protected val s = o.model
 
@@ -96,7 +97,7 @@ class BasicSaveBest(a: Neighborhood, o: Objective, alsoSaveOnExhaust:Boolean = f
   def restoreBestOnExhaust: RestoreBestOnExhaust = new RestoreBestOnExhaust(this)
 }
 
-class SaveBest(a: Neighborhood, o: Objective, alsoSaveOnExhaust:Boolean = false) extends BasicSaveBest(a: Neighborhood, o: Objective, alsoSaveOnExhaust) {
+class SaveBest(a: Neighborhood, o: Objective, alsoSaveOnExhaust:Boolean = true) extends BasicSaveBest(a: Neighborhood, o: Objective, alsoSaveOnExhaust) {
 
   def whenEmpty(violation: SetValue) = new SaveBestWhen(a, o, () => violation.value.isEmpty)
   def whenZero(violation: IntValue) = new SaveBestWhen(a, o, () => violation.value == 0L)

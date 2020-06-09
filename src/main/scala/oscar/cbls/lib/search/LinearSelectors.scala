@@ -21,7 +21,6 @@
 package oscar.cbls.lib.search
 
 import scala.util.Random
-import oscar.cbls._
 
 /**Provides a set of selectors to ease the development of search engines
   * @param isRandomized can be set to false if one wants a reproductible behavior of the search engine
@@ -183,7 +182,7 @@ trait LinearSelectors{
     if (st == null){
       var i = RandomGenerator.nextInt(r.size)
       val it = r.iterator
-      while(i > 0L){it.next(); i-=1L}
+      while(i > 0L){it.next(); i-=1}
       it.next()
     }else{
       val emptyRlist:List[R]=List.empty
@@ -195,9 +194,9 @@ trait LinearSelectors{
   }
 
   /**return an element of the range. IT is selected randomly with a uniform distribution
-    * this is performed in O(1L)
+    * this is performed in O(1)
     */
-  def selectFromRange(r: Range): Long = {
+  def selectFromRange(r: Range): Int = {
     val i = RandomGenerator.nextInt(r.size)
     r.apply(i)
   }
@@ -235,13 +234,13 @@ trait LinearSelectors{
   }
 
   /**returns a randomly chosen boolean (50L%-50L%)*/
-  def flip(PercentTrue:Long = 50L):Boolean = RandomGenerator.nextInt(100L) < PercentTrue
+  def flip(PercentTrue:Int = 50):Boolean = RandomGenerator.nextInt(100) < PercentTrue
 
-  /**returns a random permutation of the integers in [0L; N]*/
-  def getRandomPermutation(N:Long):Iterator[Long] = {
-    val intarray:Array[Long] = new Array(N)
-    for(i <- 0L until N) intarray(i)=i
-    for(i <- 0L until N){
+  /**returns a random permutation of the integers in [0; N]*/
+  def getRandomPermutation(N:Int):Iterator[Int] = {
+    val intarray:Array[Int] = new Array(N)
+    for(i <- 0 until N) intarray(i)=i
+    for(i <- 0 until N){
       val other = selectFromRange(0 until N)
       val old = intarray(i)
       intarray(i) = intarray(other)

@@ -15,11 +15,9 @@
 
 package oscar.cbls.lib.search.neighborhoods
 
-import oscar.cbls._
 import oscar.cbls.algo.search.HotRestart
 import oscar.cbls.core.computation.{CBLSIntVar, Variable}
 import oscar.cbls.core.search.{EasyNeighborhoodMultiLevel, First, LoopBehavior, Move}
-
 
 /**
   * This neighborhood searches for moves of the form
@@ -56,9 +54,9 @@ import oscar.cbls.core.search.{EasyNeighborhoodMultiLevel, First, LoopBehavior, 
   */
 case class TransferNeighborhood(vars:Array[CBLSIntVar],
                                 name:String = "TransferNeighborhood",
-                                searchZone1:()=>Iterable[Long] = null,
-                                searchZone2:() => (Long,Long)=>Iterable[Long] = null,
-                                appliedFactors:() => (Long,Long,Long,Long) => (Long,Long) = () => (_,_,_,_) => (1L,1L),
+                                searchZone1:()=>Iterable[Int] = null,
+                                searchZone2:() => (Int,Int)=>Iterable[Int] = null,
+                                appliedFactors:() => (Int,Long,Int,Long) => (Long,Long) = () => (_,_,_,_) => (1L,1L),
                                 searchZoneForDelta:() => (Long,Long) => (Long,Long) => LinearOptimizer,
                                 symmetryCanBeBrokenOnIndices:Boolean = true,
                                 selectFirstVariableBehavior:LoopBehavior = First(),
@@ -67,13 +65,13 @@ case class TransferNeighborhood(vars:Array[CBLSIntVar],
   extends EasyNeighborhoodMultiLevel[TransferMove](name){
 
   //the indice to start with for the exploration
-  var firstVarIndice:Long = 0L
+  var firstVarIndice:Int = 0
   var firstVar:CBLSIntVar = null
-  var oldValOfFirstVar:Long = 0
+  var oldValOfFirstVar:Int = 0
 
-  var secondVarIndice:Long = -1L
+  var secondVarIndice:Int = -1
   var secondVar:CBLSIntVar = null
-  var oldValOfSecondVar:Long = 0
+  var oldValOfSecondVar:Int = 0
 
   var delta:Long = 0L
   var factor1:Long = 1L
@@ -84,9 +82,9 @@ case class TransferNeighborhood(vars:Array[CBLSIntVar],
     val firstIterationSchemeZone =
       if (searchZone1 == null) {
         if (hotRestart) {
-          if (firstVarIndice >= vars.length) firstVarIndice = 0L
-          0L until vars.length startBy firstVarIndice
-        } else 0L until vars.length
+          if (firstVarIndice >= vars.length) firstVarIndice = 0
+          HotRestart(0 until vars.length, firstVarIndice)
+        } else 0 until vars.length
       } else if (hotRestart) HotRestart(searchZone1(), firstVarIndice) else searchZone1()
 
     val searchZone2ForThisSearch = if (searchZone2 == null) null else searchZone2()
@@ -98,16 +96,16 @@ case class TransferNeighborhood(vars:Array[CBLSIntVar],
     while (iIterator.hasNext) {
       firstVarIndice = iIterator.next()
       firstVar = vars(firstVarIndice)
-      oldValOfFirstVar = firstVar.newValue
+      oldValOfFirstVar = firstVar.newValueInt
 
-      val secondIterationSchemeZone = if (searchZone2ForThisSearch == null) 0L until vars.length else searchZone2ForThisSearch(firstVarIndice,oldValOfFirstVar)
+      val secondIterationSchemeZone = if (searchZone2ForThisSearch == null) 0 until vars.length else searchZone2ForThisSearch(firstVarIndice,oldValOfFirstVar)
       val searchZoneForDeltaL2 = searchZoneForDeltaL1(firstVarIndice,oldValOfFirstVar)
 
       val (jIterator,notifyFound2) = selectSecondVariableBehavior.toIterator(secondIterationSchemeZone)
       while (jIterator.hasNext) {
         secondVarIndice = jIterator.next()
         secondVar = vars(secondVarIndice)
-        oldValOfSecondVar = secondVar.newValue
+        oldValOfSecondVar = secondVar.newValueInt
 
         if ((!symmetryCanBeBrokenOnIndices || firstVarIndice < secondVarIndice) //we break symmetry on variables
           && firstVarIndice != secondVarIndice) {
@@ -141,7 +139,7 @@ case class TransferNeighborhood(vars:Array[CBLSIntVar],
 
           this.delta = bestDelta
 
-          if (evaluateCurrentMoveObjTrueIfSomethingFound(objForDelta)) {
+          if (bestDelta != 0 && evaluateCurrentMoveObjTrueIfSomethingFound(objForDelta)) {
             notifyFound1()
             notifyFound2()
           }
@@ -149,8 +147,8 @@ case class TransferNeighborhood(vars:Array[CBLSIntVar],
       }
     }
 
-    firstVarIndice = firstVarIndice + 1L
-    secondVarIndice = -1L
+    firstVarIndice = firstVarIndice + 1
+    secondVarIndice = -1
     if (firstVar != null) {
       require(firstVar.newValue == oldValOfFirstVar)
     }
@@ -171,7 +169,7 @@ case class TransferNeighborhood(vars:Array[CBLSIntVar],
 
   //this resets the internal state of the Neighborhood
   override def reset(): Unit = {
-    firstVarIndice = 0L
+    firstVarIndice = 0
   }
 }
 

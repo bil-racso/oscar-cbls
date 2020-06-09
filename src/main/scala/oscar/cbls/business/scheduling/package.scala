@@ -20,19 +20,28 @@
 package oscar.cbls.business
 
 import oscar.cbls.Store
-import oscar.cbls.business.scheduling.model.ResourceConstraint
+import oscar.cbls.business.scheduling.model.Resource
 import oscar.cbls.business.scheduling.modeling.SchedulingInvariants
 
 package object scheduling extends SchedulingInvariants {
+  type ActivityId = Int
+
+  type Mode = Int
+
   type Schedule = oscar.cbls.business.scheduling.model.Schedule
 
-  def schedule(m: Store, durations: Array[Long], precPairs: List[(Int, Int)], minStartTimes: Map[Int, Long],
-               initialActs: Iterable[Int], resConstraints: Array[ResourceConstraint]): Schedule =
-    new Schedule(m, durations, precPairs, minStartTimes, initialActs, resConstraints)
+  def schedule(m: Store,
+               activities: List[ActivityId],
+               initialActivities: List[ActivityId],
+               durations: Map[ActivityId, Int],
+               minStartTimes: Map[ActivityId, Int],
+               precedencePairs: List[(ActivityId, ActivityId)],
+               resources: List[Resource]): Schedule =
+    new Schedule(m, activities, initialActivities, durations, minStartTimes,
+      precedencePairs, resources)
 }
-/*
-package oscar.cbls.business
 
+/*
 /**
  * DEPECATED: the whole scheduling package is deprecated since OScaR 4.0 and will be fully reworked
  *  This package is a scheduling library.

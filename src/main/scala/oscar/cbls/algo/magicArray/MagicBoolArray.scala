@@ -1,9 +1,3 @@
-package oscar.cbls.algo.magicArray
-
-import oscar.cbls.algo.quick.QList
-
-import scala.language.postfixOps
-
 /*******************************************************************************
   * OscaR is free software: you can redistribute it and/or modify
   * it under the terms of the GNU Lesser General Public License as published by
@@ -18,7 +12,9 @@ import scala.language.postfixOps
   * You should have received a copy of the GNU Lesser General Public License along with OscaR.
   * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
   ******************************************************************************/
+package oscar.cbls.algo.magicArray
 
+import oscar.cbls.algo.quick.QList
 
 object MagicBoolArray {
   /**
@@ -34,29 +30,30 @@ object MagicBoolArray {
 
 
 /**
- * This represents an array of boolean with O(1L) setAll and O(1L) clearAll
- * @author Jannou Brohée on 3L/10L/1L6.
+ * This represents an array of boolean with O(1) setAll and O(1) clearAll
+ * @author Jannou Brohée on 3/10/16.
  * @param length Maximum length of magical array
  */
 class MagicBoolArray(val length:Int,initVal:Boolean = false){
 
   private[this] val threshold:Long = Long.MaxValue-10L
 
-  private[this] var global:Long = 1L
+  // Made public for testing purposes
+  var global:Long = 1L
 
   private[this] val internalArray:Array[Long] = Array.fill[Long](length)(if(initVal) 1L else 0L)
 
-  val indices = 0 until length
+  val indices: Range = 0 until length
 
   /**
    * Set the new value of element at specific index
    * @param id the index of the element
    * @param value the new element's value (true/false)
    * @return the old value
-   * @note in O(1L) // trivial
+   * @note in O(1) // trivial
    */
   def update(id:Int, value:Boolean):Boolean = {
-    assert(id<length && 0L<=id)
+    assert(id<length && 0<=id)
     val oldInternalArray = internalArray(id)
     if(value) internalArray(id)=global
     else internalArray(id)=global-1L
@@ -67,16 +64,16 @@ class MagicBoolArray(val length:Int,initVal:Boolean = false){
    * Return the value of the element at specific index
    * @param id the index of the element
    * @return true or false
-   * @note complexity is O(1L)
+   * @note complexity is O(1)
    */
   def apply(id:Int): Boolean ={
-    require(0L<=id && id<length, "got id:" + id + "length:" + length)
+    require(0<=id && id<length, "got id:" + id + "length:" + length)
     internalArray(id)>=global
   }
 
   /**
    * Sets the value of each element to "value"
-   * @note complexity is O(1L)
+   * @note complexity is O(1)
    */
   def all_= (value:Boolean): Unit ={
     if(value) {
@@ -96,8 +93,6 @@ class MagicBoolArray(val length:Int,initVal:Boolean = false){
     }
   }
 
-  def all:Boolean = ???
-
   @inline
   private [this] def resetArray(){
     var i = internalArray.length
@@ -106,6 +101,8 @@ class MagicBoolArray(val length:Int,initVal:Boolean = false){
       internalArray(i) = 0L
     }
   }
+
+  def all:Boolean = ???
 
   /**
    * Creates a new iterator over the indexes of elements which value is true.
@@ -120,6 +117,16 @@ class MagicBoolArray(val length:Int,initVal:Boolean = false){
       }
     }
     toReturn.toIterator
+  }
+
+  def indicesAtTrueAsQList:QList[Int] ={
+    var toReturn:QList[Int]=null
+    for(n <-0 until length){
+      if(internalArray(n)>=global){
+        toReturn = QList(n,toReturn)
+      }
+    }
+    toReturn
   }
 
   override def toString: String = "["+indicesAtTrue.mkString(",")+"]"

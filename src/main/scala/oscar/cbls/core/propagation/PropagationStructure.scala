@@ -29,7 +29,7 @@ import oscar.cbls.algo.dll._
 import oscar.cbls.algo.heap.{AbstractHeap, AggregatedBinomialHeapQList, BinomialHeap}
 import oscar.cbls.algo.quick.QList
 import oscar.cbls.algo.rb.RedBlackTreeMap
-import oscar.cbls.algo.tarjan._;
+import oscar.cbls.algo.tarjan._
 
 /**
  * a schedulingHandler handles the scheduling for a set of PE.

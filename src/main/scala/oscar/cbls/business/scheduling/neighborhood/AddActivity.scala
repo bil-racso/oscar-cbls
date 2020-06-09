@@ -9,10 +9,10 @@ class AddActivity(schedule: Schedule,
                   neighborhoodName: String,
                   selectValueBehavior:LoopBehavior = First(),
                   selectIndexBehavior:LoopBehavior = Best(),
-                  searchValues: Option[() => Iterable[Long]] = None)
+                  searchValues: Option[() => Iterable[Int]] = None)
   extends EasyNeighborhoodMultiLevel[AddActivityMove](neighborhoodName) {
 
-  var currentValue: Long = -1L
+  var currentValue: Int = -1
   var insertIndex: Int = -1
 
   /**
@@ -21,21 +21,25 @@ class AddActivity(schedule: Schedule,
     * as explained in the documentation of this class
     */
   override def exploreNeighborhood(initialObj: Long): Unit = {
-    // Iteration zone on values to add
+    // Iteration zone on values to add (optional activities)
     // Checking the Hot Restart
-    val iterationZone1: () => Iterable[Long] = searchValues.getOrElse(() => (0L until schedule.numActivities).filterNot(schedule.activitiesPriorList.value.contains(_)))
+    val iterationZone1: () => Iterable[Int] = searchValues.getOrElse(() =>
+      schedule
+        .activities
+        .filterNot(schedule.activityPriorityList.value.contains(_))
+    )
     val hotRestart = true
-    val iterationZone: Iterable[Long] =
+    val iterationZone: Iterable[Int] =
       if (hotRestart) HotRestart(iterationZone1(), currentValue)
       else iterationZone1()
     // iterating over the values in the activity list
     val (valuesIterator, notifyValueFound) = selectValueBehavior.toIterator(iterationZone)
     // Define checkpoint on sequence (activities list)
-    val seqValueCheckPoint = schedule.activitiesPriorList.defineCurrentValueAsCheckpoint(true)
+    val seqValueCheckPoint = schedule.activityPriorityList.defineCurrentValueAsCheckpoint(true)
     // Main loop
     while (valuesIterator.hasNext) {
       currentValue = valuesIterator.next()
-      // explore the insertable zone of the current index
+      // explore the insertable zone of the current value
       val insertableZone = schedule.insertableIndices(currentValue)
       val (insertableIterator, notifyInsertFound) = selectIndexBehavior.toIterator(insertableZone)
       while (insertableIterator.hasNext) {
@@ -44,7 +48,7 @@ class AddActivity(schedule: Schedule,
         performMove(currentValue, insertIndex)
         val newObj = obj.value
         // Rollback to checkpoint
-        schedule.activitiesPriorList.rollbackToTopCheckpoint(seqValueCheckPoint)
+        schedule.activityPriorityList.rollbackToTopCheckpoint(seqValueCheckPoint)
         // Notification of finding indices
         if (evaluateCurrentMoveObjTrueIfSomethingFound(newObj)) {
           notifyValueFound()
@@ -52,18 +56,18 @@ class AddActivity(schedule: Schedule,
         }
       }
     }
-    schedule.activitiesPriorList.releaseTopCheckpoint()
+    schedule.activityPriorityList.releaseTopCheckpoint()
   }
 
   override def instantiateCurrentMove(newObj: Long): AddActivityMove =
-    AddActivityMove(currentValue, insertIndex, schedule.activitiesPriorList.value.size, this, neighborhoodNameToString, newObj)
+    AddActivityMove(currentValue, insertIndex, schedule.activityPriorityList.value.size, this, neighborhoodNameToString, newObj)
 
-  def performMove(actInd: Long, addIndex: Int): Unit = {
-    schedule.activitiesPriorList.insertAtPosition(actInd, addIndex)
+  def performMove(actValue: Int, addIndex: Int): Unit = {
+    schedule.activityPriorityList.insertAtPosition(actValue, addIndex)
   }
 }
 
-case class AddActivityMove(actIndex: Long,
+case class AddActivityMove(actValue: Int,
                            addIndex: Int,
                            numActiveActivities: Int,
                            override val neighborhood: AddActivity,
@@ -74,6 +78,6 @@ case class AddActivityMove(actIndex: Long,
 
   /** to actually take the move */
   override def commit(): Unit = {
-    neighborhood.performMove(actIndex, addIndex)
+    neighborhood.performMove(actValue, addIndex)
   }
 }

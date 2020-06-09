@@ -1,6 +1,4 @@
-package oscar.cbls.algo.fun
-/**
- * *****************************************************************************
+/*****************************************************************************
  * OscaR is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 2.1 of the License, or
@@ -15,13 +13,16 @@ package oscar.cbls.algo.fun
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  * ****************************************************************************
  */
+package oscar.cbls.algo.fun
 
 import oscar.cbls.algo.quick.QList
 
+import scala.annotation.tailrec
 
 object PiecewiseLinearBijectionNaive{
   def identity:PiecewiseLinearBijectionNaive = new PiecewiseLinearBijectionNaive(PiecewiseLinearFun.identity)
 
+  @tailrec
   def computeInvertedPivots(prevPivot : Pivot, remainingPivots : List[Pivot], newPivots : QList[Pivot] = null) : QList[Pivot] = {
     remainingPivots match {
       case Nil => newPivots
@@ -83,13 +84,13 @@ class PiecewiseLinearBijectionNaive(val forward:PiecewiseLinearFun, givenBackwar
     new PiecewiseLinearBijectionNaive(forward.swapAdjacentZonesShiftBest(startZone1Included, endZone1Included, endZone2Included))
   }
 
-  def apply(value:Int) = forward(value)
-  def unApply(value:Int) = backward(value)
+  def apply(value:Int): Int = forward(value)
+  def unApply(value:Int): Int = backward(value)
 
    def flipInInterval(startZoneIncluded : Int, endZoneIncluded :Int):PiecewiseLinearBijectionNaive =
      new PiecewiseLinearBijectionNaive(forward.flipFunctionInInterval(startZoneIncluded, endZoneIncluded))
 }
 
 class PivotWithTo(fromValue:Int,f:LinearTransform, val toValue:Int) extends Pivot(fromValue,f) {
-  override def toString = "PivotWithTo(from:" + fromValue + " toValue:" + toValue + " " + f + ")"
+  override def toString: String = "PivotWithTo(from:" + fromValue + " toValue:" + toValue + " " + f + ")"
 }

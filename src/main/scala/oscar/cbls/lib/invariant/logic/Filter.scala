@@ -20,9 +20,8 @@
 
 package oscar.cbls.lib.invariant.logic
 
-import oscar.cbls._
-import oscar.cbls.core._
-import oscar.cbls.core.computation.IntValue
+import oscar.cbls.core.computation.{ChangingIntValue, IntNotificationTarget, IntValue, SetInvariant}
+import oscar.cbls.core.propagation.Checker
 
 import scala.collection.immutable.SortedSet
 
@@ -35,8 +34,8 @@ import scala.collection.immutable.SortedSet
   * @author renaud.delandtsheer@cetic.be
   * */
 case class Filter(values:Array[IntValue], cond:(Long=>Boolean)=_>0L)
-  extends SetInvariant(values.indices.foldLeft(SortedSet.empty[Long])((acc:SortedSet[Long],indice:Int) => if(cond(values(indice).value)){acc+indice}else acc),
-    values.indices.start to values.indices.end)
+  extends SetInvariant(values.indices.foldLeft(SortedSet.empty[Int])((acc:SortedSet[Int],indice:Int) => if(cond(values(indice).value)){acc+indice}else acc),
+    0 until values.length)
   with IntNotificationTarget{
 
   for (v <- values.indices) registerStaticAndDynamicDependency(values(v),v)
@@ -55,7 +54,7 @@ case class Filter(values:Array[IntValue], cond:(Long=>Boolean)=_>0L)
       c.check(!cond(values(i).value) || this.value.contains(i),
           Some("!cond(values(i).value) || this.value.contains(i)"))
       c.check(cond(values(i).value) || !this.value.contains(i),
-          Some("cond(values(i).value) || !this.value.contains(i)"))
+          Some("cond(values(" + i + ").value) || !this.value.contains(" + i + ")" + "-" + values.mkString(";") + "-" + this.value.mkString(";") + "-" + this.name))
     }
   }
 }

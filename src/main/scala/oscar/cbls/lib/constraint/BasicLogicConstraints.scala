@@ -24,12 +24,11 @@
 
 package oscar.cbls.lib.constraint
 
-import oscar.cbls._
-import oscar.cbls.core._
+import oscar.cbls.core.computation.{CBLSIntVar, ChangingIntValue, Domain, IntInvariant, IntNotificationTarget, IntValue, Invariant, InvariantHelper, Value}
 import oscar.cbls.core.constraint.Constraint
 import oscar.cbls.core.propagation.Checker
 import oscar.cbls.lib.invariant.logic.{BoolLEInv, BoolLTInv}
-import oscar.cbls.lib.invariant.numeric.{Dist, Minus, MinusOffsetPos, ReifViol}
+import oscar.cbls.lib.invariant.numeric.{Dist, MinusOffsetPos, ReifViol}
 
 import scala.math.abs
 
@@ -156,7 +155,7 @@ case class EQ(left: IntValue, right: IntValue) extends Constraint {
 
   override val violation = Dist(left, right)
 
-  override def violation(v: Value) = { if (left == v || right == v) violation else 0L }
+  override def violation(v: Value):IntValue = { if (left == v || right == v) violation else 0L }
 
   override def checkInternals(c: Checker) {
     val myViolation = abs(left.value - right.value)
@@ -174,7 +173,7 @@ case class BoolEQ(a: IntValue, b: IntValue) extends Constraint {
 
   override val violation = BoolEQInv(a, b)
 
-  override def violation(v: Value) = { if (a == v || b == v) violation else 0L }
+  override def violation(v: Value):IntValue = { if (a == v || b == v) violation else 0L }
   //override def violation(v: Value) = { if (a == v) Max2(0L,Minus(violation,b)) else if (b == v) Max2(0L,Minus(violation,a)) else 0L }
 }
 
@@ -215,7 +214,7 @@ case class BoolLE(a: IntValue, b: IntValue) extends Constraint {
 
   override val violation = BoolLEInv(a, b)
 
-  override def violation(v: Value) = { if (a == v || b == v) violation else 0L }
+  override def violation(v: Value):IntValue = { if (a == v || b == v) violation else 0L }
 }
 
 case class BoolLT(a: IntValue, b: IntValue) extends Constraint {
@@ -224,7 +223,7 @@ case class BoolLT(a: IntValue, b: IntValue) extends Constraint {
 
   override val violation = BoolLTInv(a, b)
 
-  override def violation(v: Value) = { if (a == v || b == v) violation else 0L }
+  override def violation(v: Value):IntValue = { if (a == v || b == v) violation else 0L }
 }
 
 
@@ -235,6 +234,6 @@ case class BoolLT(a: IntValue, b: IntValue) extends Constraint {
 case class Reif(b: IntValue, c: Constraint) extends Constraint { 
   registerConstrainedVariables(b, c.violation)
   override val violation = ReifViol(b,c.violation)
-  override def violation(v: Value) =  { if (b == v || c.violation == v) violation else 0L }
+  override def violation(v: Value):IntValue =  { if (b == v || c.violation == v) violation else 0L }
   //TODO: Check internals
 }

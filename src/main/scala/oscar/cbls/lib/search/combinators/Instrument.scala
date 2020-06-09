@@ -1,9 +1,7 @@
 package oscar.cbls.lib.search.combinators
 
-import oscar.cbls._
-import oscar.cbls.core.search._
-
-
+import oscar.cbls.core.objective.Objective
+import oscar.cbls.core.search.{InstrumentedMove, Move, MoveFound, Neighborhood, NeighborhoodCombinator, NoMoveFound, SearchResult}
 
 /**
  * this combinator attaches a custom code to a given neighborhood.

@@ -16,8 +16,6 @@
  */
 package oscar.cbls.core.search
 
-import scala.language.implicitConversions
-
 /**
  * @author renaud.delandtsheer@cetic.be
  */
@@ -38,6 +36,6 @@ abstract class NeighborhoodCombinator(a: Neighborhood*) extends Neighborhood {
 
   override def toString: String = this.getClass.getSimpleName + "(" + a.mkString(",") + ")"
 
-  override def collectProfilingStatistics: List[String] = a.flatMap(_.collectProfilingStatistics).toList
+  override def collectProfilingStatistics: List[Array[String]] = a.flatMap(_.collectProfilingStatistics).toList
 }
 

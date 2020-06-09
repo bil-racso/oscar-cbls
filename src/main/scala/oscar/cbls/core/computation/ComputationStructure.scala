@@ -20,12 +20,12 @@
 
 package oscar.cbls.core.computation
 
+import oscar.cbls
 import oscar.cbls.algo.distributedStorage.{DistributedStorageUtility, StorageUtilityManager}
 import oscar.cbls.algo.quick.QList
 import oscar.cbls.core.propagation._
 
 import scala.collection.immutable.{SortedMap, SortedSet}
-import scala.language.implicitConversions
 
 /**This class contains the invariants and variables
   * They are all modelled as propagation Elements, which are handled by the inherited
@@ -55,7 +55,9 @@ case class Store(override val verbose:Boolean = false,
   with Bulker with StorageUtilityManager{
 
   assert({System.err.println("You are using a CBLS store with asserts activated. It makes the engine slower. Recompile it with -Xdisable-assertions"); true})
-  if(checker.nonEmpty) System.err.println("OscaR.cbls is running in debug mode. It makes the engine slower.")
+
+  cbls.warning(checker.isEmpty, "OscaR.cbls is running in debug mode. It makes the engine slower.")
+
 
   private[this] var variables:QList[AbstractVariable] = null
   private var propagationElements:QList[PropagationElement] = null
@@ -158,7 +160,7 @@ case class Store(override val verbose:Boolean = false,
   /**this checks that invariant i is one that is supposed to do something now
     * used to check that invariants have declared all their controling links to the model
     * */
-  def checkExecutingInvariantOK(i:Invariant):Boolean = {
+  def   checkExecutingInvariantOK(i:Invariant):Boolean = {
     if(i != null){
       if (notifiedInvariant != null && notifiedInvariant != i){
         return false
@@ -467,6 +469,16 @@ object InvariantHelper{
     (MyMin, MyMax)
   }
 
+  def getMinMaxBoundsShort(variables:Iterable[IntValue]):(Int,Int) = {
+    var MyMax = Int.MinValue
+    var MyMin = Int.MaxValue
+    for (v <- variables) {
+      if (MyMax < v.max) MyMax = v.longToInt(v.max)
+      if (MyMin > v.min) MyMin = v.longToInt(v.min)
+    }
+    (MyMin, MyMax)
+  }
+
   def getMinMaxBoundsInt(variables:Iterable[Long]):(Long,Long) = {
     var MyMax = Long.MinValue
     var MyMin = Long.MaxValue
@@ -477,9 +489,19 @@ object InvariantHelper{
     (MyMin, MyMax)
   }
 
-  def getMinMaxBoundsSet(variables:Iterable[SetValue]):(Long,Long) = {
-    var myMax = Long.MinValue
-    var myMin = Long.MaxValue
+  def getMinMaxBoundsShortInt(variables: Iterable[Int]):(Int,Int)={
+    var MyMax = Int.MinValue
+    var MyMin = Int.MaxValue
+    for (v <- variables) {
+      if (MyMax < v) MyMax = v
+      if (MyMin > v) MyMin = v
+    }
+    (MyMin, MyMax)
+  }
+
+  def getMinMaxBoundsSet(variables:Iterable[SetValue]):(Int,Int) = {
+    var myMax = Int.MinValue
+    var myMin = Int.MaxValue
     for (v <- variables) {
       if (myMax < v.max) myMax = v.max
       if (myMin > v.min) myMin = v.min

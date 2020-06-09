@@ -20,7 +20,6 @@
 
 package oscar.cbls.algo.dag
 
-
 /** a concrete DAG  implementing all the abstract methods of DAG
   * @author renaud.delandtsheer@cetic.be
   * @param _UniqueID: an ID to be used as comparison for storage in sorted data structures
@@ -40,13 +39,25 @@ class ConcreteDAGNode(val _UniqueID:Int) extends DAGNode{
   override def getDAGPrecedingNodes: Iterable[DAGNode] = PrecedingNodes
   override def getDAGSucceedingNodes: Iterable[DAGNode] = SucceedingNodes
 
-  def setAsPrecedingNodeKnownNotYetPreceding(b:ConcreteDAGNode){
-    PrecedingNodes = b :: PrecedingNodes
-    b.SucceedingNodes = this :: b.SucceedingNodes
+
+  /**
+    * Sets the current node as predecessor of the parameter 'successor'
+    * so that this -> successor
+    * @param successor reference to the next node
+    */
+  def setAsPrecedingNodeKnownNotYetPreceding(successor:ConcreteDAGNode){
+    SucceedingNodes = successor :: SucceedingNodes
+    successor.PrecedingNodes = this :: successor.PrecedingNodes
   }
 
-  def setAsSucceedingNodeKnownNotYetSucceeding(b:ConcreteDAGNode){
-    b.setAsPrecedingNodeKnownNotYetPreceding(this)
+  /**
+    * Sets the current node as successor of the parameter 'predecessor'
+    * so that predecessor -> this
+    * @param predecessor reference to the predecessor node
+    */
+
+  def setAsSucceedingNodeKnownNotYetSucceeding(predecessor:ConcreteDAGNode){
+    predecessor.setAsPrecedingNodeKnownNotYetPreceding(this)
   }
 }
 

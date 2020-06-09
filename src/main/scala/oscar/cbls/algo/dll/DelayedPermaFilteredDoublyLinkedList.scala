@@ -52,14 +52,14 @@ class DelayedPermaFilteredDoublyLinkedList[T <: AnyRef] extends Iterable[T]{
       def injector():Unit = {
         inserted.filtered = QList(filtered.addElem(map(inserted.elem)),inserted.filtered)
       }
-      def isStillValid():Boolean = {inserted.prev != null}
+      def isStillValid:Boolean = {inserted.prev != null}
       filter(inserted.elem, injector _, isStillValid _)
     }
   }
 
-  private[this] var filtered:QList[Filtered[_]] = null
+  private[this] var filtered:QList[Filtered[_]] = _
 
-  def headPhantom = phantom
+  def headPhantom: DPFDLLStorageElement[T] = phantom
 
   /**returns the size of the PermaFilteredDLL
     * this is a O(n) method because it is very rarely used.
@@ -141,7 +141,7 @@ class DelayedPermaFilteredDoublyLinkedList[T <: AnyRef] extends Iterable[T]{
     toReturn
   }
 
-  override def foreach[U](f: (T) => U){
+  override def foreach[U](f: T => U){
     var currentPos = headPhantom.next
     while(currentPos != headPhantom){
       f(currentPos.elem)
@@ -152,13 +152,13 @@ class DelayedPermaFilteredDoublyLinkedList[T <: AnyRef] extends Iterable[T]{
 
 /**
  * @author renaud.delandtsheer@cetic.be
- * @param elem
- * @tparam T
+ * @param elem Element to store
+ * @tparam T Types of elements
  */
 class DPFDLLStorageElement[T](val elem:T){
-  var next:DPFDLLStorageElement[T] = null
-  var prev:DPFDLLStorageElement[T] = null
-  var filtered: QList[DLLStorageElement[_]] = null
+  var next:DPFDLLStorageElement[T] = _
+  var prev:DPFDLLStorageElement[T] = _
+  var filtered: QList[DLLStorageElement[_]] = _
 
   def setNext(d:DPFDLLStorageElement[T]){
     this.next = d

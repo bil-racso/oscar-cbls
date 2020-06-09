@@ -15,10 +15,9 @@
 
 package oscar.cbls.lib.invariant.graph
 
-import oscar.cbls._
 import oscar.cbls.algo.graph._
-import oscar.cbls.core._
-import oscar.cbls.core.computation.{Domain, SetNotificationTarget}
+import oscar.cbls.core.computation.{ChangingIntValue, ChangingSetValue, Domain, IntInvariant, IntNotificationTarget, IntValue, SetNotificationTarget, SetValue, ValueWiseKey, VaryingDependencies}
+import oscar.cbls.core.propagation.Checker
 
 import scala.collection.immutable.SortedSet
 
@@ -135,10 +134,10 @@ class DistanceInConditionalGraph(graph:ConditionalGraph,
 
   override def notifySetChanges(v: ChangingSetValue,
                                 d: Int,
-                                addedValues: Iterable[Long],
-                                removedValues: Iterable[Long],
-                                oldValue: SortedSet[Long],
-                                newValue: SortedSet[Long]): Unit = {
+                                addedValues: Iterable[Int],
+                                removedValues: Iterable[Int],
+                                oldValue: SortedSet[Int],
+                                newValue: SortedSet[Int]): Unit = {
 
     //this looks a bit drastic,
     // however, we are in a value-wise context;
@@ -164,7 +163,7 @@ class DistanceInConditionalGraph(graph:ConditionalGraph,
     * this will be called for each invariant after propagation is performed.
     * It requires that the Model is instantiated with the variable debug set to true.
     */
-  override def checkInternals(c: Checker): Unit = {
+  override def checkInternals(checker: Checker): Unit = {
 
     //We rely on the existing Astar, but call it twice.
 
@@ -172,7 +171,7 @@ class DistanceInConditionalGraph(graph:ConditionalGraph,
     val toID = longToInt(to.value)
 
     if (fromID == -1 || toID == -1) {
-      require(this.value == distanceIfNotConnected)
+      assert(this.value == distanceIfNotConnected)
     } else {
 
       val fwd = aStar.search(
@@ -191,16 +190,15 @@ class DistanceInConditionalGraph(graph:ConditionalGraph,
 
       (fwd, bwt) match {
         case (Distance(a, b, distance1, _, _, _), Distance(c, d, distance2, _, _, _)) =>
-          require(this.value == distance1)
-          require(distance1 == distance2)
+          assert(this.value == distance1)
+          assert(distance1 == distance2)
 
         case (NeverConnected(a, b), NeverConnected(c, d)) =>
+          assert(this.value == distanceIfNotConnected)
 
-          require(this.value == distanceIfNotConnected)
-
-        case (NotConnected(a, b, _), NotConnected(c, d, _)) =>
+       case (NotConnected(a, b, _), NotConnected(c, d, _)) =>
           //println("computeAffectAndAdjustValueWiseKey" + n)
-          require(this.value == distanceIfNotConnected)
+          assert(this.value == distanceIfNotConnected)
         case _ => throw new Error("disagreeing aStar")
       }
     }
