@@ -27,11 +27,11 @@ import oscar.cbls.core.propagation.Checker
  * @param f is a function that is applied to every value in f prior to the sum
  * @author renaud.delandtsheer@cetic.be
  */
-case class SeqSum(v: SeqValue, f:(Int => Int) = (a:Int) => a)
+case class SeqSum(v: SeqValue, f:Int => Int = (a:Int) => a)
   extends IntInvariant()
   with SeqNotificationTarget{
 
-  setName("SeqSum(" + v.name + ")")
+  setName(s"SeqSum(${v.name})")
 
   registerStaticAndDynamicDependency(v)
   finishInitialization()
@@ -97,9 +97,9 @@ case class SeqSum(v: SeqValue, f:(Int => Int) = (a:Int) => a)
     }
   }
 
-  override def checkInternals(c: Checker) {
+  override def checkInternals(c: Checker): Unit = {
 //    c.check(this.newValue == v.value.toList.map(f).sum)
-    c.check(this.newValue == computeSumFromScratch(v.value),Some("this.newValue(="+ this.newValue+") == Sum(v.value(="+ computeSumFromScratch(v.value)+ ")"))
+    c.check(this.newValue == computeSumFromScratch(v.value),
+      Some(s"this.newValue(=${this.newValue}) == Sum(v.value(=${computeSumFromScratch(v.value)})"))
   }
 }
-

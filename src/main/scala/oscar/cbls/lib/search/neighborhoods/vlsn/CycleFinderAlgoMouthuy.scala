@@ -14,14 +14,12 @@
   * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
   * ****************************************************************************
   */
-
 package oscar.cbls.lib.search.neighborhoods.vlsn
 
 import oscar.cbls.algo.magicArray.MagicBoolArray
 
 import scala.collection.mutable
 import scala.util.Random
-
 
 class CycleFinderAlgoMouthuy(graph:VLSNGraph) extends CycleFinderAlgo{
   private val nodes:Array[Node] = graph.nodes
@@ -180,7 +178,6 @@ class CycleFinderAlgoMouthuy(graph:VLSNGraph) extends CycleFinderAlgo{
     None
   }
 
-
   override def findCycle(liveNodes:Array[Boolean]):Option[List[Edge]] = {
     isLiveNode = liveNodes
     //TODO: i've put a random because I do not want nodes with smaller ID to be better optimized and create over-optimized hotspot. Maybe a HotRestart would be more efficient.
@@ -190,7 +187,6 @@ class CycleFinderAlgoMouthuy(graph:VLSNGraph) extends CycleFinderAlgo{
         case Some(c)  => return Some(c.cycle)
       }
     }
-    return None
+    None
   }
 }
-

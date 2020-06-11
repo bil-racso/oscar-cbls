@@ -14,7 +14,6 @@
   * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
   * ****************************************************************************
   */
-
 package oscar.cbls.lib.search.neighborhoods.vlsn
 
 import oscar.cbls.core.computation.Store
@@ -66,13 +65,13 @@ class MoveExplorerAlgo(v:Int,
       if (!penaltyChanged){
         val newValue = unroutedNodesPenalty.value
         require(newValue == Long.MaxValue || newValue == initialUnroutedNodesPenalty,
-          "Penaly impacted by current move and should not, can only impact " + changedVehicles.mkString(")"))
+          s"Penalty impacted by current move and should not, can only impact ${changedVehicles.mkString(")")}")
       }
       for (vehicle <- 0 until v){
         if(!(changedVehicles contains vehicle)) {
           val newValue = vehicleToObjectives(vehicle).value
           require(newValue == Long.MaxValue || newValue == initialVehicleToObjectives(vehicle),
-            "vehicle " + vehicle + " impacted by current move and should not; it can only impact {" + changedVehicles.mkString(",") +"}" + (if (penaltyChanged) " and penalty " else ""))
+            s"vehicle $vehicle impacted by current move and should not; it can only impact {${changedVehicles.mkString(",")}}${if (penaltyChanged) " and penalty " else ""}")
         }
       }
 
@@ -193,7 +192,7 @@ class MoveExplorerAlgo(v:Int,
         n
     }
 
-    val obj = if(debug) {
+    val obj = if (debug) {
       generateCheckerObjForVehicles(globalObjective:Objective, Set(targetVehicleForInsertion), penaltyChanged = true)
     }else {
       globalObjective
@@ -330,7 +329,7 @@ class MoveExplorerAlgo(v:Int,
     }
   }
 
-  private def exploreInsertions(){
+  private def exploreInsertions(): Unit ={
 
     val vehicleAndUnroutedNodes: Iterable[(Int, Int)] =
       unroutedNodesToInsert.flatMap(unroutedNode => nodeToRelevantVehicles(unroutedNode).map(vehicle => (vehicle, unroutedNode)))
@@ -340,7 +339,6 @@ class MoveExplorerAlgo(v:Int,
     exploreInsertionsNoRemove(vehicleToUnroutedNodeToInsert)
     exploreInsertionsWithRemove(vehicleToUnroutedNodeToInsert)
   }
-
 
   private var cachedNodeMoveNeighborhoodNoRemove:Option[(Int,Int => Neighborhood)] = None //targetVehicle,node=>Neighborhood
 
@@ -466,10 +464,7 @@ class MoveExplorerAlgo(v:Int,
 
     exploreNodeMoveNoRemove(vehicleToNodeToMoveThere)
     exploreNodeMoveWithRemove(vehicleToNodeToMoveThere)
-
   }
-
-
 
   def evaluateRemove(routingNodeToRemove:Int,fromVehicle:Int):(Move,Long) = {
 

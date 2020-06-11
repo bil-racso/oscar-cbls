@@ -26,7 +26,7 @@ class BasicSaveBest(a: Neighborhood, o: Objective, alsoSaveOnExhaust:Boolean = t
   def bestObj:Long = myBestObj
 
   //this resets the internal state of the move combinators
-  override def reset() {
+  override def reset(): Unit ={
     super.reset()
     if(!alsoSaveOnExhaust) {
       myBestObj = Long.MaxValue
@@ -61,18 +61,18 @@ class BasicSaveBest(a: Neighborhood, o: Objective, alsoSaveOnExhaust:Boolean = t
     }
   }
 
-  def saveCurrentIfBest(objToSave:Long) {
+  def saveCurrentIfBest(objToSave:Long): Unit ={
     if(objToSave < myBestObj) saveCurrent(objToSave)
   }
 
-  def saveCurrent(objToSave:Long){
+  def saveCurrent(objToSave:Long): Unit ={
     best = s.solution(true)
     myBestObj = objToSave
   }
 
   protected def currentSolutionIsAcceptable = true
 
-  def restoreBest() {
+  def restoreBest(): Unit ={
     val isCurrentAccepteable = currentSolutionIsAcceptable
     if (best == null && !isCurrentAccepteable) {
       if (verbose >= 1L) println("no single acceptable solution seen")

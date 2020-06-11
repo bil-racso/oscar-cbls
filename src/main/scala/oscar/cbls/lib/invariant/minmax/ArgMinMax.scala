@@ -18,7 +18,6 @@
  *         by Renaud De Landtsheer
  *            Yoann Guyot
  ******************************************************************************/
-
 package oscar.cbls.lib.invariant.minmax
 
 import oscar.cbls.algo.heap.BinomialHeapWithMoveInt
@@ -37,7 +36,6 @@ import scala.collection.immutable.SortedSet
  * */
 case class ArgMax(vars: Array[IntValue], cond: SetValue = null, default: Int = Int.MinValue)
   extends ArgMiax(vars, cond, default) {
-
   override def ord(v: Int): Int = -v
 }
 
@@ -71,7 +69,7 @@ abstract class ArgMiax[X <: IntValue](vars: Array[X], cond: SetValue, default: I
   with SetNotificationTarget{
 
   override def toString:String = {
-    name + "(" + InvariantHelper.arrayToString(vars) + "," + cond + "," + default + ")"
+    s"$name(${InvariantHelper.arrayToString(vars)},$cond,$default)"
   }
 
   var keyForRemoval: Array[KeyForElementRemoval] = new Array(vars.length)
@@ -105,7 +103,7 @@ abstract class ArgMiax[X <: IntValue](vars: Array[X], cond: SetValue, default: I
   var miax = if (firsts.isEmpty) default else vars(h.getFirst).valueInt
 
   @inline
-  override def notifyIntChanged(v: ChangingIntValue, index: Int, OldVal: Long, NewVal: Long) {
+  override def notifyIntChanged(v: ChangingIntValue, index: Int, OldVal: Long, NewVal: Long): Unit = {
     //mettre a jour le heap
     h.notifyChange(index)
 
@@ -137,7 +135,7 @@ abstract class ArgMiax[X <: IntValue](vars: Array[X], cond: SetValue, default: I
   }
 
   @inline
-  def notifyInsertOn(v: ChangingSetValue, value: Int) {
+  def notifyInsertOn(v: ChangingSetValue, value: Int): Unit = {
     assert(v == cond && cond != null)
     keyForRemoval(value) = registerDynamicDependency(vars(value), value)
 
@@ -154,7 +152,7 @@ abstract class ArgMiax[X <: IntValue](vars: Array[X], cond: SetValue, default: I
   }
 
   @inline
-  def notifyDeleteOn(v: ChangingSetValue, value: Int) {
+  def notifyDeleteOn(v: ChangingSetValue, value: Int): Unit = {
     assert(v == cond && cond != null)
 
     keyForRemoval(value).performRemove()
@@ -175,24 +173,22 @@ abstract class ArgMiax[X <: IntValue](vars: Array[X], cond: SetValue, default: I
         for(first <- h.getFirsts){
           this :+= first
         }
-
         miax = vars(h.getFirst).valueInt
       }
     }
   }
 
-  override def checkInternals(c: Checker) {
+  override def checkInternals(c: Checker): Unit = {
     var count: Long = 0L
     for (i <- vars.indices) {
       if (cond == null || (cond != null && cond.value.contains(i))) {
         if (vars(i).value == miax) {
           c.check(this.value.contains(i),
-            Some("this.value.contains(" + i + ")"))
+            Some(s"this.value.contains($i)"))
           count += 1L
         } else {
           c.check(ord(miax) < ord(vars(i).valueInt),
-            Some("Ord(" + miax + ") < Ord(vars(" + i + ").value ("
-              + vars(i).value + "))"))
+            Some(s"Ord($miax) < Ord(vars($i).value (${vars(i).value}))"))
         }
       }
     }
@@ -203,4 +199,3 @@ abstract class ArgMiax[X <: IntValue](vars: Array[X], cond: SetValue, default: I
       c.check(this.value.subsetOf(cond.value), Some("this.newValue.subsetOf(cond.newValue)"))
   }
 }
-

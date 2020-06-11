@@ -26,9 +26,13 @@ import java.awt.Color
 import org.jfree.chart.plot.{PlotOrientation, ValueMarker, XYPlot}
 import javax.swing.SwingUtilities
 
-class LongPlotLine(title: String, xlab: String, ylab: String, series: List[String] = List("default")) extends LongPlot(title,xlab,ylab, series) {
+class LongPlotLine(title: String,
+                   xlab: String,
+                   ylab: String,
+                   series: List[String] = List("default"))
+  extends LongPlot(title,xlab,ylab, series) {
 
-  def createChart = ChartFactory.createXYLineChart(title,xlab,ylab,xyDataset,PlotOrientation.VERTICAL,false,false, false);
+  def createChart(): JFreeChart = ChartFactory.createXYLineChart(title,xlab,ylab,xyDataset,PlotOrientation.VERTICAL,false,false, false)
 }
 
 abstract class LongPlot(title: String, xlab: String, ylab: String, series: List[String]) extends JPanel(new BorderLayout()) {
@@ -50,7 +54,7 @@ abstract class LongPlot(title: String, xlab: String, ylab: String, series: List[
 
   hideHighlight()
 
-  def highlight(x: Double, y: Double, col: Color = Color.LIGHT_GRAY) = {
+  def highlight(x: Double, y: Double, col: Color = Color.LIGHT_GRAY): Unit = {
     SwingUtilities.invokeLater(new Runnable() {
       def run() {
         xMarker.setPaint(col);
@@ -65,7 +69,7 @@ abstract class LongPlot(title: String, xlab: String, ylab: String, series: List[
     })
   }
 
-  def hideHighlight() = {
+  def hideHighlight(): Boolean = {
     plot.removeDomainMarker(xMarker)
     plot.removeRangeMarker(yMarker)
   }
@@ -78,7 +82,7 @@ abstract class LongPlot(title: String, xlab: String, ylab: String, series: List[
     xySeries(ser).add(x,y,true)
   }
 
-  def removeAllPoints(ser: Int = 0) {
+  def removeAllPoints(ser: Int = 0): Unit = {
     xySeries(ser).clear();
   }
 
@@ -109,4 +113,3 @@ abstract class LongPlot(title: String, xlab: String, ylab: String, series: List[
   def createChart(): JFreeChart
 
 }
-

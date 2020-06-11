@@ -35,7 +35,6 @@ object ParetoOrder extends Enumeration {
     }
   }
 
-
   def compare1(a:Long,b:Long):ParetoOrder = {
     if (a == b) Equal
     else if (a < b) Dominates
@@ -184,7 +183,7 @@ object TestParetoList extends App{
 
   val l = new ListParetoMap[Array[Long]](3)
 
-  def mInsert(x:Array[Long]){
+  def mInsert(x:Array[Long]): Unit = {
     println()
     println("inserting " + x.mkString(","))
     println("inserted:" + l.insert(x,x))

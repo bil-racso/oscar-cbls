@@ -111,34 +111,28 @@ case class HyperCube(vars:Array[CBLSIntVar],
     currentDeltas = Nil
   }
 
-
   override def instantiateCurrentMove(newObj: Long): CubeAssignMove =
     CubeAssignMove(currentDeltas, newObj, name)
 }
 
-case class CubeAssign(variable:CBLSIntVar, indice:Int, newValue:Long){
+case class CubeAssign(variable:CBLSIntVar, indice:Int, newValue:Long) {
   def commit(): Unit ={
     variable := newValue
   }
 
-  override def toString: String = variable.name + ":=" + newValue
+  override def toString: String = s"${variable.name}:=$newValue"
 }
-
-
 
 case class CubeAssignMove(l:List[CubeAssign], override val objAfter:Long, override val neighborhoodName:String = null)
   extends Move(objAfter, neighborhoodName){
 
   override def commit() {
-    l.map(_.commit)
+    l.foreach(_.commit())
   }
 
   override def toString: String = {
-    neighborhoodNameToString + "CubeAssignMove(" + l.map(_.toString).mkString(",") + objToString + ")"
+    s"${neighborhoodNameToString}CubeAssignMove(${l.map(_.toString).mkString(",")}$objToString)"
   }
 
   override def touchedVariables: List[Variable] = l.map(_.variable)
 }
-
-
-

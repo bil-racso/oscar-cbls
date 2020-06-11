@@ -28,8 +28,7 @@ object IterableMagicBoolArray {
   }
 }
 
-
-class IterableMagicBoolArray(override val length:Int,initVal:Boolean = false)
+class IterableMagicBoolArray(override val length:Int, initVal:Boolean = false)
   extends MagicBoolArray(length,initVal){
 
   private var positionsAtTrueOverApproximated:QList[Int] = _

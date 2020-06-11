@@ -14,7 +14,8 @@ object FloydWarshall{
     m
   }
 
-  def buildDistanceMatrixAllConditionalEdgesSame(g:ConditionalGraph,allConditionsState:Boolean):Array[Array[Long]] = {
+  def buildDistanceMatrixAllConditionalEdgesSame(g:ConditionalGraph,
+                                                 allConditionsState:Boolean):Array[Array[Long]] = {
     buildDistanceMatrix(g, isConditionalEdgeOpen = _ => allConditionsState)
   }
 

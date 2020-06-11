@@ -28,7 +28,7 @@ trait StopWatch {
   private var starttime:Long = 0L
 
   /**starts or resets the stopwatch*/
-  def startWatch(){
+  def startWatch(): Unit = {
     starttime = System.nanoTime()
   }
 
@@ -50,6 +50,6 @@ trait StopWatch {
     val s :Long= s1 - 60L*m1
     val ms:Long = ms1 - 1000L*s1
 
-    h + ":" + m + ":" + s + " & " + ms + "ms"
+    s"$h:$m:$s & ${ms}ms"
   }
 }

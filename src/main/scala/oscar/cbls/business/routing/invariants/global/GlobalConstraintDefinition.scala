@@ -153,9 +153,10 @@ abstract class GlobalConstraintDefinition[U <: Any :Manifest](gc: GlobalConstrai
     */
   protected[global] def checkInternals(vehicle: Int, routes: ChangingSeqValue, segments: List[Segment]): Unit ={
     val fromScratch = computeVehicleValueFromScratch(vehicle, routes.value)
-    require(fromScratch.equals(lastComputedVehiclesValue(vehicle)), "Constraint " + this.getClass.getName + " failed " +
-    "For Vehicle " + vehicle + " : should be " + fromScratch + " got " +
-      lastComputedVehiclesValue(vehicle) + " " + routes + "\nAfter receiving segments : " + segments.mkString("\n    "))
+    require(fromScratch.equals(lastComputedVehiclesValue(vehicle)),
+      s"""Constraint ${this.getClass.getName} failed.
+         |For Vehicle $vehicle should be $fromScratch got ${lastComputedVehiclesValue(vehicle)} $routes
+         |After receiving segments : ${segments.mkString("\n    ")}""".stripMargin)
   }
 
 }

@@ -67,7 +67,6 @@ class ObjectiveFunctionDisplay(title: String, minCap:Long, maxCap:Long, basePerc
     }
   }
 
-
   // The plots
   private val combinedPlots = new CombinedDomainXYPlot(new NumberAxis("Time (s)"))
   private val series = seriesIds.toArray.map {
@@ -93,10 +92,9 @@ class ObjectiveFunctionDisplay(title: String, minCap:Long, maxCap:Long, basePerc
 
     datasets.foreach(d => d.getSeries.asScala.foreach(s => {
       val series = s.asInstanceOf[XYSeries]
-      stringBuilder.append("<p style='color:#0000ff;'>" + series.getKey() +
-        " : " + series.getY(item).intValue() + "</p>")
+      stringBuilder.append(s"<p style='color:#0000ff;'>${series.getKey()} : ${series.getY(item).intValue()}</p>")
     }))
-    stringBuilder.append("<p style='color:#0000ff;'>At : " + dataset.getX(series, item) + " s </p>")
+    stringBuilder.append(s"<p style='color:#0000ff;'>At : ${dataset.getX(series, item)} s </p>")
     stringBuilder.append("</html>")
     stringBuilder.toString()
   }
@@ -120,7 +118,6 @@ class ObjectiveFunctionDisplay(title: String, minCap:Long, maxCap:Long, basePerc
 
   panel.setMouseWheelEnabled(true)
   panel.setMouseZoomable(true)
-
 
   // Display interactions
   this.setDoubleBuffered(true)
@@ -216,7 +213,7 @@ class ObjectiveFunctionDisplay(title: String, minCap:Long, maxCap:Long, basePerc
         marker.setPaint(new Color(55, 255, 55))
         marker.setAlpha(0.2f)
         marker.setOutlinePaint(new Color(55, 255, 55))
-        plots(0).addDomainMarker(marker)
+        plots.head.addDomainMarker(marker)
       } else {
         // Still decreasing ==> increase the interval
         val currentMarker =

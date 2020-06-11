@@ -1,5 +1,3 @@
-package oscar.cbls.business.geometry.model
-
 /*******************************************************************************
   * OscaR is free software: you can redistribute it and/or modify
   * it under the terms of the GNU Lesser General Public License as published by
@@ -14,6 +12,7 @@ package oscar.cbls.business.geometry.model
   * You should have received a copy of the GNU Lesser General Public License along with OscaR.
   * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
   ******************************************************************************/
+package oscar.cbls.business.geometry.model
 
 import org.locationtech.jts.algorithm.MinimumBoundingCircle
 import org.locationtech.jts.geom.impl.CoordinateArraySequence
@@ -38,6 +37,7 @@ case class GeometryValue(geometry: Geometry,
   // alors juste la doner en entrée.
 
   def centerOfOverApproximatingCircleOpt:Option[Point] = inputCentreOfOverApproximatingCircle
+
   def centerOfOverApproximatingCircle:Point = inputCentreOfOverApproximatingCircle match{
     case Some(c) => c
     case None =>
@@ -48,7 +48,9 @@ case class GeometryValue(geometry: Geometry,
   private def distance(x1:Double,y1:Double,x2:Double,y2:Double):Double = {
     Math.sqrt(Math.pow(x1-x2,2.0) + Math.pow(y1 - y2,2.0))
   }
+
   def overApproximatingRadiusOpt:Option[Double] = inputOverApproximatingRadius
+
   def overApproximatingRadius:Double = inputOverApproximatingRadius match{
     case Some(r) => r
     case None =>
@@ -73,7 +75,7 @@ case class CBLSGeometryVar(store: Store,
     val clone = CBLSGeometryVar(
       store,
       this.value,
-      "clone of " + this.name
+      s"clone of ${this.name}"
     )
 
     clone <== this
@@ -83,7 +85,6 @@ case class CBLSGeometryVar(store: Store,
   def <== (g: ChangingAtomicValue[GeometryValue]): Unit ={
     new IdentityGeometry(this, g)
   }
-
 
   override def performNotificationToListeningInv(inv: PropagationElement, id: Int, oldVal: GeometryValue, newVal: GeometryValue): Unit = {
     val target = inv.asInstanceOf[GeometryNotificationTarget]
@@ -104,12 +105,11 @@ class IdentityGeometry(toValue:CBLSGeometryVar, fromValue:ChangingAtomicValue[Ge
 
   toValue := fromValue.value
 
-
   override def notifyGeometryChange(a: ChangingAtomicValue[GeometryValue], id: Int, oldVal: GeometryValue, newVal: GeometryValue): Unit = {
     toValue := newVal
   }
 
-  override def checkInternals(c:Checker){
+  override def checkInternals(c:Checker): Unit ={
     c.check(toValue.value == fromValue.value)
   }
 }
@@ -117,7 +117,6 @@ class IdentityGeometry(toValue:CBLSGeometryVar, fromValue:ChangingAtomicValue[Ge
 trait GeometryNotificationTarget{
   def notifyGeometryChange(a:ChangingAtomicValue[GeometryValue],id:Int,oldVal:GeometryValue,newVal:GeometryValue)
 }
-
 
 case class CBLSGeometryConst(store:Store, override val value:GeometryValue, givenName:String = "")
   extends CBLSAtomicConst[GeometryValue](value){
@@ -134,7 +133,7 @@ class CBLSGeometryInvariant(store:Store,
     val clone = CBLSGeometryVar(
       store,
       this.value,
-      "clone of " + this.name
+      s"clone of ${this.name}"
     )
 
     clone <== this

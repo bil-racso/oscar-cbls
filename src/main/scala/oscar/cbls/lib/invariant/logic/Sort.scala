@@ -63,13 +63,13 @@ class Sort(var values:Array[IntValue], ReversePerm:Array[CBLSIntVar])
   def GetForwardPerm(): Array[CBLSIntVar] = ForwardPerm
 
   @inline
-  override def notifyIntChanged(v: ChangingIntValue, index: Int, OldVal: Long, NewVal: Long) {
+  override def notifyIntChanged(v: ChangingIntValue, index: Int, OldVal: Long, NewVal: Long): Unit = {
     if (NewVal > OldVal) BubbleUp(v, index)
     else BubbleDown(v, index)
   }
 
   @inline
-  private def BubbleUp(v: ChangingIntValue, PositionInInitialArray: Int) {
+  private def BubbleUp(v: ChangingIntValue, PositionInInitialArray: Int): Unit = {
     while (true) {
       val PositionInSorting: Int = ForwardPerm(PositionInInitialArray).newValueInt
       if (PositionInSorting == values.indices.last) return //last position
@@ -80,7 +80,7 @@ class Sort(var values:Array[IntValue], ReversePerm:Array[CBLSIntVar])
   }
 
   @inline
-  private def BubbleDown(v: ChangingIntValue, PositionInInitialArray: Int) {
+  private def BubbleDown(v: ChangingIntValue, PositionInInitialArray: Int): Unit = {
     while (true) {
       val PositionInSorting: Int = ForwardPerm(PositionInInitialArray).newValueInt
       if (PositionInSorting == 0) return //first position
@@ -91,7 +91,7 @@ class Sort(var values:Array[IntValue], ReversePerm:Array[CBLSIntVar])
   }
 
   @inline
-  private def swap(PositionInSorting1: Int, PositionInSorting2: Int) {
+  private def swap(PositionInSorting1: Int, PositionInSorting2: Int): Unit = {
     val PositionInInitialArray1: Int = ReversePerm(PositionInSorting1).newValueInt
     val PositionInInitialArray2: Int = ReversePerm(PositionInSorting2).newValueInt
 
@@ -102,23 +102,18 @@ class Sort(var values:Array[IntValue], ReversePerm:Array[CBLSIntVar])
     ForwardPerm(PositionInInitialArray2) := PositionInSorting1
   }
 
-  override def checkInternals(c: Checker) {
+  override def checkInternals(c: Checker): Unit = {
     val range = values.indices
     for (i <- range) {
       c.check(ReversePerm(ForwardPerm(i).valueInt).value == i,
-        Some("ReversePerm(ForwardPerm(" + i
-          + ").valueInt ("+ForwardPerm(i).value+")).value  ("+ ReversePerm(ForwardPerm(i).valueInt).value+") == " + i))
+        Some(s"ReversePerm(ForwardPerm($i).valueInt (${ForwardPerm(i).value})).value  (${ReversePerm(ForwardPerm(i).valueInt).value}) == $i"))
       c.check(ForwardPerm(ReversePerm(i).valueInt).value == i,
-        Some("ForwardPerm(ReversePerm(" + i
-          + ").valueInt ("+ReversePerm(i).value+")).value ("+ ForwardPerm(ReversePerm(i).valueInt).value+ ") == " + i))
+        Some(s"ForwardPerm(ReversePerm($i).valueInt (${ReversePerm(i).value})).value (${ForwardPerm(ReversePerm(i).valueInt).value}) == $i"))
     }
     for (i <- range) {
       for (j <- range if i < j) {
-        c.check((values(ReversePerm(i).newValueInt).value <= values(ReversePerm(j).newValueInt).value),
-          Some("(values(ReversePerm(" + i + ").newValueInt).value ("
-            + values(ReversePerm(i).newValueInt).value
-            + ") <= values(ReversePerm(" + j + ").newValueInt).value "
-            + values(ReversePerm(j).newValueInt).value + ")"))
+        c.check(values(ReversePerm(i).newValueInt).value <= values(ReversePerm(j).newValueInt).value,
+          Some(s"(values(ReversePerm($i).newValueInt).value (${values(ReversePerm(i).newValueInt).value}) <= values(ReversePerm($j).newValueInt).value ${values(ReversePerm(j).newValueInt).value})"))
       }
     }
   }
@@ -130,7 +125,7 @@ object Sort {
    * returns the ForwardPerm for a given array
    * It instantiates an array of the appropriate size and populates it with IntVar.
    */
-  def MakeSort(values: Array[IntValue])  = {
+  def MakeSort(values: Array[IntValue]) = {
     val m: Store = InvariantHelper.findModel(values)
     val ReversePerm: Array[CBLSIntVar] = values.map(v => CBLSIntVar(m, 0L, values.indices.start to values.indices.end, "reverse_perm"))
     new Sort(values, ReversePerm)
@@ -138,4 +133,3 @@ object Sort {
 
   def apply(values:Array[IntValue], reversePerm:Array[CBLSIntVar]) = new Sort(values,reversePerm)
 }
-

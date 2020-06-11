@@ -1,10 +1,9 @@
 package oscar.cbls.business.scheduling.invariants
 
-import oscar.cbls.CBLSIntVar
 import oscar.cbls.algo.seq.IntSequence
 import oscar.cbls.business.scheduling.ActivityId
 import oscar.cbls.business.scheduling.model.{Precedences, Resource, ResourceState}
-import oscar.cbls.core.computation.{ChangingSeqValue, Invariant, SeqNotificationTarget, SeqUpdate, SeqUpdateAssign, SeqUpdateDefineCheckpoint, SeqUpdateInsert, SeqUpdateLastNotified, SeqUpdateMove, SeqUpdateRemove, SeqUpdateRollBackToCheckpoint}
+import oscar.cbls.core.computation.{CBLSIntVar, ChangingSeqValue, Invariant, SeqNotificationTarget, SeqUpdate, SeqUpdateAssign, SeqUpdateDefineCheckpoint, SeqUpdateInsert, SeqUpdateLastNotified, SeqUpdateMove, SeqUpdateRemove, SeqUpdateRollBackToCheckpoint}
 import oscar.cbls.core.propagation.Checker
 
 import scala.collection.BitSet

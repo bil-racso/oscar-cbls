@@ -21,7 +21,6 @@
  *         by Renaud De Landtsheer
  * ****************************************************************************
  */
-
 package oscar.cbls.lib.invariant.minmax
 /**This package proposes a set of logic invariants, which are used to define the structure of the problem*/
 
@@ -37,7 +36,7 @@ abstract class MiaxLin(vars: SortedSet[IntValue])
   extends IntInvariant(initialValue = 0L)
   with IntNotificationTarget{
 
-  require(vars.size > 0L, "Invariant " + this + " declared with zero vars to max")
+  require(vars.size > 0L, s"Invariant $this declared with zero vars to max")
 
   for (v <- vars) registerStaticAndDynamicDependency(v)
   finishInitialization()
@@ -50,7 +49,7 @@ abstract class MiaxLin(vars: SortedSet[IntValue])
 
   def better(a: Long, b: Long): Boolean //true if a is strictly more in the direction of the invariant that b
 
-  private def LoadNewMiax() {
+  private def LoadNewMiax(): Unit = {
     var CurrentMiax: Long = vars.head.value
     MiaxCount = 1L
     vars.foreach(v => {
@@ -66,8 +65,8 @@ abstract class MiaxLin(vars: SortedSet[IntValue])
 
   LoadNewMiax()
 
-  override def notifyIntChanged(v: ChangingIntValue, id: Int, OldVal: Long, NewVal: Long) {
-    assert(vars.contains(v), this.toString + " notified for not interesting var")
+  override def notifyIntChanged(v: ChangingIntValue, id: Int, OldVal: Long, NewVal: Long): Unit = {
+    assert(vars.contains(v), s"$this notified for not interesting var")
     val MiaxVal = this.newValue
     if (OldVal == MiaxVal && better(MiaxVal, NewVal)) {
       MiaxCount -= 1L
@@ -80,10 +79,9 @@ abstract class MiaxLin(vars: SortedSet[IntValue])
     }
   }
 
-  override def checkInternals(c: Checker) {
+  override def checkInternals(c: Checker): Unit = {
     vars.foreach(v => c.check(better(this.value, v.value) || this.value == v.value,
-      Some("better(output.value (" + this.value + "), " + v.value
-        + ") || output.value == " + v.value)))
+      Some(s"better(output.value (${this.value}), ${v.value}) || output.value == ${v.value}")))
   }
 }
 
@@ -109,7 +107,6 @@ case class MaxLin(vars: SortedSet[IntValue]) extends MiaxLin(vars) {
  * @author renaud.delandtsheer@cetic.be
  * */
 case class MinLin(vars: SortedSet[IntValue]) extends MiaxLin(vars) {
-
   override def better(a: Long, b: Long): Boolean = a < b
 }
 
@@ -133,17 +130,16 @@ abstract class Miax(vars: SortedSet[IntValue])
 
   this := h.getFirst.value
 
-  override def notifyIntChanged(v: ChangingIntValue, id: Int, OldVal: Long, NewVal: Long) {
-    assert(vars.contains(v), name + " notified for not interesting var")
+  override def notifyIntChanged(v: ChangingIntValue, id: Int, OldVal: Long, NewVal: Long): Unit = {
+    assert(vars.contains(v), s"$name notified for not interesting var")
     h.notifyChange(v)
     this := h.getFirst.value
   }
 
-  override def checkInternals(c: Checker) {
+  override def checkInternals(c: Checker): Unit = {
     vars.foreach(v => c.check(better(this.value, v.value)
       || this.value == v.value,
-      Some("better(this.value (" + this.value + "), " + v.value
-        + ") || this.value == " + v.value)))
+      Some(s"better(this.value (${this.value}), ${v.value}) || this.value == ${v.value}")))
   }
 }
 

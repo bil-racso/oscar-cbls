@@ -17,7 +17,7 @@ class HotSpotManager(maxValue:Int) {
       e.enqueue(value)
     }
   }
-  def enqueueAll():Unit = {
+  def enqueueAll(): Unit = {
     for(w <- 0 to maxValue) enqueue(w)
   }
 }

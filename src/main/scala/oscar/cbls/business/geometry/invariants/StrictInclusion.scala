@@ -62,6 +62,3 @@ class StrictInclusion(innerShape:AtomicValue[GeometryValue], outerShape:AtomicVa
     }
   }
 }
-
-
-

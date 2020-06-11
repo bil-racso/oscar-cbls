@@ -28,7 +28,9 @@ object IdenticalAggregator{
     removeIdenticals[T](l, isIdentical, Nil)
 
   @tailrec
-  private def removeIdenticals[T](l:List[T], isIdentical:(T,T) => Boolean, canonicals:List[T]):List[T] = {
+  private def removeIdenticals[T](l:List[T],
+                                  isIdentical:(T,T) => Boolean,
+                                  canonicals:List[T]):List[T] = {
     l match{
       case Nil => canonicals
       case h :: t =>

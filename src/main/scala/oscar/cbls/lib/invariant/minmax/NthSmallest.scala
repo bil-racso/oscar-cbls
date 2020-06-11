@@ -12,7 +12,6 @@
   * You should have received a copy of the GNU Lesser General Public License along with OscaR.
   * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
   ******************************************************************************/
-
 package oscar.cbls.lib.invariant.minmax
 
 import oscar.cbls.algo.search.LazyQuicksort
@@ -55,7 +54,7 @@ class NthSmallest(vars: Array[IntValue], nTh: Int, smallest:Boolean = true)
   require(nTh >= 0, "nthShould be positive")
   require(nTh < vars.length, "nTh should fall within the number of variables")
 
-  require(nTh <= (vars.length/2), "invert the invariant for efficiency reasons, nTh:" + nTh + " should be <="+(vars.length/2))
+  require(nTh <= (vars.length/2), s"invert the invariant for efficiency reasons, nTh:$nTh should be <=${vars.length/2}")
 
   registerStaticAndDynamicDependencyArrayIndex(vars)
   finishInitialization()
@@ -65,8 +64,8 @@ class NthSmallest(vars: Array[IntValue], nTh: Int, smallest:Boolean = true)
 
   scheduleForPropagation()
 
-  //the principle is that we keep output unchanged unless ome value that on onee side of the percentile changes side.
-  //we count the number of such changes (positive if goes aboe, negative if goes below)
+  //the principle is that we keep output unchanged unless ome value that on one side of the percentile changes side.
+  //we count the number of such changes (positive if goes above, negative if goes below)
   //exception if the changed value is the percentile
   //upon propagation, if the amount is zero, nothing to do, otherwise, we compute the percentile from scratch, unsing lazy quicksort method.
   //the signal itself is setting the counter to MaxInt
@@ -105,9 +104,11 @@ class NthSmallest(vars: Array[IntValue], nTh: Int, smallest:Boolean = true)
 
     val sortedValues:Array[Long] = this.vars.map(_.value).sorted
     if(smallest){
-      c.check(sortedValues(nTh) == this.newValue,Some("smallest sortedValues:" +sortedValues.mkString(",") + " nTh:" + nTh + " expected:" +this.newValue))
+      c.check(sortedValues(nTh) == this.newValue,
+        Some(s"smallest sortedValues:${sortedValues.mkString(",")} nTh:$nTh expected:${this.newValue}"))
     }else{
-      c.check(sortedValues(vars.length - (nTh + 1)) == this.newValue,Some("biggest sortedValues:" +sortedValues.mkString(",") + " nTh:" + nTh + " expected:" +this.newValue))
+      c.check(sortedValues(vars.length - (nTh + 1)) == this.newValue,
+        Some(s"biggest sortedValues:${sortedValues.mkString(",")} nTh:$nTh expected:${this.newValue}"))
     }
   }
 }

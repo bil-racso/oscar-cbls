@@ -161,4 +161,3 @@ class CircularIntSetIterator(handle:Int, on:CircularIntSet) extends Iterator[Int
     on.prev(current)
   }
 }
-

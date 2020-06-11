@@ -38,7 +38,7 @@ object TarjanWithBigNodes1{
     var Stack:List[T]=List.empty
     var Components:List[List[T]]= List.empty
 
-    def visit(v:T){
+    def visit(v:T): Unit = {
       v.Index = index
       v.LowLink = index
       index +=1

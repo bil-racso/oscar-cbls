@@ -36,7 +36,7 @@ class MapCount(set:SetValue, map:Int=>Int,counts:Array[CBLSIntVar])
 
   override def checkInternals(c: Checker): Unit = {
 
-    val scratchCounts:Array[Int] = Array.fill(counts.size)(0)
+    val scratchCounts:Array[Int] = Array.fill(counts.length)(0)
     for(v <- set.value){
       val i:Int = map(v):Int
       scratchCounts(i) = scratchCounts(i) + 1

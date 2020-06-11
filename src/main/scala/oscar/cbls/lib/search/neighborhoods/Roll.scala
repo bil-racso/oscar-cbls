@@ -16,8 +16,10 @@
 package oscar.cbls.lib.search.neighborhoods
 
 import oscar.cbls.algo.search.HotRestart
-import oscar.cbls.core.computation.{InvariantHelper, CBLSIntVar}
-import oscar.cbls.core.search.{Move, EasyNeighborhood}
+import oscar.cbls.core.computation.{CBLSIntVar, InvariantHelper}
+import oscar.cbls.core.search.{EasyNeighborhood, Move}
+
+import scala.annotation.tailrec
 
 /**
  * This neighborhood will consider roll moves that roll the value of contiguous CBLSIntVar in the given array
@@ -51,10 +53,11 @@ case class RollNeighborhood(vars:Array[CBLSIntVar],
   extends EasyNeighborhood[RollMove](best,name){
   //the indice to start with for the exploration
   var startIndice:Int = 0
-  override def exploreNeighborhood(){
+
+  override def exploreNeighborhood(): Unit ={
 
     val searchZoneObject = if(searchZone == null) null else searchZone()
-    val currentSearchZone = if(searchZone == null) 0 until vars.length else searchZoneObject
+    val currentSearchZone = if(searchZone == null) vars.indices else searchZoneObject
 
     @inline
     def searchZoneContains(i:Int):Boolean = {
@@ -74,6 +77,7 @@ case class RollNeighborhood(vars:Array[CBLSIntVar],
       currentRollCluster = List(vars(currentEnd))
       initValue = List(vars(currentEnd).value)
 
+      @tailrec
       def advance(lastIndice:Int):(Int,Boolean) = {
         if(currentRollSize >= currentMaxShiftSize) return (0,false)
         val potentialAdd = currentEnd+1
@@ -162,11 +166,10 @@ case class RollNeighborhood(vars:Array[CBLSIntVar],
   }
 }
 
-
 case class RollMove(l:List[CBLSIntVar],offset:Int, override val objAfter:Long, override val neighborhoodName:String = null)
   extends Move(objAfter,neighborhoodName){
   /** to actually take the move */
-  override def commit(){
+  override def commit(): Unit ={
     val variables = l.toArray
     val initialValues:Array[Long] = variables.map(_.value)
     for(i <- variables.indices){
@@ -175,7 +178,7 @@ case class RollMove(l:List[CBLSIntVar],offset:Int, override val objAfter:Long, o
   }
 
   override def toString: String = {
-    neighborhoodNameToString + "RollMove(" + l + ", offset:" + offset + objToString + ")"
+    s"${neighborhoodNameToString}RollMove($l, offset:$offset$objToString)"
   }
 
 }

@@ -17,7 +17,6 @@
  *     This code has been initially developed by CETIC www.cetic.be
  *         by Renaud De Landtsheer
  ******************************************************************************/
-
 package oscar.cbls.lib.constraint
 
 import oscar.cbls.core.computation.{IntValue, SetValue, Value}
@@ -157,7 +156,7 @@ case class MultiKnapsackLoad(items: Array[IntValue], itemsizes: Array[IntValue],
     * this will be called for each invariant after propagation is performed.
     * It requires that the Model is instantiated with the variable debug set to true.
     */
-  override def checkInternals(c: Checker) {
+  override def checkInternals(c: Checker): Unit = {
     c.check(true,Some("nothing to check, invariant is discharged"))
   }
 }

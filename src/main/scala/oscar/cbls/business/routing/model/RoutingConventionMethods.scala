@@ -1,5 +1,3 @@
-package oscar.cbls.business.routing.model
-
 /*******************************************************************************
   * OscaR is free software: you can redistribute it and/or modify
   * it under the terms of the GNU Lesser General Public License as published by
@@ -14,6 +12,7 @@ package oscar.cbls.business.routing.model
   * You should have received a copy of the GNU Lesser General Public License along with OscaR.
   * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
   ******************************************************************************/
+package oscar.cbls.business.routing.model
 
 import oscar.cbls.algo.rb.RedBlackTreeMap
 import oscar.cbls.algo.seq.{IntSequence, Token}
@@ -123,9 +122,10 @@ class CachedPositionOf(maxValue:Int){
   //-1L stands for NONE, -2L is an error
   private val cachedAnyPosition:Array[Int] = Array.fill(maxValue+1)(-2)
 
-  def updateToCheckpoint(checkpoint:IntSequence){
+  def updateToCheckpoint(checkpoint:IntSequence): Unit ={
     tokenOfCurrentCheckpoint = checkpoint.token
   }
+
   def positionOfAnyOccurrence(seq:IntSequence,value:Int):Option[Int] = {
     val seqID = seq.token
     if(tokenOfCurrentCheckpoint == seqID){
@@ -146,7 +146,7 @@ class CachedPositionOf(maxValue:Int){
     }
   }
 
-  def savePos(seq:IntSequence,value:Int,position:Option[Int]){
+  def savePos(seq:IntSequence,value:Int,position:Option[Int]): Unit ={
     if(seq.token == tokenOfCurrentCheckpoint){
       checkpointIDOfSavedValue(value) = tokenOfCurrentCheckpoint
       position match{

@@ -14,7 +14,9 @@
   ******************************************************************************/
 package oscar.cbls.algo.magicArray
 
-class MagicIntArrayStacked(maxLevel:Int, initVal:Int => Long, size:Int) extends Iterable[Long]{
+class MagicIntArrayStacked(maxLevel:Int,
+                           initVal:Int => Long,
+                           size:Int) extends Iterable[Long]{
 
   private[this] val levelToArray:Array[Array[Long]] = Array.tabulate(maxLevel+1)(level => if(level == 0) Array.tabulate(size)(initVal) else Array.fill(size)(0L))
   private[this] val levelToIsValueChangedAtNextLevel:Array[IterableMagicBoolArray] = Array.tabulate(maxLevel)(level => new IterableMagicBoolArray(size,false))
@@ -22,7 +24,7 @@ class MagicIntArrayStacked(maxLevel:Int, initVal:Int => Long, size:Int) extends 
 
   def level:Int = currentLevel - 1
 
-  def update(indice:Int,value:Long){
+  def update(indice:Int,value:Long): Unit = {
     levelToArray(currentLevel)(indice) = value
     if(currentLevel!=0)levelToIsValueChangedAtNextLevel(currentLevel-1)(indice) = true
   }
@@ -40,13 +42,13 @@ class MagicIntArrayStacked(maxLevel:Int, initVal:Int => Long, size:Int) extends 
     levelToArray(0)(indice)
   }
 
-  def pushLevel(){
+  def pushLevel(): Unit = {
     require(currentLevel < maxLevel,"MagicIntArrayStacked was declaring with max " + maxLevel + " levels; trying to push more")
     levelToIsValueChangedAtNextLevel(currentLevel).all = false
     currentLevel += 1
   }
 
-  def popLevel(dropChanges:Boolean){
+  def popLevel(dropChanges:Boolean): Unit = {
     require(currentLevel > 0,"trying to pop level zero")
     if(dropChanges){
       currentLevel -= 1
@@ -69,5 +71,5 @@ class MagicIntArrayStacked(maxLevel:Int, initVal:Int => Long, size:Int) extends 
     cloneTopArray.iterator
   }
 
-  override def toString : String = "MagicIntArrayStacked(size:" + size + " level:" + currentLevel + " [" + cloneTopArray.mkString(",") + "])"
+  override def toString : String = s"MagicIntArrayStacked(size:$size level:$currentLevel [${cloneTopArray.mkString(",")}])"
 }

@@ -7,6 +7,8 @@ import oscar.cbls.business.routing.model.VehicleLocation
 import oscar.cbls.core.computation.{ChangingSeqValue, Invariant, SeqNotificationTarget, SeqUpdate, SeqUpdateAssign, SeqUpdateDefineCheckpoint, SeqUpdateInsert, SeqUpdateLastNotified, SeqUpdateMove, SeqUpdateRemove, SeqUpdateRollBackToCheckpoint}
 import oscar.cbls.core.propagation.Checker
 
+import scala.annotation.tailrec
+
 case class GlobalConstraintCore(routes: ChangingSeqValue, v: Int)
   extends Invariant with SeqNotificationTarget{
 
@@ -198,7 +200,7 @@ case class GlobalConstraintCore(routes: ChangingSeqValue, v: Int)
           // Insert the sub-segments at his new position
           val listSegmentsAfterInsertion =
             if (flip)
-              toImpactedSegment.insertSegments(segmentsToRemove.qMap(_.flip).reverse, after, prevRoutes, delta)
+              toImpactedSegment.insertSegments(segmentsToRemove.qMap(_.flip()).reverse, after, prevRoutes, delta)
             else
               toImpactedSegment.insertSegments(segmentsToRemove, after, prevRoutes, delta)
 
@@ -443,6 +445,7 @@ case class GlobalConstraintCore(routes: ChangingSeqValue, v: Int)
       * @return a tuple (impactedSegment: Segment, exploredSegments: Option[QList[Segment ] ], unexploredSegments: Option[QList[Segment ] ])
       */
     private def findImpactedSegment(pos: Int, vehicle: Int, initCounter: Int, segmentsToExplore: QList[Segment] = segments): (Segment, QList[Segment], QList[Segment], Int) ={
+      @tailrec
       def checkSegment(segmentsToExplore: QList[Segment], counter: Int = initCounter, exploredSegments: QList[Segment] = null): (Segment, QList[Segment], QList[Segment], Int) ={
         require(segmentsToExplore != null, "Shouldn't happen, it means that the desired position is not within this vehicle route")
         val segment = segmentsToExplore.head
@@ -461,7 +464,7 @@ case class GlobalConstraintCore(routes: ChangingSeqValue, v: Int)
     }
 
     override def toString: String ={
-      "Segments of vehicle " + vehicle + " : " + segments.mkString(", ")
+      s"Segments of vehicle $vehicle : ${segments.mkString(", ")}"
     }
   }
 
@@ -494,7 +497,7 @@ case class PreComputedSubSequence(startNode:Int,
                                                   endNode:Int,
                                                   length: Int) extends Segment{
   override def toString: String = {
-    "PreComputedSubSequence (StartNode : " + startNode + " EndNode : " + endNode + " Length : " + length + ")"
+    s"PreComputedSubSequence (StartNode : $startNode EndNode : $endNode Length : $length)"
   }
 
   override def splitAtNode(beforeSplitNode: Int, splitNode: Int, leftLength: Int, rightLength: Int): (Segment,Segment) = {
@@ -522,7 +525,7 @@ case class FlippedPreComputedSubSequence(startNode:Int,
                                                          endNode:Int,
                                                          length: Int) extends Segment{
   override def toString: String = {
-    "FlippedPreComputedSubSequence (StartNode : " + startNode + " EndNode : " + endNode + " Length : " + length + ")"
+    s"FlippedPreComputedSubSequence (StartNode : $startNode EndNode : $endNode Length : $length)"
   }
 
   override def splitAtNode(beforeSplitNode: Int, splitNode: Int, leftLength: Int, rightLength: Int): (Segment,Segment) = {
@@ -545,7 +548,7 @@ case class FlippedPreComputedSubSequence(startNode:Int,
   */
 case class NewNode(node:Int) extends Segment{
   override def toString: String = {
-    "NewNode - Node : " + node
+    s"NewNode - Node : $node"
   }
 
   override def splitAtNode(beforeSplitNode: Int, splitNode: Int, leftLength: Int, rightLength: Int): (Segment,Segment) = {

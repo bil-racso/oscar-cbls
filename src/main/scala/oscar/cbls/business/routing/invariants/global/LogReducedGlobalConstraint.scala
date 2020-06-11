@@ -1,5 +1,3 @@
-package oscar.cbls.business.routing.invariants.global
-
 /*******************************************************************************
   * OscaR is free software: you can redistribute it and/or modify
   * it under the terms of the GNU Lesser General Public License as published by
@@ -14,13 +12,12 @@ package oscar.cbls.business.routing.invariants.global
   * You should have received a copy of the GNU Lesser General Public License along with OscaR.
   * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
   ******************************************************************************/
-
+package oscar.cbls.business.routing.invariants.global
 
 import oscar.cbls.algo.quick.QList
 import oscar.cbls.algo.seq.{IntSequence, IntSequenceExplorer}
 
 sealed abstract class LogReducedSegment[T]()
-
 
 /**
   * This represents a subsequence starting at startNode and ending at endNode.
@@ -41,8 +38,7 @@ abstract sealed class LogReducedPreComputedSubSequence[T](val startNode:Int,
   def steps:QList[T]
 
   override def toString: String = {
-    "LogReducedPreComputedSubSequence(startNode:" + startNode +
-      " endNode:" + endNode + " steps:{" + steps.mkString(",") + "})"
+    s"LogReducedPreComputedSubSequence(startNode:$startNode endNode:$endNode steps:{${steps.mkString(",")}})"
   }
 }
 
@@ -69,8 +65,7 @@ class LogReducedPreComputedSubSequenceLazy[T](startNode:Int,
   }
 
   override def toString: String = {
-    "LogReducedPreComputedSubSequence(startNode:" + startNode +
-      " endNode:" + endNode + " steps:{" + steps.mkString(",") + "})"
+    s"LogReducedPreComputedSubSequence(startNode:$startNode endNode:$endNode steps:{${steps.mkString(",")}})"
   }
 }
 
@@ -89,11 +84,9 @@ class LogReducedPreComputedSubSequenceGiven[T](startNode:Int,
   extends LogReducedPreComputedSubSequence[T](startNode:Int,endNode:Int){
 
   override def toString: String = {
-    "LogReducedPreComputedSubSequence(startNode:" + startNode +
-      " endNode:" + endNode + " steps:{" + steps.mkString(",") + "})"
+    s"LogReducedPreComputedSubSequence(startNode:$startNode endNode:$endNode steps:{${steps.mkString(",")}})"
   }
 }
-
 
 object LogReducedPreComputedSubSequenceGiven {
 
@@ -126,8 +119,7 @@ class LogReducedFlippedPreComputedSubSequence[T](val startNode:Int,
   lazy val steps:QList[T] = stepGenerator()
 
   override def toString: String = {
-    "LogReducedFlippedPreComputedSubSequence(startNode:" + startNode +
-      " endNode:" + endNode + " steps:{" + steps.mkString(",") + "})"
+    s"LogReducedFlippedPreComputedSubSequence(startNode:$startNode endNode:$endNode steps:{${steps.mkString(",")}})"
   }
 }
 
@@ -147,7 +139,7 @@ object LogReducedFlippedPreComputedSubSequence {
     */
   case class LogReducedNewNode[T](node:Int, value:T) extends LogReducedSegment[T]{
     override def toString: String = {
-      "LogReducedNewNode(node:" + node + ")"
+      s"LogReducedNewNode(node:$node)"
     }
   }
 
@@ -209,7 +201,7 @@ object LogReducedFlippedPreComputedSubSequence {
     class NodeAndPreComputes(val node:Int,
                              var precomputes:Array[T] = null){
       override def toString: String = {
-        "NodeAndPreComputes(node:" + node + " precomputes:" + (if(precomputes == null) null else precomputes.mkString(",")) + ")"
+        s"NodeAndPreComputes(node:$node precomputes:${if(precomputes == null) null else precomputes.mkString(",")})"
       }
     }
 
@@ -290,7 +282,7 @@ object LogReducedFlippedPreComputedSubSequence {
       toReturn
     }
 
-    private def decorateAndAllocate(vehicle:Int,positionInRoute:Int,level:Int,allocateFirst:Boolean){
+    private def decorateAndAllocate(vehicle:Int,positionInRoute:Int,level:Int,allocateFirst:Boolean): Unit ={
       //println("decorateAndAllocate(vehicle:" + vehicle + " level:" + level + " positionInRoute:" + positionInRoute)
 
       if(allocateFirst){
@@ -445,8 +437,6 @@ object LogReducedFlippedPreComputedSubSequence {
   }
 
 
-  case class VehicleAndPosition(val vehicle:Int,
-                                val positionInVehicleRoute:Int,
-                                val node:Int)
-
-
+case class VehicleAndPosition(vehicle:Int,
+                              positionInVehicleRoute:Int,
+                              node:Int)

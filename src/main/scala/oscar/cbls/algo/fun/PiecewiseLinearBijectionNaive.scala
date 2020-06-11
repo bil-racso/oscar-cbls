@@ -23,7 +23,9 @@ object PiecewiseLinearBijectionNaive{
   def identity:PiecewiseLinearBijectionNaive = new PiecewiseLinearBijectionNaive(PiecewiseLinearFun.identity)
 
   @tailrec
-  def computeInvertedPivots(prevPivot : Pivot, remainingPivots : List[Pivot], newPivots : QList[Pivot] = null) : QList[Pivot] = {
+  def computeInvertedPivots(prevPivot : Pivot,
+                            remainingPivots : List[Pivot],
+                            newPivots : QList[Pivot] = null): QList[Pivot] = {
     remainingPivots match {
       case Nil => newPivots
       case p1 :: p2 :: tail =>
@@ -50,7 +52,7 @@ class PiecewiseLinearBijectionNaive(val forward:PiecewiseLinearFun, givenBackwar
 
   def invert : PiecewiseLinearBijectionNaive = new PiecewiseLinearBijectionNaive(backward, forward)
 
-  def checkBijection() {
+  def checkBijection(): Unit = {
     var pivots = backward.pivots
     while (true) {
       pivots match {
@@ -68,29 +70,39 @@ class PiecewiseLinearBijectionNaive(val forward:PiecewiseLinearFun, givenBackwar
   }
 
   def updateBefore(updates : (Int, Int, LinearTransform)*) : PiecewiseLinearBijectionNaive = {
-    //println("update before:" + updates)
     new PiecewiseLinearBijectionNaive(forward.updateForCompositionBefore(updates : _*))
   }
 
-  def swapAdjacentZonesShiftFirst(startZone1Included : Int, endZone1Included : Int, endZone2Included : Int, flipZone2 : Boolean) : PiecewiseLinearBijectionNaive = {
+  def swapAdjacentZonesShiftFirst(startZone1Included : Int,
+                                  endZone1Included : Int,
+                                  endZone2Included : Int,
+                                  flipZone2 : Boolean) : PiecewiseLinearBijectionNaive = {
     new PiecewiseLinearBijectionNaive(forward.swapAdjacentZonesShiftFirst(startZone1Included, endZone1Included, endZone2Included, flipZone2))
   }
 
-  def swapAdjacentZonesShiftSecond(startZone1Included:Int, endZone1Included:Int, endZone2Included:Int, flipZone1:Boolean):PiecewiseLinearBijectionNaive = {
+  def swapAdjacentZonesShiftSecond(startZone1Included:Int,
+                                   endZone1Included:Int,
+                                   endZone2Included:Int,
+                                   flipZone1:Boolean):PiecewiseLinearBijectionNaive = {
     new PiecewiseLinearBijectionNaive(forward.swapAdjacentZonesShiftSecond(startZone1Included, endZone1Included, endZone2Included, flipZone1))
   }
 
-  def swapAdjacentZonesShiftBest(startZone1Included : Int, endZone1Included : Int, endZone2Included : Int): PiecewiseLinearBijectionNaive ={
+  def swapAdjacentZonesShiftBest(startZone1Included : Int,
+                                 endZone1Included : Int,
+                                 endZone2Included : Int): PiecewiseLinearBijectionNaive = {
     new PiecewiseLinearBijectionNaive(forward.swapAdjacentZonesShiftBest(startZone1Included, endZone1Included, endZone2Included))
   }
 
   def apply(value:Int): Int = forward(value)
+
   def unApply(value:Int): Int = backward(value)
 
-   def flipInInterval(startZoneIncluded : Int, endZoneIncluded :Int):PiecewiseLinearBijectionNaive =
+   def flipInInterval(startZoneIncluded : Int,
+                      endZoneIncluded :Int):PiecewiseLinearBijectionNaive =
      new PiecewiseLinearBijectionNaive(forward.flipFunctionInInterval(startZoneIncluded, endZoneIncluded))
 }
 
 class PivotWithTo(fromValue:Int,f:LinearTransform, val toValue:Int) extends Pivot(fromValue,f) {
-  override def toString: String = "PivotWithTo(from:" + fromValue + " toValue:" + toValue + " " + f + ")"
+  override def toString: String =
+    s"PivotWithTo(from:$fromValue toValue:$toValue $f)"
 }

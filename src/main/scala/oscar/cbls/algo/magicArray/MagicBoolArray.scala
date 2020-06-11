@@ -28,7 +28,6 @@ object MagicBoolArray {
   }
 }
 
-
 /**
  * This represents an array of boolean with O(1) setAll and O(1) clearAll
  * @author Jannou Brohée on 3/10/16.
@@ -94,7 +93,7 @@ class MagicBoolArray(val length:Int,initVal:Boolean = false){
   }
 
   @inline
-  private [this] def resetArray(){
+  private [this] def resetArray(): Unit ={
     var i = internalArray.length
     while(i > 0){
       i -= 1
@@ -129,7 +128,5 @@ class MagicBoolArray(val length:Int,initVal:Boolean = false){
     toReturn
   }
 
-  override def toString: String = "["+indicesAtTrue.mkString(",")+"]"
+  override def toString: String = s"[${indicesAtTrue.mkString(",")}]"
 }
-
-

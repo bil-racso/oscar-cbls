@@ -27,7 +27,7 @@ case class OccurrencesOf(v: SeqValue, a:IntValue)
   extends IntInvariant(v.value.nbOccurrence(a.valueInt), Domain(0 , Int.MaxValue))
   with SeqNotificationTarget with IntNotificationTarget{
 
-  setName("OccurrencesOf(" + a.name + " in " + v.name + ")")
+  setName(s"OccurrencesOf(${a.name} in ${v.name})")
 
   registerStaticAndDynamicDependency(v)
   registerStaticAndDynamicDependency(a)
@@ -38,15 +38,15 @@ case class OccurrencesOf(v: SeqValue, a:IntValue)
     scheduleForPropagation()
   }
 
-  override def notifyIntChanged(v: ChangingIntValue, id: Int, OldVal: Long, NewVal: Long) {
+  override def notifyIntChanged(v: ChangingIntValue, id: Int, OldVal: Long, NewVal: Long): Unit = {
     scheduleForPropagation()
   }
 
-  override def performInvariantPropagation() {
+  override def performInvariantPropagation(): Unit = {
     this := v.value.nbOccurrence(a.valueInt)
   }
 
-  override def checkInternals(c: Checker) {
-    require(this.value == v.value.positionsOfValue(a.valueInt).size, "this.value:" + this.value + " v.value.positionsOfValue(a.value).size:" + v.value.positionsOfValue(a.valueInt).size + " v.value.nbOccurrence(a.value):" + v.value.nbOccurrence(a.valueInt))
+  override def checkInternals(c: Checker): Unit = {
+    require(this.value == v.value.positionsOfValue(a.valueInt).size, s"this.value:${this.value} v.value.positionsOfValue(a.value).size:${v.value.positionsOfValue(a.valueInt).size} v.value.nbOccurrence(a.value):${v.value.nbOccurrence(a.valueInt)}")
   }
 }

@@ -18,8 +18,7 @@ object GeometryDrawingTypes extends Enumeration{
   val Simple, OnRealMap = Value
 }
 
-
-//TODO: putôt donner une règle de conversion en option
+//TODO: plutôt donner une règle de conversion en option
 //conversionDataForRealMapDisplay(originPoint:(Double,Double), )
 object GeometryDrawing {
   def apply(relevantDistances: List[(Int,Int)],
@@ -39,6 +38,3 @@ object GeometryDrawing {
     }
   }
 }
-
-
-

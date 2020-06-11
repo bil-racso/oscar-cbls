@@ -40,12 +40,14 @@ case class ShuffleNeighborhood(vars:Array[CBLSIntVar],
                                checkNoMoveFound:Boolean = true)
   extends Neighborhood(name) with LinearSelectors{
 
-  override def getMove(obj: Objective, initialObj:Long, acceptanceCriteria: (Long, Long) => Boolean = null): SearchResult = {
+  override def getMove(obj: Objective,
+                       initialObj:Long,
+                       acceptanceCriteria: (Long, Long) => Boolean = null): SearchResult = {
     if(printExploredNeighborhoods) println("applying " + name)
 
     val (realIndicesToConsider:List[Int],numberOfIndicesToConsider:Int) =
       if(indicesToConsider == null) (vars.indices.toList,vars.length)
-      else { val tmp = indicesToConsider(); (tmp.toList.map(_.toInt),tmp.size) }
+      else { val tmp = indicesToConsider(); (tmp.toList,tmp.size) }
 
     if(checkNoMoveFound) {
       val (minValue, maxValue) = InvariantHelper.getMinMaxBoundsInt(realIndicesToConsider.map(vars(_).value))
@@ -65,7 +67,7 @@ case class ShuffleNeighborhood(vars:Array[CBLSIntVar],
     val newValues = Random.shuffle(values)
 
     val moves:List[AssignMove] = subsetOfIndicesToConsider.zip(newValues).
-      map({case ((indice,newValue)) => AssignMove(vars(indice),newValue,indice,Int.MaxValue)})
+      map({case (indice,newValue) => AssignMove(vars(indice),newValue,indice,Int.MaxValue)})
 
     if(printExploredNeighborhoods) println(name + ": move found")
     CompositeMove(moves, Long.MaxValue, name)

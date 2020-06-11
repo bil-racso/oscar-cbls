@@ -29,7 +29,7 @@ case class Length(v: SeqValue,maxSequenceLength:Int = Int.MaxValue)
   extends IntInvariant(v.value.size, Domain(0 , maxSequenceLength))
   with SeqNotificationTarget{
 
-  setName("Length(" + v.name + ")")
+  setName(s"Length(${v.name})")
 
   registerStaticAndDynamicDependency(v)
   finishInitialization()
@@ -38,7 +38,7 @@ case class Length(v: SeqValue,maxSequenceLength:Int = Int.MaxValue)
     this := changes.newValue.size
   }
 
-  override def checkInternals(c: Checker) {
+  override def checkInternals(c: Checker): Unit ={
     c.check(this.value == v.value.size, Some("this.value == v.value.size"))
   }
 }

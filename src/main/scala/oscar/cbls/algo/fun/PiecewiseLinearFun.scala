@@ -95,7 +95,7 @@ class PiecewiseLinearFun(private[fun] val transformation: RedBlackTreeMap[Pivot]
   def pivots:List[Pivot] = transformation.values
 
   override def toString: String = {
-    "PiecewiseLinearFun(nbSegments:" + transformation.size + ", " + (if(transformation.isEmpty) "identity" else ("segments:" + transformation.values.mkString(",")))+")"
+    s"PiecewiseLinearFun(nbSegments:${transformation.size}, ${if(transformation.isEmpty) "identity" else s"segments:${transformation.values.mkString(",")}"})"
   }
 
   def apply(value:Int):Int = {
@@ -249,7 +249,7 @@ class PiecewiseLinearFun(private[fun] val transformation: RedBlackTreeMap[Pivot]
               false
             }
         }) {}
-        return acc
+        acc
     }
   }
 
@@ -377,7 +377,6 @@ class PiecewiseLinearFun(private[fun] val transformation: RedBlackTreeMap[Pivot]
     }
     currentTransformation
   }
-
 
   /**
    *

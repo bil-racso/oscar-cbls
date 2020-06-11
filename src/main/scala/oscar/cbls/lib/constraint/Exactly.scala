@@ -17,7 +17,6 @@
   *     This code has been initially developed by CETIC www.cetic.be
   *         by Gaël Thouvenin
   ******************************************************************************/
-
 package oscar.cbls.lib.constraint
 
 import oscar.cbls.core.computation.{IntValue, Value}
@@ -46,7 +45,6 @@ case class Exactly(variables:Iterable[IntValue], bounds:SortedMap[Int, IntValue]
   private val violationsByVal =
     Map[IntValue, IntValue]() ++
       (for(v <- variables) yield v -> Sum2(least.violation(v), most.violation(v)))
-
 
   /** returns the violation associated with variable v in this constraint
     * all variables that are declared as constraint should have an associated violation degree. */

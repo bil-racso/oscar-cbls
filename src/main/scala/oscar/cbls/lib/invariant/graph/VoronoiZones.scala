@@ -21,10 +21,8 @@ import oscar.cbls.core.computation._
 import oscar.cbls.core.propagation.Checker
 import oscar.cbls.lib.invariant.logic.{Cluster, Filter}
 import oscar.cbls.lib.invariant.set.SetMap
-import oscar.cbls.{CBLSIntVar, Domain, IntValue, SetValue}
 
 import scala.collection.immutable.{SortedMap, SortedSet}
-
 
 object VoronoiZones{
   def apply(graph:ConditionalGraph,
@@ -150,7 +148,6 @@ class VoronoiZones(graph:ConditionalGraph,
       }
     }
   }
-
 
   private val isConditionalEdgeOpen: Array[Boolean] = Array.fill(graph.nbConditions)(false)
 
@@ -280,7 +277,7 @@ class VoronoiZones(graph:ConditionalGraph,
   private val nodeIDHeap = new oscar.cbls.algo.heap.BinomialHeapWithMoveLong(
     nodeID => nodeLabeling(nodeID).asInstanceOf[VoronoiZone].distance, graph.nbNodes, graph.nbNodes)
 
-  private def performLabelingFromCurrentHeap() {
+  private def performLabelingFromCurrentHeap(): Unit = {
     while (!nodeIDHeap.isEmpty) {
       val currentNodeId: Int = nodeIDHeap.removeFirst()
       val currentNode = graph.nodes(currentNodeId)
@@ -436,7 +433,7 @@ class VoronoiZones(graph:ConditionalGraph,
     }
   }
 
-  private def loadExternalBoundaryIntoHeapMarkInnerZone(removedCentroid:Node){
+  private def loadExternalBoundaryIntoHeapMarkInnerZone(removedCentroid:Node): Unit ={
     //performed as a DFS, non-redundant exploration, so not very costly
     //TODO: try an explicit tack to replace the recursion since there is a risk of stack overflow in large graphs.
     var reachedNewCentroids:SortedSet[Int] = SortedSet.empty
@@ -480,7 +477,7 @@ class VoronoiZones(graph:ConditionalGraph,
   }
 
   // //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-  override def checkInternals(c: Checker){
+  override def checkInternals(c: Checker): Unit ={
     require(nodeIDHeap.isEmpty)
 
     val centroids:Iterable[Node] = this.centroids.value.toList.map(nodeID => graph.nodes(nodeID))
@@ -496,7 +493,8 @@ class VoronoiZones(graph:ConditionalGraph,
 
       val incremental = nodeLabeling(node.id)
 
-      require(fromScratch equals incremental, "node:" + node + " incremental:" + incremental + " fromScratch:" + fromScratch)
+      require(fromScratch equals incremental,
+        s"node:$node incremental:$incremental fromScratch:$fromScratch")
     }
 
     //this is mostly a static check
@@ -534,4 +532,3 @@ class VoronoiZones(graph:ConditionalGraph,
     toReturn
   }
 }
-

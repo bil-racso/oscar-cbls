@@ -15,7 +15,7 @@ import scala.collection.immutable.SortedSet
 case class MovingVehicles(routes:ChangingSeqValue, v:Int)
   extends SetInvariant(initialDomain = 0 until v) with SeqNotificationTarget{
 
-  setName("MovingVehicles in route" + routes.name)
+  setName(s"MovingVehicles in route${routes.name}")
 
   registerStaticAndDynamicDependency(routes)
   finishInitialization()
@@ -148,6 +148,6 @@ case class MovingVehicles(routes:ChangingSeqValue, v:Int)
   override def checkInternals(c : Checker) : Unit = {
     val valuesFromScratch = computeValueFromScratch(routes.value)
     c.check(valuesFromScratch equals this.newValue,
-      Some("error on moving vehicle, got " + this.newValue.toList + " should be " + valuesFromScratch.toList + " routes: " + routes.value))
+      Some(s"error on moving vehicle, got ${this.newValue.toList} should be ${valuesFromScratch.toList} routes: ${routes.value}"))
   }
 }

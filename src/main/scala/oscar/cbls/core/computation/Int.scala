@@ -17,7 +17,6 @@
   *     This code has been initially developed by CETIC www.cetic.be
   *         by Renaud De Landtsheer
   ******************************************************************************/
-
 package oscar.cbls.core.computation
 
 import oscar.cbls.core.propagation.Checker
@@ -33,21 +32,20 @@ sealed trait IntValue extends Value{
   def value: Long
   def valueInt: Int
   def domain:Domain
-  def min = domain.min
-  def minInt = longToInt(min)
-  def max = domain.max
-  def maxInt = longToInt(max)
+  def min: Long = domain.min
+  def minInt: Int = longToInt(min)
+  def max: Long = domain.max
+  def maxInt: Int = longToInt(max)
 
   def name:String
-  override def valueString: String = "" + value
+  override def valueString: String = s"$value"
   def restrictDomain(d:Domain): Unit
 
   def longToInt(value:Long):Int = {
     val i = value.toInt
-    if (i != value) throw new ArithmeticException("integer overflow:" + value)
-    return i
+    if (i != value) throw new ArithmeticException(s"integer overflow:$value")
+    i
   }
-
 }
 
 object IntValue {
@@ -56,14 +54,12 @@ object IntValue {
 
   implicit def toFunction(i: IntValue): () => Long = () => i.value
 
-  implicit val ord: Ordering[IntValue] = new Ordering[IntValue] {
-    def compare(o1: IntValue, o2: IntValue) = {
-      (o1, o2) match {
-        case (a: CBLSIntConst, b: CBLSIntConst) => a.value compare b.value
-        case (a: ChangingIntValue, b: ChangingIntValue) => a.uniqueID - b.uniqueID
-        case (_:CBLSIntConst, _:ChangingIntValue) => -1
-        case (_:ChangingIntValue, _:CBLSIntConst) => 1
-      }
+  implicit val ord: Ordering[IntValue] = (o1: IntValue, o2: IntValue) => {
+    (o1, o2) match {
+      case (a: CBLSIntConst, b: CBLSIntConst) => a.value compare b.value
+      case (a: ChangingIntValue, b: ChangingIntValue) => a.uniqueID - b.uniqueID
+      case (_: CBLSIntConst, _: ChangingIntValue) => -1
+      case (_: ChangingIntValue, _: CBLSIntConst) => 1
     }
   }
 }
@@ -84,7 +80,8 @@ trait ShortIntNotificationTarget{
 abstract class ChangingIntValue(initialValue:Long, initialDomain:Domain)
   extends AbstractVariable with IntValue{
 
-  assert(initialDomain.contains(initialValue),initialValue+ " is not in the domain of "+this.name+"("+initialDomain+"). This might indicate an integer overflow.")
+  assert(initialDomain.contains(initialValue),
+    s"$initialValue is not in the domain of ${this.name}($initialDomain). This might indicate an integer overflow.")
 
   override def snapshot : ChangingIntValueSnapShot = new ChangingIntValueSnapShot(this,this.value)
   def valueAtSnapShot(s:Snapshot):Long = s(this) match{case s:ChangingIntValueSnapShot => s.savedValue case _ => throw new Error("cannot find value of " + this + " in snapshot")}
@@ -93,32 +90,36 @@ abstract class ChangingIntValue(initialValue:Long, initialDomain:Domain)
   private[this] var mNewValue: Long = initialValue
   private[this] var mOldValue = mNewValue
 
-
   def domain:Domain = privatedomain
 
   def restrictDomain(d:Domain): Unit = {
     privatedomain = privatedomain.intersect(d)
-    require(privatedomain.contains(mNewValue),"you are restricting a domain and the value is not in this domain; value:" + mNewValue + " newDomain:" + d)
+    require(privatedomain.contains(mNewValue),
+      s"you are restricting a domain and the value is not in this domain; value:$mNewValue newDomain:$d")
   }
 
   //Unions the domain with d
   def relaxDomain(d:Domain): Unit = {
-    require(this.getStaticallyListeningElements.isEmpty,"you cannot relax the domain when someone is already listening to you")
+    require(this.getStaticallyListeningElements.isEmpty,
+      "you cannot relax the domain when someone is already listening to you")
     privatedomain = privatedomain.union(d)
   }
 
   def inDomain(v:Long): Boolean = privatedomain.contains(v)
   def domainSize:Long = privatedomain.size
 
-  override def toString = {
-    if(model != null && model.propagateOnToString) s"$name:=$value" else s"$name:=$mNewValue"
+  override def toString: String = {
+    if (model != null && model.propagateOnToString)
+      s"$name:=$value"
+    else s"$name:=$mNewValue"
   }
   override def toStringNoPropagate = s"$name:=$mNewValue"
 
   @inline
-  def setValue(v:Long){
+  def setValue(v:Long): Unit ={
     if (v != mNewValue){
-      assert(domain.contains(v),v+ " is not in the domain of "+this+"("+min+".."+max+"). This might indicate an integer overflow.")
+      assert(domain.contains(v),
+        s"$v is not in the domain of $this($min..$max). This might indicate an integer overflow.")
       mNewValue = v
       notifyChanged()
     }
@@ -146,8 +147,8 @@ abstract class ChangingIntValue(initialValue:Long, initialDomain:Domain)
   }
 
   def newValue:Long = {
-    assert(model.checkExecutingInvariantOK(definingInvariant),"variable [" + this
-      + "] queried for latest val by non-controlling invariant")
+    assert(model.checkExecutingInvariantOK(definingInvariant),
+      s"variable [$this] queried for latest val by non-controlling invariant")
     mNewValue
   }
 
@@ -155,9 +156,9 @@ abstract class ChangingIntValue(initialValue:Long, initialDomain:Domain)
     longToInt(newValue)
   }
 
-  override def performPropagation(){performIntPropagation()}
+  override def performPropagation(): Unit = {performIntPropagation()}
 
-  final protected def performIntPropagation(){
+  final protected def performIntPropagation(): Unit ={
     if(mOldValue!=mNewValue){
       val old=mOldValue
       mOldValue=mNewValue  //TODO: the change should be made AFTER the notification
@@ -187,49 +188,47 @@ abstract class ChangingIntValue(initialValue:Long, initialDomain:Domain)
     }
   }
 
-  override def checkInternals(c:Checker){
+  override def checkInternals(c:Checker): Unit ={
     c.check(mOldValue == mNewValue)
   }
 
-  protected def :=(v: Long) {
+  protected def :=(v: Long): Unit = {
     setValue(v)
   }
 
-  protected def :+=(v: Long) {
+  protected def :+=(v: Long): Unit = {
     setValue(v + mNewValue)
   }
 
-  protected def :*=(v: Long) {
+  protected def :*=(v: Long): Unit = {
     setValue(v * mNewValue)
   }
 
-  protected def :-=(v:Long) {
+  protected def :-=(v:Long): Unit = {
     setValue(mNewValue - v)
   }
 
   /** increments the variable by one
     */
-  protected def ++ {
+  protected def ++(): Unit = {
     setValue(1L + mNewValue)
   }
 
   def createClone:CBLSIntVar = {
-    val clone = new CBLSIntVar(model, this.value, this.domain, "clone of " + this.name)
+    val clone = new CBLSIntVar(model, this.value, this.domain, "clone of ${this.name}")
     clone <== this
     clone
   }
 
   def compare(that: ChangingIntValue): Long = {
-    assert(this.uniqueID != -1L, "cannot compare non-registered PropagationElements this: [" + this + "] that: [" + that + "]")
-    assert(that.uniqueID != -1L, "cannot compare non-registered PropagationElements this: [" + this + "] that: [" + that + "]")
+    assert(this.uniqueID != -1L, s"cannot compare non-registered PropagationElements this: [$this] that: [$that]")
+    assert(that.uniqueID != -1L, s"cannot compare non-registered PropagationElements this: [$this] that: [$that]")
     this.uniqueID - that.uniqueID
   }
 }
 
 object ChangingIntValue{
-  implicit val ord:Ordering[ChangingIntValue] = new Ordering[ChangingIntValue]{
-    def compare(o1: ChangingIntValue, o2: ChangingIntValue) = o1.compare(o2)
-  }
+  implicit val ord:Ordering[ChangingIntValue] = (o1: ChangingIntValue, o2: ChangingIntValue) => o1.compare(o2)
 }
 
 class ChangingIntValueSnapShot(val variable:ChangingIntValue,val savedValue:Long) extends AbstractVariableSnapShot(variable){
@@ -252,53 +251,53 @@ class CBLSIntVar(givenModel: Store, initialValue: Long, initialDomain:Domain, n:
 
   override def name: String = if (n == null) defaultName else n
 
-  override def :=(v: Long) {
+  override def :=(v: Long): Unit ={
     setValue(v)
   }
 
-  def assignWithAdjust (v: Long) {
+  def assignWithAdjust (v: Long): Unit ={
     setValue(adjustToDomain(v))
   }
 
-  def incrementWithAdjust (v: Long) {
+  def incrementWithAdjust (v: Long): Unit ={
     setValue(adjustToDomain(v+newValue))
   }
 
-  def assignWithModuloAdjust (v: Long) {
+  def assignWithModuloAdjust (v: Long): Unit ={
     setValue(adjustToDomainModulo(v))
   }
 
-  override def :+=(v: Long) {
+  override def :+=(v: Long): Unit ={
     setValue(v + newValue)
   }
 
-  override def :*=(v: Long) {
+  override def :*=(v: Long): Unit ={
     setValue(v * newValue)
   }
 
-  override def :-=(v:Long) {
+  override def :-=(v:Long): Unit ={
     setValue(newValue - v)
   }
 
   /** increments the variable by one
     */
-  override def ++ {
+  override def ++(): Unit ={
     setValue(1L + newValue)
   }
 
   /**this operator swaps the value of two IntVar*/
-  def :=:(v:CBLSIntVar){
+  def :=:(v:CBLSIntVar): Unit ={
     val a:Long = v.value
     v:=this.value
     this := a
   }
 
   /**this operator swaps the value of two IntVar*/
-  def swap(v: CBLSIntVar) {
+  def swap(v: CBLSIntVar): Unit ={
     this :=: v
   }
 
-  def <==(i: IntValue) {IdentityInt(this,i)}
+  def <==(i: IntValue): Unit ={IdentityInt(this,i)}
 
   def randomize(): Unit ={
     if(this.max != this.min) {
@@ -313,9 +312,7 @@ object CBLSIntVar{
   def apply(model: Store, value:Long = 0L, d:Domain = FullRange, name:String = null) =
     new CBLSIntVar(model, value, d, name)
 
-  implicit val ord:Ordering[CBLSIntVar] = new Ordering[CBLSIntVar]{
-    def compare(o1: CBLSIntVar, o2: CBLSIntVar) = o1.compare(o2)
-  }
+  implicit val ord:Ordering[CBLSIntVar] = (o1: CBLSIntVar, o2: CBLSIntVar) => o1.compare(o2)
 }
 
 /**
@@ -331,8 +328,8 @@ class CBLSIntConst(override val value:Long)
     require(value <= Int.MaxValue, "The constant value is higher than Int.MaxValue")
     value.toInt
   }
-  override def toString:String = "" + value
-  override def domain: SingleValueDomain = new SingleValueDomain(value)
+  override def toString:String = s"$value"
+  override def domain: SingleValueDomain = SingleValueDomain(value)
   override def min: Long = value
   override def max: Long = value
   override def name = value.toString
@@ -367,7 +364,7 @@ abstract class IntInvariant(initialValue:Long = 0L, initialDomain:Domain = FullR
   override def isControlledVariable:Boolean = true
   override def isDecisionVariable:Boolean = false
 
-  override def model = propagationStructure.asInstanceOf[Store]
+  override def model: Store = propagationStructure.asInstanceOf[Store]
 
   override def hasModel:Boolean = schedulingHandler != null
 
@@ -380,7 +377,7 @@ abstract class IntInvariant(initialValue:Long = 0L, initialDomain:Domain = FullR
 
   override final def name: String = if(customName == null) this.getClass.getSimpleName else customName
 
-  override final def performPropagation(){
+  override final def performPropagation(): Unit ={
     performInvariantPropagation()
     performIntPropagation()
   }
@@ -409,7 +406,7 @@ class IdentityInt(toValue:CBLSIntVar, fromValue:IntValue) extends Invariant with
     toValue := NewVal
   }
 
-  override def checkInternals(c:Checker){
+  override def checkInternals(c:Checker): Unit ={
     c.check(toValue.value == fromValue.value)
   }
 }

@@ -33,7 +33,11 @@ private object RedBlackTreeMapLib{
   }
 
   // balance: Balance a tree with balanced subtrees.
-  def balance[V] (c : Boolean,l : RedBlackTreeMap[V],k : Int,v : Option[V],r : RedBlackTreeMap[V]) : RedBlackTreeMap[V] = {
+  def balance[V] (c : Boolean,
+                  l : RedBlackTreeMap[V],
+                  k : Int,
+                  v : Option[V],
+                  r : RedBlackTreeMap[V]) : RedBlackTreeMap[V] = {
     (c,l,k,v,r) match {
       case (B,T(R,T(R,a,xK,xV,b),yK,yV,c),zK,zV,d) => T(R,T(B,a,xK,xV,b),yK,yV,T(B,c,zK,zV,d))
       case (B,T(R,a,xK,xV,T(R,b,yK,yV,c)),zK,zV,d) => T(R,T(B,a,xK,xV,b),yK,yV,T(B,c,zK,zV,d))
@@ -454,7 +458,6 @@ object RedBlackTreeMap {
     currentMap
   }
 
-
   /**
    * make the red black tree out of already sorted couples (key,value)
    * they must be sorted by increasing order of key, and a key can only be present once.
@@ -494,7 +497,6 @@ object RedBlackTreeMap {
       T(targetIsRed, left,  middlePoint, Some(value), right)
     }
   }
-
 
   /**
    * make the red black tree out of already sorted couples (key,value)

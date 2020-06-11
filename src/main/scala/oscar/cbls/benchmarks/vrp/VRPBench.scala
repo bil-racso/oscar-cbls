@@ -1,5 +1,3 @@
-package oscar.cbls.benchmarks.vrp
-
 /*******************************************************************************
   * OscaR is free software: you can redistribute it and/or modify
   * it under the terms of the GNU Lesser General Public License as published by
@@ -14,6 +12,7 @@ package oscar.cbls.benchmarks.vrp
   * You should have received a copy of the GNU Lesser General Public License along with OscaR.
   * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
   ******************************************************************************/
+package oscar.cbls.benchmarks.vrp
 
 import java.io.{File, PrintWriter}
 
@@ -29,11 +28,11 @@ import scala.io.Source
 
 object TSProutePoints extends App {
 
-  def printMatrix(m:Array[Array[Int]]){
+  def printMatrix(m:Array[Array[Int]]): Unit = {
     println(m.map(l => l.mkString(" ")).mkString("\n"))
   }
 
-  def benchmarkOnProblem(fileName:String){
+  def benchmarkOnProblem(fileName:String): Unit = {
     warmUp(1000)
     val matrix = loadMatrixFromFile(fileName:String)
     val n = matrix.length
@@ -45,7 +44,7 @@ object TSProutePoints extends App {
     new TSPRoutePointsS(n, v, percent, 0, matrix)
   }
 
-  def warmUp(n:Int = 10000){
+  def warmUp(n:Int = 10000): Unit = {
     val verbose = 1
     val maxPivotPerValuePercent = 4
     val v = 100
@@ -54,7 +53,7 @@ object TSProutePoints extends App {
     System.gc()
   }
 
-  def performRandomBenchmark() {
+  def performRandomBenchmark(): Unit = {
 
     println("performing warm up")
     warmUp()
@@ -134,7 +133,7 @@ object TSProutePoints extends App {
     writer.close()
   }
 
-  def generateAllBenchmarks(){
+  def generateAllBenchmarks(): Unit = {
     for(n <- benchmarkSizes){
       println("generating TSP n:" + n + " to file:" + fileName)
       val symmetricDistanceMatrix = RoutingMatrixGenerator(n)._1
@@ -143,7 +142,7 @@ object TSProutePoints extends App {
     }
   }
 
-  def runAllBenchmarks(){
+  def runAllBenchmarks(): Unit = {
     warmUp(200)
     println()
     print("balise\tn\ttime\tobj")
@@ -158,7 +157,7 @@ object TSProutePoints extends App {
     }
   }
 
-  def runBenchmark(fileName:String,n:Int){
+  def runBenchmark(fileName:String,n:Int): Unit = {
     new TSPRoutePointsS(1000, 100, 3, 0, RoutingMatrixGenerator(1000)._1)
 
     println()
@@ -184,7 +183,7 @@ object TSProutePoints extends App {
 class TSPRoutePointsS(n:Int,v:Int,maxPivotPerValuePercent:Int, verbose:Int, symmetricDistanceMatrix:Array[Array[Long]],printobj:Boolean = false) extends StopWatch{
 
   //  println("restrictions:" + restrictions)
-  val model = new Store() //checker = Some(new ErrorChecker()))
+  val model = Store() //checker = Some(new ErrorChecker()))
 
   val myVRP = new VRP(model,n,v,maxPivotPerValuePercent = maxPivotPerValuePercent)
 
@@ -202,10 +201,11 @@ class TSPRoutePointsS(n:Int,v:Int,maxPivotPerValuePercent:Int, verbose:Int, symm
 
   val obj = Objective(totalRouteLengthSlow + (penaltyForUnrouted*(n - length(myVRP.routes))))
 
-  override def toString : String = super.toString +  "objective: " + obj.value + "\n"
+  override def toString : String =
+    s"""${super.toString}objective: ${obj.value}
+       |""".stripMargin
 
   model.close()
-
 
   val relevantPredecessorsOfNodes = (node:Int) => myVRP.nodes
   val closestRelevantNeighborsByDistance = Array.tabulate(n)(i => DistanceHelper.lazyClosestPredecessorsOfNode(symmetricDistanceMatrix,relevantPredecessorsOfNodes)(i))
@@ -245,6 +245,6 @@ class TSPRoutePointsS(n:Int,v:Int,maxPivotPerValuePercent:Int, verbose:Int, symm
 
   print(getWatch)
   if(printobj){
-    print("\t" + obj.value)
+      print(s"  ${obj.value}")
   }
 }

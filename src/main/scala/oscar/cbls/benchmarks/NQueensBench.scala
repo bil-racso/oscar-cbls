@@ -47,7 +47,7 @@ import scala.util.Random
  */
 object NQueensBench extends LinearSelectorClass(true) with StopWatch{
 
-  def nStrings(N: Long, C: String): String = if (N <= 0) "" else "" + C + nStrings(N - 1, C)
+  def nStrings(N: Long, C: String): String = if (N <= 0) "" else s"$C${nStrings(N - 1, C)}"
   def padToLength(s: String, l: Int) = (s + nStrings(l, " ")).substring(0, l)
 
   val help = "Benchmarking NQueen \n" +

@@ -17,7 +17,6 @@
   *     This code has been initially developed by CETIC www.cetic.be
   *         by Renaud De Landtsheer
   ******************************************************************************/
-
 package oscar.cbls.lib.invariant.logic
 
 import oscar.cbls.core.computation.{CBLSIntVar, ChangingIntValue, Domain, IntInvariant, IntNotificationTarget, IntValue, Invariant, InvariantHelper}
@@ -45,7 +44,7 @@ class Int2Int(a:IntValue, fun:Long => Long, domain:Domain,cached:Boolean = false
   var cachedOut:Long = this.newValue
 
   @inline
-  override def notifyIntChanged(v: ChangingIntValue, id: Int, OldVal: Long, NewVal: Long) {
+  override def notifyIntChanged(v: ChangingIntValue, id: Int, OldVal: Long, NewVal: Long): Unit = {
     assert(v == a)
     if(cached){
       if(NewVal == cachedIn) {
@@ -63,7 +62,7 @@ class Int2Int(a:IntValue, fun:Long => Long, domain:Domain,cached:Boolean = false
     }
   }
 
-  override def checkInternals(c:Checker){
+  override def checkInternals(c:Checker): Unit ={
     c.check(this.value == fun(a.value), Some("output.value == fun(a.value)"))
   }
 }
@@ -77,7 +76,7 @@ class Int2Int(a:IntValue, fun:Long => Long, domain:Domain,cached:Boolean = false
   * @param domain the expected domain of the output
   * @author renaud.delandtsheer@cetic.be
   * */
-class IntInt2Int(a:IntValue, b:IntValue, fun:((Long, Long) => Long), domain:Domain)
+class IntInt2Int(a:IntValue, b:IntValue, fun:(Long, Long) => Long, domain:Domain)
   extends IntInvariant(fun(a.value,b.value),domain)
   with IntNotificationTarget{
 
@@ -87,11 +86,11 @@ class IntInt2Int(a:IntValue, b:IntValue, fun:((Long, Long) => Long), domain:Doma
   this := fun(a.value,b.value)
 
   @inline
-  override def notifyIntChanged(v: ChangingIntValue, id: Int, OldVal: Long, NewVal: Long) {
+  override def notifyIntChanged(v: ChangingIntValue, id: Int, OldVal: Long, NewVal: Long): Unit = {
     this := fun(a.value,b.value)
   }
 
-  override def checkInternals(c:Checker){
+  override def checkInternals(c:Checker): Unit ={
     c.check(this.value == fun(a.value,b.value), Some("output.value == fun(a.value,b.value)"))
   }
 }
@@ -105,7 +104,7 @@ class IntInt2Int(a:IntValue, b:IntValue, fun:((Long, Long) => Long), domain:Doma
   * @param domain the expected domain of the output
   * @author renaud.delandtsheer@cetic.be
   * */
-class LazyIntInt2Int(a:IntValue, b:IntValue, fun:((Long, Long) => Long), domain:Domain)
+class LazyIntInt2Int(a:IntValue, b:IntValue, fun:(Long, Long) => Long, domain:Domain)
   extends IntInvariant(fun(a.value,b.value),domain)
   with IntNotificationTarget{
 
@@ -113,15 +112,15 @@ class LazyIntInt2Int(a:IntValue, b:IntValue, fun:((Long, Long) => Long), domain:
   finishInitialization()
 
   @inline
-  override def notifyIntChanged(v: ChangingIntValue, id: Int, OldVal: Long, NewVal: Long) {
+  override def notifyIntChanged(v: ChangingIntValue, id: Int, OldVal: Long, NewVal: Long): Unit = {
     scheduleForPropagation()
   }
 
-  override def performInvariantPropagation(){
+  override def performInvariantPropagation(): Unit ={
     this := fun(a.value,b.value)
   }
 
-  override def checkInternals(c: Checker){
+  override def checkInternals(c: Checker): Unit ={
     c.check(this.value == fun(a.value,b.value), Some("checking output of LazyIntVarIntVar2IntVarFun"))
   }
 }

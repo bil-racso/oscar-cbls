@@ -55,7 +55,7 @@ abstract class AbstractForwardCumulativeDimensionOnVehicle(routes:ChangingSeqVal
   }
 */
 
-  override def performPropagation(){
+  override def performPropagation(): Unit ={
     setNodesUnrouted(potentiallyRemovedNodes)
 
     toUpdateZonesAndVehicleStartAfter match{
@@ -73,7 +73,6 @@ abstract class AbstractForwardCumulativeDimensionOnVehicle(routes:ChangingSeqVal
 
     potentiallyRemovedNodes = SortedSet.empty
   }
-
 
   def digestUpdatesAndUpdateVehicleStartPositionsAndSearchZoneToUpdate(changes:SeqUpdate,
                                                                        toUpdateZonesAndVehicleStartOpt:Option[(RedBlackTreeMap[List[(Int,Int)]],VehicleLocation)],
@@ -143,7 +142,6 @@ abstract class AbstractForwardCumulativeDimensionOnVehicle(routes:ChangingSeqVal
             vehicleLocationAndCheckpointStack.defineCheckpoint(prev.newValue,checkpointLevel,vehicleLocationToSave)
             (Some((zonesAfterPrev, vehicleLocationToSave)), removedPointsAfterPrev)
           case (None,potentiallyRemovedPointsAfterPrev) =>
-
             val vehicleLocationToSave = VehicleLocation.apply(v,node => prev.newValue.positionOfAnyOccurrence(node).get)
             vehicleLocationAndCheckpointStack.defineCheckpoint(prev.newValue,checkpointLevel,vehicleLocationToSave)
 

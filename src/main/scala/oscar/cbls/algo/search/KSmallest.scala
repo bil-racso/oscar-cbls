@@ -111,8 +111,8 @@ object testQuickSort extends App with StopWatch{
   }
   val watch2 = getWatch
 
-  println("nonLazy:" + watch1)
-  println("lazy:" + watch2)
+  println(s"nonLazy:$watch1")
+  println(s"lazy:$watch2")
 }
 
 /**
@@ -126,7 +126,7 @@ class LazyQuicksort(val array:Array[Int], key:Int => Long = a => a) extends Iter
   private[this] var toDo: QList = new QList(0, array.length - 1,null)
 
   private[this] var lastSortedPosition = -1
-  def sortUntil(k: Int) {
+  def sortUntil(k: Int): Unit = {
     if(k <= lastSortedPosition) return
     while (true) {
       if (toDo == null) return
@@ -144,7 +144,7 @@ class LazyQuicksort(val array:Array[Int], key:Int => Long = a => a) extends Iter
 
   @inline
   @tailrec
-  private[this] def sort1(l: Int, r: Int) {
+  private[this] def sort1(l: Int, r: Int): Unit = {
     val pivot: Long = key(array((l + r) / 2))
     var i = l
     var j = r

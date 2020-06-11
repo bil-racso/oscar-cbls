@@ -93,8 +93,7 @@ object GraphContractor {
       }
     }
 
-
-    def checkOtherNode(otherNode:TmpNode,prevDegree:Int){
+    def checkOtherNode(otherNode:TmpNode,prevDegree:Int): Unit = {
       if(otherNode.degree <= 2
         && prevDegree >2
         && !otherNode.shouldBeKeptNode){ //en fait c'est idiot, les transit fobidden on peut les supprimer out de suite.
@@ -231,8 +230,9 @@ class ContractedConditionalGraph(originalGraph:ConditionalGraph,
   extends ConditionalGraph(nodes,edges,originalGraph.nbConditions) {
 
   override def toString: String = {
-    "Contracted" + super.toString + "\n" +
-      "edgeToPathInOriginalGraph:\n\t" + edgeToPathInOriginalGraph.mkString("\n\t")
+    s"""Contracted ${super.toString}
+       |edgeToPathInOriginalGraph:
+       |  ${edgeToPathInOriginalGraph.mkString("\n\t")}""".stripMargin
   }
 
   def decontractPath(fromNodeInContractedGraph:Node,

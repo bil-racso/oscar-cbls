@@ -65,7 +65,6 @@ package object geometry {
   }
 
   def createRectangle(height:Double,width:Double):GeometryValue = {
-
     val halfHeight = height /2
     val halfWidth = width/2
 
@@ -128,4 +127,3 @@ package object geometry {
   final val GeometryValue = oscar.cbls.business.geometry.model.GeometryValue
 
 }
-

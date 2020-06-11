@@ -148,7 +148,6 @@ trait BasicCombinators{
   def dyn(f:() => Neighborhood) = new Dyn(f)
 }
 
-
 trait MetaheuristicCombinators{
   /**
    * performs a restart of the search for a number of time.
@@ -166,11 +165,9 @@ trait MetaheuristicCombinators{
    */
   def restart(n:Neighborhood,randomizationNeighborhood:Neighborhood, maxRestartWithoutImprovement:Long, obj:Objective) =
     Restart(n,randomizationNeighborhood, maxRestartWithoutImprovement, obj)
-
 }
 
 trait CompositionCombinators{
-
   /**
    * to build a composite neighborhood.
    * the first neighborhood is used only to provide a round robin exploration on its possible moves
@@ -364,9 +361,7 @@ trait NeighborhoodSelectionCombinators{
     new ExhaustAndContinueIfMovesFound(a, b)
 }
 
-
 class NeighborhoodOps(n:Neighborhood){
-
   /**
    * this combinator sequentially tries all neighborhoods until one move is found
    * between calls, it will roll back to the first neighborhood
@@ -466,7 +461,6 @@ class NeighborhoodOps(n:Neighborhood){
    * @author renaud.delandtsheer@cetic.be
    */
   def exhaustAndContinueIfMovesFound(b: Neighborhood) = new ExhaustAndContinueIfMovesFound(n, b)
-
 
   /**
    * this one bounds the number of time the search is actually performed

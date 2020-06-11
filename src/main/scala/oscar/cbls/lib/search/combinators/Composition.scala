@@ -7,7 +7,7 @@ import oscar.cbls.core.search.{CallBackMove, CompositeMove, DoNothingNeighborhoo
 
 abstract class NeighborhoodCombinatorNoProfile(a: Neighborhood*) extends NeighborhoodCombinator(a:_*){
   override def collectProfilingStatistics: List[Array[String]] = List.empty
-  override def resetStatistics(){}
+  override def resetStatistics(): Unit ={}
 }
 
 object Mu {
@@ -99,7 +99,7 @@ object Mu {
 case class AndThen[FirstMoveType<:Move](a: Neighborhood with SupportForAndThenChaining[FirstMoveType],
                                         b: Neighborhood,
                                         maximalIntermediaryDegradation: Long = Long.MaxValue)
-  extends DynAndThen[FirstMoveType](a,(_) => b, maximalIntermediaryDegradation){
+  extends DynAndThen[FirstMoveType](a, _ => b, maximalIntermediaryDegradation){
 }
 
 /**
@@ -156,7 +156,7 @@ class DynAndThen[FirstMoveType<:Move](a:Neighborhood with SupportForAndThenChain
 
       override def detailedString(short: Boolean, indent: Long = 0L): String = nSpace(indent) + "AndThenInstrumentedObjective(initialObjective:" + obj.detailedString(short) + ")"
 
-      override def model = obj.model
+      override def model: Store = obj.model
 
       override def value: Long = {
 
@@ -268,7 +268,7 @@ case class Filter[MoveType<:Move](a:Neighborhood with SupportForAndThenChaining[
       override def detailedString(short: Boolean, indent: Long = 0L): String =
         obj.detailedString(short: Boolean, indent)
 
-      override def model = obj.model
+      override def model: Store = obj.model
 
       override def value: Long = {
         if(filter(a.instantiateCurrentMove(Long.MaxValue))){
@@ -324,7 +324,7 @@ case class Atomic(a: Neighborhood, shouldStop:Int => Boolean, stopAsSoonAsAccept
     if(allMoves.isEmpty){
       NoMoveFound
     } else {
-      CompositeMove(allMoves,endObj,"Atomic(" + a + ")")
+      CompositeMove(allMoves,endObj, s"Atomic($a)")
     }
   }
 

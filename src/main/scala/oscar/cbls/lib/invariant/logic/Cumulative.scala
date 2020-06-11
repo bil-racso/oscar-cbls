@@ -20,7 +20,6 @@
  *     This code has been initially developed by CETIC www.cetic.be
  *         by Renaud De Landtsheer
  ******************************************************************************/
-
 package oscar.cbls.lib.invariant.logic
 
 import oscar.cbls.core.computation.{CBLSIntVar, CBLSSetVar, ChangingIntValue, IntValue, Invariant, ShortIntNotificationTarget}
@@ -46,11 +45,11 @@ case class Cumulative(indices: Array[Int],
   extends Invariant
   with ShortIntNotificationTarget{
 
-  //horizon is the uppermost indice of the profile, which is supposed to be the same as active
+  //horizon is the uppermost index of the profile, which is supposed to be the same as active
   val horizonPlus1 : Int = profile.length
   assert(active.length == horizonPlus1)
 
-  //horizon is the uppermost indice of the profile, which is supposed to be the same as active
+  //horizon is the uppermost index of the profile, which is supposed to be the same as active
   val horizon = profile.length-1
   assert(active.length == horizon +1)
 
@@ -65,7 +64,7 @@ case class Cumulative(indices: Array[Int],
 
   for (i <- start.indices) insert(start(i).valueInt, duration(i).valueInt, amount(i).value, i)
 
-  def remove(start: Int, duration: Int, amount: Long, index: Int) {
+  def remove(start: Int, duration: Int, amount: Long, index: Int): Unit = {
     if (start < horizonPlus1) {
       for (t <- start until (horizonPlus1 min (start + duration))) {
         profile(t) :-= amount
@@ -74,7 +73,7 @@ case class Cumulative(indices: Array[Int],
     }
   }
 
-  def insert(start: Int, duration: Int, amount: Long, index: Int) {
+  def insert(start: Int, duration: Int, amount: Long, index: Int): Unit = {
     if (start < horizonPlus1) {
       for (t <- start until (horizonPlus1 min (start + duration))) {
         //sprintln(s"insert($start, $duration, $amount, $index) t=$t")
@@ -85,7 +84,7 @@ case class Cumulative(indices: Array[Int],
   }
 
   @inline
-  override def notifyIntChanged(v: ChangingIntValue, index: Int, OldVal: Int, NewVal: Int) {
+  override def notifyIntChanged(v: ChangingIntValue, index: Int, OldVal: Int, NewVal: Int): Unit = {
     if (start(index) == v) {
       //start
       remove(OldVal, duration(index).valueInt, amount(index).value, index)
@@ -111,7 +110,6 @@ case class Cumulative(indices: Array[Int],
 
   //TODO: checkInternals.
 }
-
 
 /**
  * Maintains a resource usage profile.
@@ -145,7 +143,7 @@ case class CumulativeNoSet(start: Array[IntValue],
 
   for (i <- start.indices) insert(start(i).valueInt, duration(i).valueInt, amount(i).value, i)
 
-  def remove(start: Int, duration: Int, amount: Long, index: Int) {
+  def remove(start: Int, duration: Int, amount: Long, index: Int): Unit = {
     if (start < horizonPlus1) {
       for (t <- start until (horizonPlus1 min (start + duration))) {
         profile(t) :-= amount
@@ -153,7 +151,7 @@ case class CumulativeNoSet(start: Array[IntValue],
     }
   }
 
-  def insert(start: Int, duration: Int, amount: Long, index: Int) {
+  def insert(start: Int, duration: Int, amount: Long, index: Int): Unit = {
     if (start < horizonPlus1) {
       for (t <- start until (horizonPlus1 min (start + duration))) {
         //sprintln(s"insert($start, $duration, $amount, $index) t=$t")
@@ -163,7 +161,7 @@ case class CumulativeNoSet(start: Array[IntValue],
   }
 
   @inline
-  override def notifyIntChanged(v: ChangingIntValue, index: Int, OldVal: Int, NewVal: Int) {
+  override def notifyIntChanged(v: ChangingIntValue, index: Int, OldVal: Int, NewVal: Int): Unit = {
     if (start(index) == v) {
       //start
       remove(OldVal, duration(index).valueInt, amount(index).value, index)

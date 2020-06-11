@@ -1,4 +1,3 @@
-package oscar.cbls.benchmarks
 /**
  * *****************************************************************************
  * OscaR is free software: you can redistribute it and/or modify
@@ -15,12 +14,14 @@ package oscar.cbls.benchmarks
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  * ****************************************************************************
  */
+package oscar.cbls.benchmarks
 
 import oscar.cbls._
 import oscar.cbls.lib.search.combinators.Profile
 import oscar.cbls.lib.search.neighborhoods.WideningFlipNeighborhood
 import oscar.cbls.modeling.CBLSModel
 
+import scala.annotation.tailrec
 import scala.collection.immutable.SortedMap
 import scala.util.Random
 
@@ -57,7 +58,8 @@ object CarSequencerBench extends CBLSModel with App {
   val dieselCarTypes = makeBoolArray(0,1,2)
   val espCarTypes = makeBoolArray(3,4,5)
 
-  def prependItems(acc:List[Long],n:Long,item:Long):List[Long] = if(n == 0) acc else prependItems(item :: acc,n-1,item)
+  @tailrec
+  def prependItems(acc:List[Long], n:Long, item:Long):List[Long] = if(n == 0) acc else prependItems(item :: acc,n-1,item)
   val orderedCarTypes:List[Long] = orderedCarsByType.foldLeft(List.empty[Long])({case (accList,(carType,nbItems)) => prependItems(accList,nbItems,carType)})
   val nbCars = orderedCarTypes.size
 

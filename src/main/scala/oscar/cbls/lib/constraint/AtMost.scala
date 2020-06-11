@@ -17,7 +17,6 @@
   *     This code has been initially developed by CETIC www.cetic.be
   *         by Renaud De Landtsheer
   ******************************************************************************/
-
 package oscar.cbls.lib.constraint
 
 import oscar.cbls._
@@ -86,7 +85,7 @@ case class AtMost(variables:Iterable[IntValue], bounds:SortedMap[Int, IntValue])
     Violations(v.asInstanceOf[IntValue])
   }
 
-  override def checkInternals(c: Checker) {
+  override def checkInternals(c: Checker): Unit = {
     var checkBounds:SortedMap[Long, Long] = SortedMap.empty
     for(i <- bounds.keys) checkBounds += ((i,0L))
     for (v <- variables) if (checkBounds.isDefinedAt(v.value)) checkBounds += ((v.value,checkBounds(v.value) +1L))
@@ -109,7 +108,7 @@ case class AtMost(variables:Iterable[IntValue], bounds:SortedMap[Int, IntValue])
     for(i <- bounds.keys){
       if (checkBounds(i) > bounds(i).value) summedViolation += (checkBounds(i) - bounds(i).value)
     }
-    c.check(summedViolation == violation.value, Some("summedViolation ("+summedViolation+") == violation.value ("+violation.value+")"))
+    c.check(summedViolation == violation.value,
+      Some(s"summedViolation ($summedViolation) == violation.value (${violation.value})"))
   }
 }
-

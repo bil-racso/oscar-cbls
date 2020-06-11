@@ -14,12 +14,11 @@ abstract class LogReducedGlobalConstraintWithExtremes[T:Manifest, @specialized(I
                                   var fromStart:T = null.asInstanceOf[T],
                                   var toEnd:T = null.asInstanceOf[T]){
     override def toString: String = {
-      "NodeAndExtremePreComputes(node:" + node + " fromStart:" + fromStart + " toEnd:" + toEnd + ")"
+      s"NodeAndExtremePreComputes(node:$node fromStart:$fromStart toEnd:$toEnd)"
     }
   }
 
   private val vehicleToExtremePrecomputes:Array[Array[NodeAndExtremePreComputes]] = Array.fill(v)(null)
-
 
   private def identifyNodesAndAllocateExtremePrecomputes(e:Option[IntSequenceExplorer],
                                                          vehicle:Int,positionInVehicleRoute:Int,

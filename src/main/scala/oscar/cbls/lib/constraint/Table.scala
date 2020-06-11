@@ -16,7 +16,6 @@
   * @author Gustav Björdal
   *
   **/
-
 package oscar.cbls.lib.constraint
 
 import oscar.cbls.core.computation.{CBLSIntVar, ChangingIntValue, IntNotificationTarget, IntValue, Invariant, Value}
@@ -45,12 +44,11 @@ case class Table(variables: Array[IntValue], table:Array[Array[Long]])
 
   finishInitialization()
 
-
-  val rowViolation:Array[CBLSIntVar] = Array.tabulate(table.size)( i => {
+  val rowViolation:Array[CBLSIntVar] = Array.tabulate(table.length)(i => {
     val tmp = CBLSIntVar(this.model,
                          table(i).zip(variables).foldLeft(0L)((acc, p) => acc + (if (p._1 == p._2.value) 0L else 1L)),
                          //table(i).zip(variables).foldLeft(0L)((acc, p) => acc + Math.abs(p._1 - p._2.value)),
-                         0 to table.size)
+                         0 to table.length)
     tmp.setDefiningInvariant(this)
     tmp
   }
@@ -93,7 +91,7 @@ case class Table(variables: Array[IntValue], table:Array[Array[Long]])
     }
   }
 
- @inline
+  @inline
   override def notifyIntChanged(v: ChangingIntValue, index: Int, OldVal: Long, NewVal: Long): Unit = {
    assert(OldVal != NewVal)
    for(r <- table.indices) {

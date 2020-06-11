@@ -14,7 +14,6 @@
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  * ****************************************************************************
  */
-
 package oscar.cbls.lib.invariant.logic
 
 import oscar.cbls.core.computation.{CBLSIntVar, ChangingIntValue, Domain, DomainRange, IntInvariant, IntNotificationTarget, IntValue, Invariant, InvariantHelper, ShortIntNotificationTarget, Store}
@@ -36,8 +35,8 @@ case class SparseCount(values: Array[IntValue], counts: Map[Long,CBLSIntVar])
   }
   for(c <- counts.values) c.setDefiningInvariant(this)
     
-   @inline
-  override def notifyIntChanged(v: ChangingIntValue, index: Int, OldVal: Long, NewVal: Long) {
+  @inline
+  override def notifyIntChanged(v: ChangingIntValue, index: Int, OldVal: Long, NewVal: Long): Unit = {
     assert(values(index) == v)
     counts.get(OldVal).foreach(c => c :-= 1L)
     counts.get(NewVal).foreach(c => c :+= 1L)
@@ -68,13 +67,13 @@ case class DenseCount(values: Array[IntValue], counts: Array[CBLSIntVar], offset
   for (c <- counts) { c.setDefiningInvariant(this) }
 
   @inline
-  override def notifyIntChanged(v: ChangingIntValue, index: Int, OldVal: Int, NewVal: Int) {
+  override def notifyIntChanged(v: ChangingIntValue, index: Int, OldVal: Int, NewVal: Int): Unit = {
     assert(values(index) == v)
     counts(OldVal + offset) :-= 1L
     counts(NewVal + offset) :+= 1L
   }
 
-  override def checkInternals(c: Checker) {
+  override def checkInternals(c: Checker): Unit = {
     /**
      * Maintains a count of the indexes of array:
      * count(j) = #{i in index of values | values[i] == j}
@@ -90,8 +89,7 @@ case class DenseCount(values: Array[IntValue], counts: Array[CBLSIntVar], offset
 
     for (j <- counts.indices) {
       c.check(counts(j+offset).value == myCounts(j+offset),
-        Some("counts(" + j + "+offset).getValue(false) (" + counts(j+offset).value
-          + ") == myCounts(" + j + "+offset) (" + myCounts(j+offset) + ")"))
+        Some(s"counts($j+offset).getValue(false) (${counts(j+offset).value}) == myCounts($j+offset) (${myCounts(j+offset)})"))
     }
   }
 }
@@ -110,7 +108,7 @@ case class ConstCount(values: Array[IntValue], c: Long)
   finishInitialization()
 
   @inline
-  override def notifyIntChanged(v: ChangingIntValue, index: Int, OldVal: Long, NewVal: Long) {
+  override def notifyIntChanged(v: ChangingIntValue, index: Int, OldVal: Long, NewVal: Long): Unit = {
     if(NewVal == c){
       this :+= 1L
     }else if(OldVal == c){
@@ -118,7 +116,7 @@ case class ConstCount(values: Array[IntValue], c: Long)
     }
   }
 
-  override def checkInternals(c: Checker) {
+  override def checkInternals(c: Checker): Unit = {
   }
 }
 
@@ -136,7 +134,7 @@ case class Count(values: Array[IntValue], condition:Long=>Boolean = _!=0)
   finishInitialization()
 
   @inline
-  override def notifyIntChanged(v: ChangingIntValue, index: Int, OldVal: Long, NewVal: Long) {
+  override def notifyIntChanged(v: ChangingIntValue, index: Int, OldVal: Long, NewVal: Long): Unit = {
     if(condition(NewVal) && !condition(OldVal)) {
       this :+= 1L
     }else if(!condition(NewVal) && condition(OldVal)){
@@ -151,7 +149,7 @@ case class Count(values: Array[IntValue], condition:Long=>Boolean = _!=0)
 
 object DenseCount{
   def makeDenseCount(vars: Array[IntValue]):DenseCount = {
-    val ((minMin,maxMax)) = InvariantHelper.getMinMaxBoundsShort(vars)
+    val (minMin,maxMax) = InvariantHelper.getMinMaxBoundsShort(vars)
     val mbValues = maxMax - minMin + 1
     val m:Store = InvariantHelper.findModel(vars)
     val nbVars = vars.length
