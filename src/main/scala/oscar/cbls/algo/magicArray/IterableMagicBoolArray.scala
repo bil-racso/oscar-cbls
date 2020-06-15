@@ -84,13 +84,13 @@ class IterableMagicBoolArray(override val length:Int, initVal:Boolean = false)
       if(anyIndividualSetToFalse){
         super.indicesAtTrue
       }else{
-        indices.toIterator
+        indices.iterator
       }
     }else{
       if(anyIndividualSetToFalse){
-        positionsAtTrueOverApproximated.filter(this(_)).toIterator
+        positionsAtTrueOverApproximated.filter(this(_)).iterator
       }else{
-        positionsAtTrueOverApproximated.toIterator
+        positionsAtTrueOverApproximated.iterator
       }
     }
   }

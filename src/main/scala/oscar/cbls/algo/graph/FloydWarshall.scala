@@ -1,6 +1,6 @@
 package oscar.cbls.algo.graph
 
-//import scala.collection.parallel.CollectionConverters._
+import scala.collection.parallel.immutable.ParVector
 
 /**
   * this is a FloydWarshall algorithm for the [[ConditionalGraph]] data structure.
@@ -82,11 +82,12 @@ object FloydWarshall{
     matrix
   }
 
-  def saturateAdjacencyMatrixToDistanceMatrix(w:Array[Array[Long]], graph:ConditionalGraph){
+  def saturateAdjacencyMatrixToDistanceMatrix(w:Array[Array[Long]], graph:ConditionalGraph): Unit ={
     val n = w.length
+    val parRange = ParVector.tabulate(n){x => x}
 
     for (k <- 0 until n) {
-      for (i <- (0 until n).par) {
+      for (i <- parRange) {
         for (j <- i + 1 until n) {
 
           if(w(i)(k) != Long.MaxValue && w(k)(j)!= Long.MaxValue &&graph.nodes(k).transitAllowed) {

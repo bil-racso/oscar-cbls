@@ -101,7 +101,7 @@ object TSProutePoints extends App {
     matrix
   }
 
-  def writeMatrix(writer:PrintWriter,matrix:Array[Array[Long]]){
+  def writeMatrix(writer:PrintWriter,matrix:Array[Array[Long]]): Unit ={
     val n = matrix.length
     for(i <- 0 until n){
       for(j <- 0 until n){
@@ -111,14 +111,14 @@ object TSProutePoints extends App {
     }
   }
 
-  def saveMatrixToFile(fileName:String,matrix:Array[Array[Long]]){
+  def saveMatrixToFile(fileName:String,matrix:Array[Array[Long]]): Unit ={
     val writer = new PrintWriter(new File(fileName))
     writer.write(matrix.length + "\n")
     writeMatrix(writer,matrix)
     writer.close()
   }
 
-  def saveMatrixToLocalSolverFile(fileName:String,matrix:Array[Array[Long]]){
+  def saveMatrixToLocalSolverFile(fileName:String,matrix:Array[Array[Long]]): Unit ={
     val writer = new PrintWriter(new File(fileName))
     val n = matrix.length
     writer.write("NAME: RANDOM" + fileName + "\n")

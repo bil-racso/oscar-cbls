@@ -488,7 +488,7 @@ class RouteLength(routes:ChangingSeqValue,
     check(c, routes.value)
   }
 
-  def check(c : Checker,s:IntSequence) {
+  def check(c : Checker,s:IntSequence): Unit ={
     c.check(!distanceIsSymmetric || RouteLength.isDistanceSymmetric(distanceMatrix, n), Some("distance matrix should be symmetric if invariant told so"))
 
     if (perVehicle) {

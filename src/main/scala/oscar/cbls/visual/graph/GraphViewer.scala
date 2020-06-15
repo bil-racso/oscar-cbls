@@ -9,7 +9,6 @@ import oscar.visual.VisualDrawing
 import oscar.visual.shapes._
 
 import scala.collection.immutable.{SortedMap, SortedSet}
-import scala.swing.Color
 
 class GraphViewer(graph:ConditionalGraphWithIntegerNodeCoordinates,
                   centroidColor:SortedMap[Int,Color],
@@ -145,10 +144,10 @@ class GraphViewer(graph:ConditionalGraphWithIntegerNodeCoordinates,
       drawPath(path,emphNodes = true:Boolean,emphEdges=true)
     }
 
-    drawEdges(openConditions:SortedSet[Int],hideClosedEdges,hideRegularEdges, hideOpenEdges,emphasizeEdges)
+    drawEdges(openConditions,hideClosedEdges,hideRegularEdges, hideOpenEdges,emphasizeEdges)
 
-    drawNodes(centroids:SortedSet[Int],
-      nodeToCentroid.mapValues(Array(_)):SortedMap[Int,Array[Int]],extraCentroids)
+    drawNodes(centroids,
+      nodeToCentroid.map {tup => tup._1 -> Array(tup._2)} ,extraCentroids)
 
     //double buffering still does not work!
     super.repaint()
@@ -328,6 +327,8 @@ class GraphViewer(graph:ConditionalGraphWithIntegerNodeCoordinates,
 
 
   def drawPath(d:RevisableDistance,emphNodes:Boolean,emphEdges:Boolean): Unit ={
+    implicit val ev: Ordering[Edge] = EdgeOrdering
+
     d match {
       case Distance(
       from: Node,

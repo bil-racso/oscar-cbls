@@ -265,7 +265,7 @@ class RouteLengthOnConditionalGraph(routes:SeqValue,
 
     var aStarToRecompute: List[AStarInfo] = Nil
 
-    def recordTouchedCondition(closedCondition: Int){
+    def recordTouchedCondition(closedCondition: Int): Unit ={
       val l = conditionToAStarInfo(closedCondition).toList
       for (a <- l) a.invalidate()
       require(conditionToAStarInfo(closedCondition).isEmpty)

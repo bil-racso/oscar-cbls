@@ -438,7 +438,7 @@ class VoronoiZones(graph:ConditionalGraph,
     //TODO: try an explicit tack to replace the recursion since there is a risk of stack overflow in large graphs.
     var reachedNewCentroids:SortedSet[Int] = SortedSet.empty
 
-    def explore(node:Node){
+    def explore(node:Node): Unit ={
       for(edge <- node.incidentEdges if isEdgeOpen(edge)){
         val otherNode = edge.otherNode(node)
         val otherNodeID = otherNode.id

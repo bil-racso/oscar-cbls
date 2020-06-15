@@ -1,11 +1,10 @@
-package oscar.cbls.business.geometry.visu
+package oscar.cbls.visual.geometry
 
 import java.awt.Color
 import java.io.File
 
 import org.locationtech.jts.geom.Geometry
 import oscar.cbls.visual.SingleFrameWindow
-import oscar.cbls.visual.geometry.{GeometryDrawing, GeometryDrawingOnRealMap, GeometryDrawingTypes}
 
 class Drawing (title: String,
                relevantDistances: List[(Int,Int)],

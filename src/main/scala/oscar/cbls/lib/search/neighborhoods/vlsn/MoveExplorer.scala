@@ -131,7 +131,7 @@ class MoveExplorerAlgo(v:Int,
     (edgeBuilder.finish(),directEdges)
   }
 
-  private def buildNodes() {
+  private def buildNodes(): Unit = {
     //label of nodes are:
     // for each routed node and vehicle node: the vehicle of the node
     // For each unrouted node: a different label

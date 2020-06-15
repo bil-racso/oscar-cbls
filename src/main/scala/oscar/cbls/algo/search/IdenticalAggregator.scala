@@ -50,7 +50,7 @@ object IdenticalAggregator{
    */
   def removeIdenticalClasses[T](l:Iterable[T], itemClass:T => Int):List[T] = {
     val a: Set[Int] = SortedSet.empty
-    removeIdenticalClasses[T](l.toIterator, itemClass, Nil, a)
+    removeIdenticalClasses[T](l.iterator, itemClass, Nil, a)
   }
 
   @tailrec

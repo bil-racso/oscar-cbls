@@ -67,7 +67,7 @@ class QList[@specialized T](val head:T, val tail:QList[T] = null){
 object QList{
 
   def append[@specialized T](l:Iterable[T],q:QList[T]):QList[T] = {
-    val it = l.toIterator
+    val it = l.iterator
 
     var toReturn = q
     while(it.hasNext){
@@ -99,7 +99,7 @@ object QList{
 
   def buildFromIterable[@specialized T](l:Iterable[T]):QList[T] = {
     var acc:QList[T] = null
-    val it = l.toIterator
+    val it = l.iterator
     while(it.hasNext){
       acc = QList(it.next(),acc)
     }

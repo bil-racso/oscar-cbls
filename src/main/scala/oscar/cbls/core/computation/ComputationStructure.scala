@@ -134,7 +134,7 @@ case class Store(override val verbose:Boolean = false,
 
   var toCallBeforeClose:List[()=>Unit] = List.empty
 
-  def addToCallBeforeClose(toCallBeforeCloseProc : ()=>Unit){
+  def addToCallBeforeClose(toCallBeforeCloseProc : ()=>Unit): Unit ={
     toCallBeforeClose = toCallBeforeCloseProc :: toCallBeforeClose
   }
 
@@ -240,7 +240,7 @@ case class Solution(saves:Iterable[AbstractVariableSnapShot],model:Store){
     "Solution(\n" + saves.mkString(",\n\t") + "\n)"
   }
 
-  def restoreDecisionVariables() {
+  def restoreDecisionVariables(): Unit ={
     for(snapshot <- saves) snapshot.restoreIfDecisionVariable()
   }
 }
@@ -254,7 +254,7 @@ case class Solution(saves:Iterable[AbstractVariableSnapShot],model:Store){
 class Snapshot(toRecord:Iterable[AbstractVariable], val model:Store) {
   lazy val varDico:SortedMap[AbstractVariable, AbstractVariableSnapShot] = SortedMap.empty[AbstractVariable, AbstractVariableSnapShot] ++ toRecord.map(v => ((v,v.snapshot)))
 
-  def restoreDecisionVariables() {
+  def restoreDecisionVariables(): Unit = {
     for(snapshot <- varDico.values) snapshot.restoreIfDecisionVariable()
   }
 
@@ -268,7 +268,7 @@ object Invariant{
 trait VaryingDependencies extends Invariant with VaryingDependenciesPE{
 
   /**register to determining element. It must be in the static dependency graph*/
-  def registerDeterminingDependency(v:Value,i:Int = -1){
+  def registerDeterminingDependency(v:Value,i:Int = -1): Unit ={
     registerDeterminingElement(v,i)
   }
 
@@ -434,7 +434,7 @@ object InvariantHelper{
     * @return the model that the invariant belongs to
     */
   def findModel(i:Iterable[BasicPropagationElement]):Store={
-    val it = i.toIterator
+    val it = i.iterator
     while(it.hasNext){
       it.next() match{
         case pe:AbstractVariable if pe.model != null => return pe.model
@@ -445,7 +445,7 @@ object InvariantHelper{
   }
 
   def findModel(i:BasicPropagationElement*):Store={
-    val it = i.toIterator
+    val it = i.iterator
     while(it.hasNext){
       it.next() match {
         case v: Variable =>
@@ -517,7 +517,7 @@ trait Value extends BasicPropagationElement with DistributedStorageUtility {
 //TODO: try to remove the double inclusion of AbstractVariable into CBLSIntVar and SetVar
 trait Variable extends AbstractVariable{
   protected var definingInvariant:Invariant = null
-  def setDefiningInvariant(i:Invariant){
+  def setDefiningInvariant(i:Invariant): Unit ={
     assert(i.model == model || i.model == null,"i.model == null:" + (i.model == null) + " i.model == model:" + (i.model == model) + " model == null:" + (model == null))
     assert(! i.isInstanceOf[Variable])
     if(definingInvariant == null){

@@ -22,6 +22,7 @@
  * ****************************************************************************
  */
 package oscar.cbls.lib.invariant.minmax
+
 /**This package proposes a set of logic invariants, which are used to define the structure of the problem*/
 
 import oscar.cbls._

@@ -109,7 +109,7 @@ case class Sequence(variables: Array[_ <: IntValue], length:Int, Max:Int, predic
   }
 
   @inline
-  override def notifyIntChanged(v: ChangingIntValue, i: Int, OldVal: Int, NewVal: Int) {
+  override def notifyIntChanged(v: ChangingIntValue, i: Int, OldVal: Int, NewVal: Int): Unit = {
     if (predicate(OldVal)){ //TODO: on peut éventuellement conserver predicate(OldVal) dans un tableau de booléens
       if(!predicate(NewVal)){
         //decrease the count

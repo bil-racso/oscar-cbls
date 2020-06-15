@@ -1241,7 +1241,7 @@ abstract class SeqInvariant(initialValue:IntSequence,
 }
 
 object IdentitySeq{
-  def apply(fromValue:SeqValue,toValue:CBLSSeqVar){
+  def apply(fromValue:SeqValue,toValue:CBLSSeqVar): Unit ={
     fromValue match{
       case c:CBLSSeqConst => toValue := c.value
       case c:ChangingSeqValue => new IdentitySeq(c,toValue)

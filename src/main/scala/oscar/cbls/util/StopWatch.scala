@@ -17,7 +17,6 @@
  *     This code has been initially developed by CETIC www.cetic.be
  *         by Renaud De Landtsheer
  ******************************************************************************/
-
 package oscar.cbls.util
 
 /**This trait implements simple stopwatch functionality used for benchmarking search scripts

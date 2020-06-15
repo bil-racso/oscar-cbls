@@ -211,7 +211,7 @@ class SlideVaryingSteps(stepSequence:List[Long] = List(1L), gradualIncrease:Bool
       toReturn
     }
 
-    def recurExploreNoGradualIncrease(toExploreSteps:List[Long]){
+    def recurExploreNoGradualIncrease(toExploreSteps:List[Long]): Unit ={
       toExploreSteps match{
         case Nil => ;
         case head::tail =>

@@ -126,7 +126,7 @@ case class CubeAssign(variable:CBLSIntVar, indice:Int, newValue:Long) {
 case class CubeAssignMove(l:List[CubeAssign], override val objAfter:Long, override val neighborhoodName:String = null)
   extends Move(objAfter, neighborhoodName){
 
-  override def commit() {
+  override def commit(): Unit = {
     l.foreach(_.commit())
   }
 

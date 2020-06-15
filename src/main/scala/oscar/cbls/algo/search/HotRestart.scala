@@ -69,12 +69,12 @@ class ShiftedIterable(it:Iterable[Int], pivot:Int, sequence:Boolean = false) ext
   class ShiftedIterator[@specialized(Int,Long) T](first:Iterable[T], var second:Iterable[T]) extends Iterator[T]{
     //TODO: this is awful: maybe the stuff is already sorted
     //TODO: we should perform a lazy sort since all the first might not be covered anyway
-    var it:Iterator[T] = first.toList.toIterator
+    var it:Iterator[T] = first.toList.iterator
     override def hasNext: Boolean = {
       if(it.hasNext) true
       else if (second == null) false
       else{
-        it = second.toList.toIterator
+        it = second.toList.iterator
         second = null
         it.hasNext
       }
@@ -148,7 +148,7 @@ class ShiftedSet(s:SortedSet[Int], pivot:Int) extends Iterable[Int] {
           return true
         }else{
           //start the second iterator
-          it = s.toIterator
+          it = s.iterator
           first = false
           //and continue the execution flow
         }

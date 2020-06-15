@@ -66,7 +66,7 @@ object CarSequencerBench extends CBLSModel with App {
   println("totalNumberOfCars:" + nbCars)
 
   //initializes the car sequence in a random way
-  val orderedCarTypesIterator = Random.shuffle(orderedCarTypes).toIterator
+  val orderedCarTypesIterator = Random.shuffle(orderedCarTypes).iterator
   val carSequence:Array[CBLSIntVar] = Array.tabulate(nbCars)(p => CBLSIntVar(orderedCarTypesIterator.next(),carTypes,"carClassAtPosition" + p))
 
   //airConditionner: max 2 out of 3

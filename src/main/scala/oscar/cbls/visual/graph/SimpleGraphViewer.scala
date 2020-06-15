@@ -1,13 +1,12 @@
 package oscar.cbls.visual.graph
 
+import java.awt.Color
 import java.awt.geom.Line2D.Double
 import java.awt.geom.Rectangle2D
 
 import oscar.cbls.algo.graph._
 import oscar.visual.VisualDrawing
 import oscar.visual.shapes.{VisualCircle, VisualLine, VisualRectangle, VisualShape}
-
-import scala.swing.Color
 
 class SimpleGraphViewer(graph:ConditionalGraphWithIntegerNodeCoordinates)
   extends VisualDrawing(false,false){

@@ -29,7 +29,7 @@ object PiecewiseLinearFun{
 
   def createFromPivots(pivots:Iterable[Pivot]):PiecewiseLinearFun = {
     var acc = RedBlackTreeMap.empty[Pivot]
-    val pivotIt = pivots.toIterator
+    val pivotIt = pivots.iterator
     while(pivotIt.hasNext){
       val currentPivot = pivotIt.next()
       acc =  acc.insert(currentPivot.fromValue,currentPivot)

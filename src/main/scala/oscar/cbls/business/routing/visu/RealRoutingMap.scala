@@ -8,8 +8,6 @@ import oscar.cbls.business.routing._
 import oscar.cbls.util.StopWatch
 import oscar.visual.map._
 
-import scala.swing.Color
-
 /**
   * This class purpose is to display on a real map the resolution of a routing problem having
   * geographical coordinates for the nodes's location. In order to see the problem's resolution, the user

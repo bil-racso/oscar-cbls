@@ -416,7 +416,7 @@ abstract class AbstractVehicleCapacity(n:Int,
 
   //this is a debug procedure
   def checkZonesToUpdate(zonesToUpdate: RedBlackTreeMap[List[(Int, Int)]],
-                         sequenceAfterMovesBeforeUpdates:IntSequence) {
+                         sequenceAfterMovesBeforeUpdates:IntSequence): Unit ={
 
     for (vehicle <- zonesToUpdate.keys) {
       val theZone = zonesToUpdate.get(vehicle).get

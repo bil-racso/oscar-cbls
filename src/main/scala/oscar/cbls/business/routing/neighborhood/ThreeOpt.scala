@@ -118,7 +118,6 @@ case class ThreeOpt(potentialInsertionPoints:()=>Iterable[Int], //must be routed
                   val (flipValuesToTest,notifyFound4) =
                     selectFlipBehavior.toIterable(if(tryFlip) List(false,true) else List(false))
 
-
                   for(flipForInstantiationTmp <- flipValuesToTest){
                     flipForInstantiation = flipForInstantiationTmp
                     doMove(insertionPosition, segmentStartPosition, segmentEndPosition, flipForInstantiation)

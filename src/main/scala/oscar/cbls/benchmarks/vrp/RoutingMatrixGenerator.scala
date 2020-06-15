@@ -51,7 +51,7 @@ object RoutingMatrixGenerator {
   def generatePrecedence(n:Int,v:Int,nbPRecedences:Int):List[(Int,Int)] = {
     val allNodes = v until n
 
-    val randomizedNodes = random.shuffle(allNodes.toList).toIterator
+    val randomizedNodes = random.shuffle(allNodes.toList).iterator
     var precedencesToGenerate = nbPRecedences
     var toReturn:List[(Int,Int)] = List.empty
 

@@ -106,10 +106,14 @@ class Edge(val id:Int,
   }
 }
 
+object EdgeOrdering extends Ordering[Edge] {
+  override def compare(x: Edge, y: Edge): Int = x.id compare y.id
+}
+
 class Node(val id:Int, val transitAllowed:Boolean = true){
   var incidentEdges:List[Edge] = Nil
   def degree: Int = incidentEdges.size
-  def registerEdge(edge:Edge) {incidentEdges = edge::incidentEdges}
+  def registerEdge(edge:Edge): Unit = {incidentEdges = edge::incidentEdges}
 
   override def toString: String = s"Node(nodeId:$id transitAllowed:$transitAllowed)"
 

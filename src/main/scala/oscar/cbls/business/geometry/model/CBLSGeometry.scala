@@ -18,7 +18,7 @@ import org.locationtech.jts.algorithm.MinimumBoundingCircle
 import org.locationtech.jts.geom.impl.CoordinateArraySequence
 import org.locationtech.jts.geom.{Geometry, Point}
 import oscar.cbls.Store
-import oscar.cbls.core.computation._
+import oscar.cbls.core.computation.{AtomicInvariant, CBLSAtomicConst, CBLSAtomicVar, ChangingAtomicValue, Invariant}
 import oscar.cbls.core.propagation.{Checker, PropagationElement}
 
 case class GeometryValue(geometry: Geometry,
@@ -115,7 +115,7 @@ class IdentityGeometry(toValue:CBLSGeometryVar, fromValue:ChangingAtomicValue[Ge
 }
 
 trait GeometryNotificationTarget{
-  def notifyGeometryChange(a:ChangingAtomicValue[GeometryValue],id:Int,oldVal:GeometryValue,newVal:GeometryValue)
+  def notifyGeometryChange(a:ChangingAtomicValue[GeometryValue],id:Int,oldVal:GeometryValue,newVal:GeometryValue): Unit
 }
 
 case class CBLSGeometryConst(store:Store, override val value:GeometryValue, givenName:String = "")

@@ -187,7 +187,7 @@ abstract class PropagationStructure(val verbose: Boolean, val checker: Option[Ch
 
     scheduledElements = null
 
-    val it = getPropagationElements.toIterator
+    val it = getPropagationElements.iterator
     while (it.hasNext) {
       it.next().rescheduleIfNeeded()
     }
@@ -890,7 +890,7 @@ trait BasicPropagationElement {
    * @param listening the dynamically listening element
    * @param i: the payload that will be given for the notification, according to what the PE is supposed to do
    */
-  protected[propagation] def registerDynamicallyListeningElementNoKey(listening: PropagationElement, i: Int) {}
+  protected[propagation] def registerDynamicallyListeningElementNoKey(listening: PropagationElement, i: Int): Unit = {}
 
   /**
    * @param listening the listening element
@@ -925,13 +925,13 @@ class PropagationElement extends BasicPropagationElement with DAGNode {
   //dynamicallyListeningElementsFromSameComponent
   final def getDAGSucceedingNodes: Iterable[DAGNode] = dynamicallyListeningElementsFromSameComponent
 
-  def initiateDynamicGraphFromSameComponent(stronglyConnectedComponentTopologicalSort: StronglyConnectedComponentTopologicalSort) {
+  def initiateDynamicGraphFromSameComponent(stronglyConnectedComponentTopologicalSort: StronglyConnectedComponentTopologicalSort): Unit = {
     initiateDynamicGraphFromSameComponentListening(stronglyConnectedComponentTopologicalSort)
     initiateDynamicGraphFromSameComponentListened(stronglyConnectedComponentTopologicalSort)
   }
 
-  protected def initiateDynamicGraphFromSameComponentListening(stronglyConnectedComponentTopologicalSort: StronglyConnectedComponentTopologicalSort) {
-    def filterForListening(listeningAndPayload: (PropagationElement, Any), injector: (() => Unit), isStillValid: (() => Boolean)) {
+  protected def initiateDynamicGraphFromSameComponentListening(stronglyConnectedComponentTopologicalSort: StronglyConnectedComponentTopologicalSort): Unit = {
+    def filterForListening(listeningAndPayload: (PropagationElement, Any), injector: () => Unit, isStillValid: () => Boolean): Unit = {
       if (stronglyConnectedComponentTopologicalSort == listeningAndPayload._1.schedulingHandler)
         stronglyConnectedComponentTopologicalSort.registerListeningWaitingDependency(injector)
     }
@@ -939,7 +939,7 @@ class PropagationElement extends BasicPropagationElement with DAGNode {
     dynamicallyListeningElementsFromSameComponent = dynamicallyListeningElements.delayedPermaFilter(filterForListening, (e) => e._1)
   }
 
-  protected def initiateDynamicGraphFromSameComponentListened(stronglyConnectedComponentTopologicalSort: StronglyConnectedComponentTopologicalSort) {
+  protected def initiateDynamicGraphFromSameComponentListened(stronglyConnectedComponentTopologicalSort: StronglyConnectedComponentTopologicalSort): Unit = {
     assert(stronglyConnectedComponentTopologicalSort == mySchedulingHandler)
     //filters the list of staticallyListenedElements
 
@@ -1177,7 +1177,7 @@ trait VaryingDependenciesPE extends PropagationElement {
    * @param i an additional value that is stored in this element together with the reference to this,
    * can be use for notification purposes
    */
-  protected final def registerDeterminingElement(p: BasicPropagationElement, i: Int) {
+  protected final def registerDeterminingElement(p: BasicPropagationElement, i: Int): Unit = {
     p match {
       case pe: PropagationElement =>
         assert(this.getStaticallyListenedElements.exists(e => e == pe),
@@ -1200,7 +1200,7 @@ trait VaryingDependenciesPE extends PropagationElement {
       if (inSortingSCC) schedulingHandler.asInstanceOf[StronglyConnectedComponentTopologicalSort] else null,
       dynamicallyListenedElements)
 
-  override protected def initiateDynamicGraphFromSameComponentListened(stronglyConnectedComponentTopologicalSort: StronglyConnectedComponentTopologicalSort) {
+  override protected def initiateDynamicGraphFromSameComponentListened(stronglyConnectedComponentTopologicalSort: StronglyConnectedComponentTopologicalSort): Unit = {
     assert(stronglyConnectedComponentTopologicalSort == schedulingHandler)
     def filterForListened(listened: PropagationElement, injector: () => Unit, isStillValid: () => Boolean): Unit = {
       if (stronglyConnectedComponentTopologicalSort == listened.schedulingHandler)

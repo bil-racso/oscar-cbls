@@ -69,8 +69,8 @@ object KVoronoiZones {
       (nodeId: Int) => {
         nodeId ->
           Array.tabulate(k)((centroidI: Int) => {
-            (new CBLSIntVar(m, defaultCentroidForUnreachableNode, Domain(0L, defaultCentroidForUnreachableNode max Long.MaxValue), "closest centroid number " + centroidI + " for node " + nodeId),
-              new CBLSIntVar(m, defaultDistanceForUnreachableNode, Domain(0L, defaultDistanceForUnreachableNode max Long.MaxValue), "distance to centroid number " + centroidI + " for node " + nodeId))
+            (new CBLSIntVar(m, defaultCentroidForUnreachableNode, Domain(0L, defaultCentroidForUnreachableNode max Long.MaxValue), s"closest centroid number $centroidI for node $nodeId"),
+              new CBLSIntVar(m, defaultDistanceForUnreachableNode, Domain(0L, defaultDistanceForUnreachableNode max Long.MaxValue), s"distance to centroid number $centroidI for node $nodeId"))
           })
       })
 
@@ -368,7 +368,7 @@ class KVoronoiZones(graph:ConditionalGraph,
 
   private val nodeHeapToTreateToto = new BinomialHeapWithMove[NodeLabeling](totreate => totreate.distance,graph.nbNodes * centroids.domain.iterator.length)
 
-  class NodeLabelingMap extends scala.collection.mutable.Map[NodeLabeling,Int] {
+  class NodeLabelingMap extends mutable.Map[NodeLabeling,Int] {
     def get(k : NodeLabeling):Option[Int] = {
       if (k.positionInHeapMap == -1)
         None
@@ -378,12 +378,18 @@ class KVoronoiZones(graph:ConditionalGraph,
 
     def iterator: Iterator[(NodeLabeling, Int)] = {throw new Exception("enumeration not supported"); null}
 
-    def +=(nodeLabelingAndPos : (NodeLabeling,Int)) = {
+    // Scala 2.12
+    // def +=(nodeLabelingAndPos : (NodeLabeling,Int)) = {
+    // Scala 2.13
+    def addOne(nodeLabelingAndPos : (NodeLabeling,Int)) = {
       nodeLabelingAndPos._1.positionInHeapMap = nodeLabelingAndPos._2
       this
     }
 
-    def -=(nodeLabeling: NodeLabeling) = {
+    // Scala 2.12
+    // def -=(nodeLabeling: NodeLabeling) = {
+    // Scala 2.13
+    def subtractOne(nodeLabeling: NodeLabeling) = {
       nodeLabeling.positionInHeapMap = -1
       this
     }
@@ -431,7 +437,7 @@ class KVoronoiZones(graph:ConditionalGraph,
 //    }
 //  }
 
-  private def tryLabelNode(node : Node,distance : Long,centroid : Node) {
+  private def tryLabelNode(node : Node,distance : Long,centroid : Node): Unit = {
     //println("Try Labeling : (" + node + "," + centroid + ") with distance " + distance + " --- Currently " + nodeLabeling(node.id).centroidList.mkString(";"))
     val labelOfNode = nodeLabeling(node.id)
     //println(labelOfNode.farthestDistance)

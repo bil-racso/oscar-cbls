@@ -115,7 +115,7 @@ class MagicBoolArray(val length:Int,initVal:Boolean = false){
         toReturn = QList(n,toReturn)
       }
     }
-    toReturn.toIterator
+    toReturn.iterator
   }
 
   def indicesAtTrueAsQList:QList[Int] ={

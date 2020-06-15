@@ -60,11 +60,11 @@ class Sum(vars: Iterable[IntValue])
   for (v <- vars) registerStaticAndDynamicDependency(v)
   finishInitialization()
 
-  override def notifyIntChanged(v: ChangingIntValue, id: Int, OldVal: Long, NewVal: Long) {
+  override def notifyIntChanged(v: ChangingIntValue, id: Int, OldVal: Long, NewVal: Long): Unit = {
     this :+= NewVal - OldVal
   }
 
-  override def checkInternals(c: Checker) {
+  override def checkInternals(c: Checker): Unit = {
     c.check(this.value == vars.foldLeft(0L)((acc, intvar) => acc + intvar.value),
       Some("output.value == vars.foldLeft(0L)((acc,intvar) => acc+intvar.value)"))
   }

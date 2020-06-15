@@ -15,7 +15,6 @@ package oscar
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
 
-
 import oscar.cbls.algo.search.InstrumentedRange
 import oscar.cbls.core.computation._
 import oscar.cbls.core.search.Neighborhood
@@ -265,12 +264,12 @@ package object cbls extends ModelingAPI{
    *  @param message       a String to print to he error console
    *  @group assertions
    */
-  @inline final def warning(requirement: Boolean, message: => Any) {
+  @inline final def warning(requirement: Boolean, message: => Any): Unit = {
     if (!requirement)
       println(Console.RED + "WARNING: " + message + Console.RESET)
   }
 
-  @inline final def warning(message: => Any) {
+  @inline final def warning(message: => Any): Unit = {
     println(Console.RED + "WARNING: " + message + Console.RESET)
   }
 }

@@ -296,7 +296,7 @@ abstract class ChangingSetValue(initialValue:SortedSet[Int], initialDomain:Domai
     clone
   }
 
-  override def checkInternals(c:Checker){
+  override def checkInternals(c:Checker): Unit ={
     assert(this.definingInvariant == null || OldValue.intersect(m_NewValue).size == m_NewValue.size,
       s"internal error: Value: $m_NewValue OldValue: $OldValue")
   }

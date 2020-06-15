@@ -28,7 +28,7 @@ class WareHouseLocationMap(deliveryCoordinates:Array[(Long,Long)],
   var prevOpenWarehouse:SortedSet[Int] = SortedSet.empty
   var prevNearestOpenWarehouse = Array.fill[Int](d)(-1)
 
-  def redraw(openWarehouses:SortedSet[Int],boldChanges:Boolean=true,hideClosedWarehouses:Boolean = false){
+  def redraw(openWarehouses:SortedSet[Int],boldChanges:Boolean=true,hideClosedWarehouses:Boolean = false): Unit ={
     val closestWarehouses:Array[Int] = Array.tabulate(d)(nearestOpenWareHouse(openWarehouses,_))
     drawMap(closestWarehouses,openWarehouses,prevOpenWarehouse,prevNearestOpenWarehouse,boldChanges,hideClosedWarehouses)
     prevOpenWarehouse = openWarehouses

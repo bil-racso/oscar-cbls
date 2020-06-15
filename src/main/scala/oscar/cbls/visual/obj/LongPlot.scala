@@ -12,7 +12,6 @@
   * You should have received a copy of the GNU Lesser General Public License along with OscaR.
   * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
   ******************************************************************************/
-
 package oscar.cbls.visual.obj
 
 import javax.swing.JPanel
@@ -56,7 +55,7 @@ abstract class LongPlot(title: String, xlab: String, ylab: String, series: List[
 
   def highlight(x: Double, y: Double, col: Color = Color.LIGHT_GRAY): Unit = {
     SwingUtilities.invokeLater(new Runnable() {
-      def run() {
+      def run(): Unit = {
         xMarker.setPaint(col);
         yMarker.setPaint(col);
         plot.addDomainMarker(xMarker)

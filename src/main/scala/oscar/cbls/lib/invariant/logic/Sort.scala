@@ -20,6 +20,7 @@
   ******************************************************************************/
 
 package oscar.cbls.lib.invariant.logic
+
 /**This package proposes a set of logic invariants, which are used to define the structure of the problem*/
 
 import oscar.cbls.core.computation.{CBLSIntVar, ChangingIntValue, Domain, IntNotificationTarget, IntValue, Invariant, InvariantHelper, Store}

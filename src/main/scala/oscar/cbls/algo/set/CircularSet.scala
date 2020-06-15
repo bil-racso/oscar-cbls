@@ -81,7 +81,7 @@ class CircularIntSet(val maxsize:Int) extends scala.collection.mutable.SortedSet
   this
   }
 
-  private def insertAfter(elem:Int, newElem:Int){
+  private def insertAfter(elem:Int, newElem:Int): Unit ={
     val elemAfter:Int = next(elem)
     next(elem) = newElem
     next(newElem) = elemAfter

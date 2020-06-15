@@ -147,7 +147,7 @@ case class RollNeighborhood(vars:Array[CBLSIntVar],
     }
   }
 
-  def assignAll(vars:List[CBLSIntVar],vals:List[Long]){
+  def assignAll(vars:List[CBLSIntVar],vals:List[Long]): Unit ={
     (vars, vals) match {
       case (hVar :: t1, hVal :: t2) =>
         hVar := hVal

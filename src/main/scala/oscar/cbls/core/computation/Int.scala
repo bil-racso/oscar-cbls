@@ -333,7 +333,7 @@ class CBLSIntConst(override val value:Long)
   override def min: Long = value
   override def max: Long = value
   override def name = value.toString
-  override def restrictDomain(d:Domain){
+  override def restrictDomain(d:Domain): Unit ={
     require(d.contains(value))
   }
 }
@@ -384,7 +384,7 @@ abstract class IntInvariant(initialValue:Long = 0L, initialDomain:Domain = FullR
 }
 
 object IdentityInt{
-  def apply(toValue:CBLSIntVar, fromValue:IntValue){
+  def apply(toValue:CBLSIntVar, fromValue:IntValue): Unit ={
     fromValue match{
       case c:CBLSIntConst => toValue := c.value
       case c:ChangingIntValue => new IdentityInt(toValue, c)
@@ -402,7 +402,7 @@ class IdentityInt(toValue:CBLSIntVar, fromValue:IntValue) extends Invariant with
 
   toValue := fromValue.value
 
-  override def notifyIntChanged(v: ChangingIntValue, id: Int, OldVal: Long, NewVal: Long) {
+  override def notifyIntChanged(v: ChangingIntValue, id: Int, OldVal: Long, NewVal: Long): Unit = {
     toValue := NewVal
   }
 

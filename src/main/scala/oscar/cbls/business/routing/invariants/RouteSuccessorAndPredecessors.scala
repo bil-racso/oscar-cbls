@@ -126,7 +126,7 @@ class RouteSuccessorAndPredecessors(routes:ChangingSeqValue,
     }
   }
 
-  def computeAllFromScratch(seq:IntSequence){
+  def computeAllFromScratch(seq:IntSequence): Unit ={
     successorValues.foreach(node => node := defaultWhenNotInSequence)
     predecessorValues.foreach(node => node := defaultWhenNotInSequence)
     var explorer = seq.explorerAtPosition(0).head
@@ -148,7 +148,7 @@ class RouteSuccessorAndPredecessors(routes:ChangingSeqValue,
     }){}
   }
 
-  def updateStartFrom(startValue:Int,startExplorerOpt:Option[IntSequenceExplorer],seq:IntSequence){
+  def updateStartFrom(startValue:Int,startExplorerOpt:Option[IntSequenceExplorer],seq:IntSequence): Unit ={
     startExplorerOpt match{
       case None =>
         successorValues(startValue) := defaultWhenNotInSequence

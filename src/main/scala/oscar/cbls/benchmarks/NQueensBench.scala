@@ -61,7 +61,7 @@ object NQueensBench extends LinearSelectorClass(true) with StopWatch{
     "dryRun: 0 for no dry run, 1 for a dry run\n"+
     "random 1 for a real random, 0 for a pseudo-random. pseudo-random it will exhibit the same trajectory every time you call the bench\n"
 
-  def main(args: Array[String]) {
+  def main(args: Array[String]): Unit ={
 
     println(help)
     if (args.length<1) {
@@ -91,7 +91,7 @@ object NQueensBench extends LinearSelectorClass(true) with StopWatch{
     }
   }
 
-  def SolveNQueen(N:Int, r:Random){
+  def SolveNQueen(N:Int, r:Random): Unit ={
     print(padToLength("" + N, 15))
 
     startWatch()

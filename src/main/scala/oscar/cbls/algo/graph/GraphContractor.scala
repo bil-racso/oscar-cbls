@@ -39,7 +39,7 @@ object GraphContractor {
         }
       }
       var keysFoDeletion:List[DLLStorageElement[TempEdge]] = Nil
-      def addKey(k:DLLStorageElement[TempEdge]){
+      def addKey(k:DLLStorageElement[TempEdge]): Unit ={
         keysFoDeletion = k :: keysFoDeletion
       }
     }

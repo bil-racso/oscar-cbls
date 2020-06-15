@@ -110,7 +110,7 @@ abstract class GlobalConstraintDefinition[U <: Any :Manifest](gc: GlobalConstrai
     * @param routes the sequence representing the route of all vehicle
     *               BEWARE,other vehicles are also present in this sequence; you must only work on the given vehicle
     */
-  protected[global] def performPreCompute(vehicle:Int, routes:IntSequence)
+  protected[global] def performPreCompute(vehicle:Int, routes:IntSequence): Unit
 
   /**
     * This method is called by the framework when the value of a vehicle must be computed.

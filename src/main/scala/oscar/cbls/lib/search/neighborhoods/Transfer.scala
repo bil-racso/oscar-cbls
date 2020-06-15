@@ -77,7 +77,7 @@ case class TransferNeighborhood(vars:Array[CBLSIntVar],
   var factor1:Long = 1L
   var factor2:Long = 1L
 
-  override def exploreNeighborhood(initialObj: Long){
+  override def exploreNeighborhood(initialObj: Long): Unit ={
 
     val firstIterationSchemeZone =
       if (searchZone1 == null) {

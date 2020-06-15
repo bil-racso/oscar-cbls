@@ -1,4 +1,5 @@
 package oscar.cbls.algo.fun
+
 /**
  * *****************************************************************************
  * OscaR is free software: you can redistribute it and/or modify

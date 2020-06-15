@@ -11,7 +11,7 @@ trait GeometryDrawingTrait{
   def drawShapes(boundingBoxOn:Option[Geometry] = None,
                  shapes:List[(Geometry,Option[Color],Option[Color],String)],
                  centers:List[(Long,Long)],
-                 saveShapesAndPositions: Boolean = true)
+                 saveShapesAndPositions: Boolean = true): Unit
 }
 
 object GeometryDrawingTypes extends Enumeration{
